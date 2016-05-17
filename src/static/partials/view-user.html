@@ -1,0 +1,46 @@
+<div class="row">
+  <div class="col-md-10"><h2>User Details</h2></div>
+  <div class="col-md-2">
+    <a onclick="history.back();" role="button" class="btn btn-success btn-large">Back</a>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    <div class="table-responsive">
+      <table class="table table-stripped">
+	<thead>
+	  <tr>
+            <th>Name</th>
+	    <th>Email-id</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <tr>
+            <td>{{ name }}</td>
+	    <td>{{ email }}</td>
+          </tr>
+	  
+      </tbody>
+      </table>
+      <span ng-if="user_id == 1 || user_id == id">
+        <a href="#/edit-user/{{id}}" class="btn btn-primary">Edit</a>
+	<span ng-if="user_id == 1">
+	  <a class="btn btn-primary" ng-click="delete_user(id)">Delete</a>
+	</span>
+      </span>
+      
+      <!--
+      <div ng-if="user_id == (id+1)">
+        <a href="#/edit-oc/{{oc.id}}" class="btn btn-primary">Edit</a>
+	
+	<a class="btn btn-primary" ng-click="delete_oc(oc.id)">Delete</a>
+      </div>
+      -->
+    </div>
+  </div>
+</div>
+
+
+
+
+

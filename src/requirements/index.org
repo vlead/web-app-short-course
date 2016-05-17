@@ -1,4 +1,4 @@
-#+TITLE: Requirements for the User Directory Application
+#+TITLE: Requirements for the Mini Version of User Directory Application
 #+AUTHOR: VLEAD
 #+DATE: [2016-05-11 Wed]
 #+PROPERTY: results output
@@ -7,67 +7,113 @@
 #+options: ^:nil
 #+LATEX: Literal LaTeX code for export
 
+* Application:  A web-based directory of users
+
+ The application is a simple directory of users and some
+ related information (name and email).  The system has
+ users.  There is a special user called =admin=.  Once a
+ user is logged in, the system allows for the following
+ /operations/
+
+   
+  1. Viewing the details of a user
+  2. Creating a user, or
+  3. Updating the details of that user. 
+  4. Deleting a user.  
+
+All interaction is via a login session.  That is, users need
+to log in before they can perform any operation.  Which
+operation may be executed on what entity depends on both
+that entity and the user who is logged in.  For example, if
+user =u= is logged in, he/she may modify the details of user
+=v= iff either =u = v= or =u = admin=.
+
+The rest of the sections have more detailed requirements. 
+
 * Users
 
-The system has users.  Users login to access the system.
-Each user has an email that uniquely identifies that user.
-In addition, a user has a name.  It is possible for two
-users to have the same name.
+1. The system has users.
+
+2. Each user has an email address (string that corresponds to a
+   valid email addr).  
+
+3. Email identifies a user.  Two users with the same email
+   are the same users. 
+
+4. Each user has a Name (string).
+
 
 * Roles
-A user may have multiple roles: guest, admin, user.  In any
-given login session, a user may assume only one role.  Each
-role determines what data access privileges are available to
-the user in that session.
 
-  - Guest :: A user logged in as guest may only read (but
-       not modify) the data  in the system.
+1. There are two kinds of roles: =admin= and =user=. 
 
-  - User :: A user logged with role =user= may only modify
-       data related to only that user.  He/She may view (but
+2. Each user is mapped to exactly one role, either =admin=
+   or =user=.
+
+3. Each role determines what data access privileges are
+   available to the user:
+
+  - User :: A user with role =user= may  modify
+       data related only to that user.  He/She may view (but
        not modify) other users' data. 
 
-
-  - Admin :: A user logged in with the role =admin= may view
-       or modify the data belonging to that user or any
-       other user.  A user logged in as =admin= may also
-       create and delete users.  
-
-* Interaction with the system
-
-A user who is logged in, depending on the privileges, may
-interact with the application either by querying the
-application for some information or commanding the system to
-modify some of the application's data.
+  - Admin :: A user with role =admin= may view or modify the
+       data belonging to that user or any other user.  A
+       user logged in as =admin= may also create and delete
+       users.  A user is not allowed to delete his/her
+       account.
 
 
 
-* Questions?
+* Interaction with the system and privileges
+
+|----------------------------------+-------+--------------------------+---|
+| Operation                        | Actor | Permission               |   |
+|----------------------------------+-------+--------------------------+---|
+| Create a user                    | =a=   | =a='s role is =admin=    |   |
+|----------------------------------+-------+--------------------------+---|
+| Delete a user =u=                | =a=   | =a='s role is =admin=    |   |
+|                                  |       | AND =u= is not =a=.      |   |
+|----------------------------------+-------+--------------------------+---|
+| Update the details of a user =u= | =a=   | =a= is equal to =u=      |   |
+|                                  |       | OR =a='s role is =admin= |   |
+|----------------------------------+-------+--------------------------+---|
+| View the list of users           | =a=   | always allowed           |   |
+|----------------------------------+-------+--------------------------+---|
+| View the details of a user       | =a=   | always allowed           |   |
+|----------------------------------+-------+--------------------------+---|
+
+* Sessions
+
+1. Users are required to login into the system.  
+
+2. Once the user is logged in into the system, the system
+   creates a /login/ session.   
+
+3. Operations are permitted only if the actor is logged in
+   into the system. 
+
+* Questions/scenarios
 ** Deleting oneself?  
-Can a user delete himself/herself?
+- Question :: Can a user delete himself/herself?
+- Ans :: No
 
 ** No user with admin role? 
-Is it possible for the system to have no user with role
-admin?
+
+- Question :: Is it possible for the system to have no user
+     with role admin?
+
+- Answer :: No.  There is at least one user in the system
+     with role =admin=.  This is ensured by configuring the
+     system with an initial user with role =admin=. 
 
 ** Multiple sessions for same user?   
-Is it possible for a user to be simultaneously logged in
-into the system in two different sessions?
+
+- Question :: Is it possible for a user to be simultaneously
+     logged in into the system in two different sessions?
+
+- Answer :: Yes. 
 
 
 
 
-
-
-* Ideas
-
-There should be a role called =Owner=.  There is one user in
-the system called =owner=.  The role =Owner= is always an
-element of the set of roles that =owner= has
-
-#+begin_example
-roles(owner) = {Owner, ...}
-#+end_example
-
-The privileges of role =Owner= do not permit the deletion
-of user with role =Owner=.
