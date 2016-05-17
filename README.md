@@ -1,1 +1,2 @@
-# web-app-short-course
+# data-model
+An exmaple applciation built using data modelling

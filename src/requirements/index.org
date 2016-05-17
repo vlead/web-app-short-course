@@ -1,0 +1,73 @@
+#+TITLE: Requirements for the User Directory Application
+#+AUTHOR: VLEAD
+#+DATE: [2016-05-11 Wed]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ../org-templates/level-1.org
+#+options: ^:nil
+#+LATEX: Literal LaTeX code for export
+
+* Users
+
+The system has users.  Users login to access the system.
+Each user has an email that uniquely identifies that user.
+In addition, a user has a name.  It is possible for two
+users to have the same name.
+
+* Roles
+A user may have multiple roles: guest, admin, user.  In any
+given login session, a user may assume only one role.  Each
+role determines what data access privileges are available to
+the user in that session.
+
+  - Guest :: A user logged in as guest may only read (but
+       not modify) the data  in the system.
+
+  - User :: A user logged with role =user= may only modify
+       data related to only that user.  He/She may view (but
+       not modify) other users' data. 
+
+
+  - Admin :: A user logged in with the role =admin= may view
+       or modify the data belonging to that user or any
+       other user.  A user logged in as =admin= may also
+       create and delete users.  
+
+* Interaction with the system
+
+A user who is logged in, depending on the privileges, may
+interact with the application either by querying the
+application for some information or commanding the system to
+modify some of the application's data.
+
+
+
+* Questions?
+** Deleting oneself?  
+Can a user delete himself/herself?
+
+** No user with admin role? 
+Is it possible for the system to have no user with role
+admin?
+
+** Multiple sessions for same user?   
+Is it possible for a user to be simultaneously logged in
+into the system in two different sessions?
+
+
+
+
+
+
+* Ideas
+
+There should be a role called =Owner=.  There is one user in
+the system called =owner=.  The role =Owner= is always an
+element of the set of roles that =owner= has
+
+#+begin_example
+roles(owner) = {Owner, ...}
+#+end_example
+
+The privileges of role =Owner= do not permit the deletion
+of user with role =Owner=.
