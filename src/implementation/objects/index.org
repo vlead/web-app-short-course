@@ -1,4 +1,4 @@
-#+title:  Object Implementation of Mini Version of User Directory Application
+#+title:  Object  Implementation of Mini Version of User Directory Application
 #+AUTHOR: VLEAD
 #+DATE: [2016-05-18 Wed]
 #+PROPERTY: results output
@@ -19,41 +19,112 @@ Then we define constructors for the entities =Name= and
 =Email=. 
 
 
-* Utility Functions
 
-** =is_alphabetic_string=
+* Initialization
+
+** Imports for Python API
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+# -*- coding: utf-8 -*-
+from op_exceptions import AttributeRequired
+from utils import *
+#+END_SRC
+
+
+** Imports and Initialization of testcases for Python API
+
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+# -*- coding: utf-8 -*-
+import unittest
+from unittest import TestCase
+from datetime import datetime
+
+from src.obj import *
+from src.op_exceptions import AttributeRequired
+
+#+END_SRC
+
+
+** Imports for utility functions
+
+#+BEGIN_SRC python :tangle ../../src/utils.py :eval no
+
+# module to hold all utilities/helper functions
+
+import json
+
+import re
+
+
+#+END_SRC
+
+
+** Init Files
+#+BEGIN_SRC python :tangle ../../src/__init__.py :eval no
+import obj
+#+END_SRC
+
+#+BEGIN_SRC python :tangle ../../tests/__init__.py :eval no
+print "tests package"
+#+END_SRC
+
+
+
+* Object Model
+** Custom Exceptions
+   These are some of the custom exceptions used in the application.
+
+*** AttributeRequired
+
+#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no
+class AttributeRequired(Exception):
+    str = None
+
+    def __init__(self, str):
+        self.str = str
+
+    def __str__(self):
+        return repr(self.str)
+
+#+END_SRC
+
+
+
+
+** Utility Functions
+
+*** is_alphabetic_string(value)
+    This function take an argument and checks whether the argument contains
+    only alphabets.
+
     This function take an argument and checks whether the
     argument is an alphabetic string.  An alphabetic string
     consists of one or more alphabetic characters, period or
     space.
 
-*** Tests/Examples
-#+begin_src python :tangle utility-tests.py
-import unittest
-from utility import is_alphabetic_string
 
+#+BEGIN_SRC  python :tangle ../../src/utils.py :eval no
+def is_alphabetic_string(value):
+    if re.search('[^a-zA-Z. ]+', value):
+        return False
+    else:
+        return True
+#+END_SRC
+
+
+**** Tests/Examples
+#+begin_src python :tangle ../../tests/test_obj.py :eval no
 class Test_is_alphabetic_string(unittest.TestCase):
     """Tests for is_alphabetic_string."""
 
     def test_one(self):
-        """test-01"""
+        """test-Hello"""
         self.assertTrue(is_alphabetic_string("Hello"))
 
     def test_two(self):
-        """test-02"""
+        """test-M N Ray"""
         self.assertTrue(is_alphabetic_string("M. N. Ray"))
 #+end_src
 
-
-*** Implementation
-#+BEGIN_SRC python :tangle utility.py
-import re
-def is_alphabetic_string(value):
-    if re.search('[a-zA-Z. ]+', value):
-        return True
-    else:
-        return False
-#+END_SRC
 
 There are some false positives, which slip in.  A more
 accurate definition of =is_alphabetic_string= should fix
@@ -61,18 +132,17 @@ this.
 
 #+begin_src python :tangle utility-tests.py
         def test_three(self):
-               """test-02"""
+               """test-. ."""
               self.assertTrue(is_alphabetic_string(".  ."))
 unittest.main()
 #+end_src
 
-** =is_email=
-    Valid email string is defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and
-    [[https://tools.ietf.org/html/rfc6531][6531]].  
 
-*** Implementation
+*** is_email(value)
+    Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
+    Following is the constructor for this class.
 
-#+BEGIN_SRC python :tangle utility.py
+#+BEGIN_SRC python :tangle ../../src/utils.py :eval no
 def is_email(value):
     if re.search('[^@]+@[^@]+\.[^@]+', value):
         return True
@@ -84,23 +154,17 @@ def is_email(value):
 Python.  See [[http://stackoverflow.com/questions/8022530/python-check-for-valid-email-address][this]] Stack Overflow discussion.)
 
 
-*** Test cases 
+**** Test cases 
 
 To be done.
 
+** Name
 
+*** Construction
 
+     Name is an alphabetical string.
 
-
-
-
-* Name
-** Construction
-
-A =Name= object is constructed from a string.  A Type Error
-is thrown if the the string is not a name.  
-
-#+BEGIN_SRC python :tangle entities.py
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class Name(object):
     value = None
     def __init__(self, value):
@@ -116,23 +180,11 @@ class Name(object):
         return self.value
 #+END_SRC
 
-** Test cases for =Name=
-#+BEGIN_SRC python :tangle test_entities.py
-from  entities import Name
+
+*** Test the Construction
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
 class TestName(TestCase):
     TESTING = True
-
-    def create_app(self):
-        app = create_app(config)
-        return app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
     def test_name_type(self):
         print "test_name_type"
         new_name = Name("John")
@@ -142,19 +194,20 @@ class TestName(TestCase):
         self.assertRaises(TypeError, Name, "123dasd")
 #+END_SRC
 
-* Email
 
-** Construction
+** Email
 
-=Email= is constructed from a string.  If the string does
-not match a valid email address, a type error is thrown.
+*** Construction
 
-#+BEGIN_SRC python :tangle entities.py
+     Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
+     Following is the constructor for this class.
+
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class Email(object):
     value = None
     def __init__(self, value):
         if not is_email(value):
-            raise TypeError('%s is not an email' % value)
+            raise TypeError('%s is not an email!' % value)
         self.value = value
 
     def __str__(self):
@@ -163,24 +216,10 @@ class Email(object):
 
 
 
-** Test cases for =Email= constructor
-#+BEGIN_SRC python :tangle test_entities.py
-from  entities import Email
-
+*** Test the Construction
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
 class TestEmail(TestCase):
     TESTING = True
-
-    def create_app(self):
-        app = create_app(config)
-        return app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
     def test_email_type(self):
         print "test_email_type"
         new_email = Email("smith@gmail.com")
@@ -192,524 +231,280 @@ class TestEmail(TestCase):
 
 
 
-* User
+** User
 
-
-** Mutable Data
-
-     These are the data associated with User type, which are
-     (potentially) mutable
-
-     + Name
-     + Email
-     + Roles
-
-
-
-** Definition
-#+BEGIN_SRC python
-class User(Entity):
-    name = ""
-    email = ""
-    role = "user"
-#+END_SRC
-
-
-** Constructor
-
-*** Implementation
-
-    Signature of the constructor of =User= is as follows:
-
-    #+BEGIN_EXAMPLE
-    usr = User(name=<object of Name>, 
-               email=<object of Email>, 
-               role=<object of Role>)
-    #+END_EXAMPLE
-
-#+BEGIN_SRC python
-def __init__(self, **kwargs):
-    if 'email' not in kwargs:
-        raise AttributeRequired("email is mandatory")
-
-    if 'name' not in kwargs:
-        raise AttributeRequired("name is mandatory")
-
-    if 'role' not in kwargs:
-        raise AttributeRequired("Role is mandatory")
-    self.set_email(kwargs['email'])
-    self.set_name(kwargs['name'])
-    self.set_roles(kwargs['roles'])
-#+END_SRC
-
-
-*** Test the constructor
- #+BEGIN_SRC python
- class TestUser(TestCase):
-     TESTING = True
-
-     def create_app(self):
-         app = create_app(config)
-         return app
-
-     def setUp(self):
-         db.create_all()
-
-     def tearDown(self):
-         db.session.remove()
-         db.drop_all()
-
-     def test_user_creation_without_role(self):
-         print "test_user_creation_without_role"
-         with self.assertRaises(AttributeRequired):
-             user = User(name=Name("Robin Smith"), 
-                             email=Email("smith@gmail.com"))
-
-     def test_user_creation_with_role(self):
-         print "test_user_creation_with_role"
-         user = User(name=Name("Robin Smith"), 
-                     email=Email("smith@gmail.com"),
-                     role=Role(name=Name("admin")))
-
-         for role in Role.get_all():
-             print role.to_client()
-         self.assertEqual(user.role.name, "admin")   
-         self.assertEqual(user.email, "smith@gmail.com")
- #+END_SRC
-
-
-** Functions
-
-*** addRole 
-#+BEGIN_SRC python
-def add_role(self, role):
-    if not isinstance(role, Role):
-        raise TypeError('`role` argument should be of Role type.')
-    else:
-        self.roles.append(role)
-#+END_SRC
-    
-#+BEGIN_SRC python
-def test_add_role_to_user(self):
-    print "test_add_role_to_user"
-    roles = Role.get_all()
-    for role in roles:
-        print role.to_client()
-    r1 = Role(name=Name("admin"))
-    r1.save()
-    r2 = Role(name=Name("owner"))
-    r2.save()
-    roles = Role.get_all()
-    user = User(name=Name("Robin Smith"), 
-                email=Email("smith@gmail.com"),
-                roles=roles[0:1])
-    user.save()
-    users = User.get_all()
-    for user in users:
-        print user.to_client()
-    user.add_role(roles[1])
-    user.save()
-    users = User.get_all()
-    for user in users:
-        print user.to_client()
-    self.assertEqual(users[0].roles[0].name, "admin")
-    self.assertEqual(users[0].roles[1].name, "owner")
-#+END_SRC
-
-
-*** setRoles User, Roles ---> NIL
-
-**** Implementation
-#+BEGIN_SRC python
-def set_roles(self, roles):
-    type_error = False
-    for role in roles:
-        if not isinstance(role, Role):
-            type_error = True
-            break
-
-    if not type_error:
-        self.roles = roles
-    else:
-        raise TypeError('`role` argument should be of type Role.')
-#+END_SRC
-
-**** Test setRoles to a user 
-#+BEGIN_SRC python
-def test_set_toles_to_user(self):
-    print "test_set_toles_to_user"
-    user = User(name=Name("Robin Smith"), 
-                email=Email("smith@gmail.com"),
-                roles=[Role(name=Name("admin"))])
-    user.save()
-    roles = user.get_roles()
-    for role in roles:
-        print role.to_client()
-    roles = []
-    user.set_roles(roles)
-    user.save()
-    users = User.get_all()
-    self.assertEqual(users[0].roles, [])
-#+END_SRC
-
-
-*** setEmail
-#+BEGIN_SRC python
-def set_email(self, email):
-    if not isinstance(email, Email):
-        raise TypeError('`email` argument should be of type Email.')
-    else:
-        self.email = email.value
-#+END_SRC
-
-
-*** setName
-#+BEGIN_SRC python
-def set_name(self, name):
-    if not isinstance(name, Name):
-        raise TypeError('`name` argument should be of type Name.')
-    else:
-        self.name = name.value
-#+END_SRC
-
-
-*** getRoles
-#+BEGIN_SRC python
-def get_roles(self):
-    return self.roles
-#+END_SRC
-
-
-*** getEmail
- #+BEGIN_SRC python
- def get_email(self):
-     return self.email
- #+END_SRC
-
-
-*** getName
-#+BEGIN_SRC python
-def get_name(self):
-    return self.name
-#+END_SRC
-
-
-*** getAll: Nil --> set[User]
-
-**** Implementation
-#+BEGIN_SRC python
-@staticmethod
-def get_all():
-    return User.query.all()
-#+END_SRC
-
-
-**** Test getAll
-#+BEGIN_SRC python
-def test_user_get_all(self):
-    print "test_user_get_all"
-    role = Role(name=Name("Admin"))
-    role.save()
-    roles = Role.get_all()
-    user = User(name=Name("Termite"), 
-                email=Email("tremite@gmail.com"),
-                roles=roles)
-    user.save()
-    users = User.get_all()
-    self.assertEqual("Admin", users[0].roles[0].name)
-#+END_SRC
-
-
-*** getById : id --> User
-
-**** Implementation
-#+BEGIN_SRC python
-@staticmethod
-def get_by_id(id):
-    return User.query.get(id)
-#+END_SRC
-
-
-**** Test getById: Id --> User
-#+BEGIN_SRC python
-def test_get_user_by_id(self):
-    print "test_get_user_by_id"
-    user = User(name=Name("Robin Smith"), 
-                email=Email("smith@gmail.com"),
-                roles=[Role(name=Name("admin"))])
-    user.save()
-    self.assertEqual(user.get_by_id(1).roles[0].name, "admin")
-    self.assertEqual(user.get_by_id(1).name, "Robin Smith")
-#+END_SRC
-
-**** Test updateRole: Role -> Role
-#+BEGIN_SRC python
-def test_update_user(self):
-    print "test_update_role"
-    user = User(name=Name("Robin Smith"), 
-                email=Email("smith@gmail.com"),
-                roles=[Role(name=Name("admin"))])
-    user.save()
-    u1 = User.get_by_id(1)
-    print u1.to_client()
-    u1.update(name=Name("Duddley Rod"), 
-              email=Email("duddley@gmail.com"),
-              roles=[Role(name=Name("owner"))])
-    print u1.to_client()
-    self.assertEqual(u1.get_by_id(1).name, "Duddley Rod")
-    self.assertEqual(u1.get_by_id(1).roles[0].name, "owner")
-#+END_SRC
-
-
-*** toClient
-#+BEGIN_SRC python
-def to_client(self):
-    return {
-        'id': self.id,
-        'name': self.name,
-        'email': self.email,
-        'roles': [r.to_client() for r in self.roles]
-    }
-#+END_SRC
-
-
-
-* Role
-
-** Introduction
-   A Role has got certain privileges.  In this current application, the
-   privileges are understood 
-   
-   Different types of roles are:
-   - Owner  :: An owner is user an admin who cannot delete himself
-   - Admin :: An admin is an user who can add, modify and delete other users
-        except owner
-   - User :: A User is a user who can view all other users and either modify or
-        delete himself.
-   - Guest :: A Guest is a user who can view all other users
-
-
-** Immutable Data
-     This is the data associated with Institute type, which is immutable.
-
-     + Id
-
-
-** Mutable Data
+*** Mutable Data
 
      These are the data associated with User type, which are mutable
 
      + Name
+     + Email
+     + Role
 
 
-** Definition
-#+BEGIN_SRC python
-class Role(Entity):
-    __tablename__ = 'roles'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), unique=True, nullable=False)
+*** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+class User():
+    name = None
+    email = None
+    role = None
+    users = []     # this is a static variable, accessed by User.users
 #+END_SRC
 
 
-** Constructor
+*** Constructor
+
+**** Implementation
+
+    Signature of the constructor of =User= is as follows:
+
+    #+BEGIN_EXAMPLE
+    usr = User(name=<object of Name>, email=<object of Email>, 
+              role=[<object of Role>, <object of Role> ...])
+    #+END_EXAMPLE
+
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def __init__(self, **kwargs):
+        if 'email' not in kwargs:
+            raise AttributeRequired("email is mandatory")
+
+        if 'name' not in kwargs:
+            raise AttributeRequired("name is mandatory")
+
+        if 'role' not in kwargs:
+            raise AttributeRequired("role is mandatory")
+
+        self.set_email(kwargs['email'])
+        self.set_name(kwargs['name'])
+        self.set_role(kwargs['role'])
+        User.users.append(self)
+#+END_SRC
+
+
+**** Test the constructor
+ #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+class TestUser(TestCase):
+    TESTING = True
+
+    def test_user_creation_without_role(self):
+        print "test_user_creation_without_role"
+        with self.assertRaises(AttributeRequired):
+            user = User(name=Name("Robin Smith"), 
+                            email=Email("smith@gmail.com"))
+
+    def test_user_creation_with_role(self):
+        print "test_user_creation_with_role"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role(name=Name("admin")))
+        self.assertEqual(user.role.name, "admin")   
+        self.assertEqual(user.email, "smith@gmail.com")
+ #+END_SRC
+
+
+*** Functions
+
+**** setEmail
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def set_email(self, email):
+        if not isinstance(email, Email):
+            raise TypeError('`email` argument should be of type Email.')
+        else:
+            self.email = email.value
+#+END_SRC
+
+
+**** setName
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def set_name(self, name):
+        if not isinstance(name, Name):
+            raise TypeError('`name` argument should be of type Name.')
+        else:
+            self.name = name.value
+#+END_SRC
+
+**** setRole
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def set_role(self, role):
+        if not isinstance(role, Role):
+            raise TypeError('`role` argument should be of type Role.')
+        else:
+            self.role = role
+#+END_SRC
+
+
+**** getRole
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def get_role(self):
+        return self.role
+#+END_SRC
+
+
+**** getEmail
+ #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def get_email(self):
+        return self.email
+ #+END_SRC
+
+
+**** getName
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def get_name(self):
+        return self.name
+#+END_SRC
+
+
+**** getAll: Nil --> set[User]
+
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def get_all():
+        return User.users
+#+END_SRC
+
+
+***** Test getAll
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_user_get_all(self):
+        print "test_user_get_all"
+#        role = Role(name=Name("admin"))
+#        user = User(name=Name("Termite"), 
+#                    email=Email("tremite@gmail.com"),
+#                    role=role)
+
+        users = User.get_all()
+        for user in users:
+            print user.to_client()
+        self.assertEqual("admin", users[0].role.name)
+#+END_SRC
+
+
+**** toClient
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def to_client(self):
+        return {
+            'name': self.name,
+            'email': self.email,
+            'role': self.role.to_client()
+        }
+#+END_SRC
+
+
+
+** Role
+
+*** Introduction
+   A Role has got certain privileges.  In this current application, the
+   privileges are understood 
+   
+   Different types of roles are:
+   - Admin :: An admin is an user who can add, modify and delete other users
+        except himself.
+   - User :: A User is a user who can view all other users and can modify himself.
+
+*** Mutable Data
+
+     These are the data associated with Role type, which are mutable
+
+     + Name
+
+
+*** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+class Role():
+    name = None
+    roles = []   ## This is a static variable and accessed by Role.roles
+#+END_SRC
+
+
+*** Constructor
 
     The signature of Role is defined as follows
     #+BEGIN_EXAMPLE
     role = Role(name=<Object of Name>)
     #+END_EXAMPLE
 
-#+BEGIN_SRC python
-def __init__(self, **kwargs):
-    if 'name' not in kwargs:
-        raise AttributeRequired("name is mandatory")
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def __init__(self, **kwargs):
+        if 'name' not in kwargs:
+            raise AttributeRequired("name is mandatory")
 
-    self.set_name(kwargs['name'])
+        self.set_name(kwargs['name'])
+        Role.roles.append(self)
 #+END_SRC
 
 
-** Test Constructor
-#+BEGIN_SRC python
+*** Test Constructor
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
 class TestRole(TestCase):
     TESTING = True
-
-    def create_app(self):
-        app = create_app(config)
-        return app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
     def test_role_creation(self):
         print "test_role_creation"
         role = Role(name=Name("admin"))
-        role.save()
         self.assertEqual(role.name, "admin")
+
 #+END_SRC
 
 
-** Functions
+*** Functions
 
-*** setName
-**** Implementation
-#+BEGIN_SRC python
-def set_name(self, name):
-    if not isinstance(name, Name):
-        raise TypeError('`name` argument should be of type Name.')
-    else:
-        self.name = name.value
+**** setName
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def set_name(self, name):
+        if not isinstance(name, Name):
+            raise TypeError('`name` argument should be of type Name.')
+        else:
+            self.name = name.value
 #+END_SRC
 
-***** Test
-#+BEGIN_SRC python
-def test_role_set_name(self):
-    print "test_role_set_name"
-    role = Role(name=Name("admin"))
-    role.save()
-    role.set_name(Name("owner"))
-    role.save()
-    role = Role.get_by_id(1)
-    self.assertEqual(role.name, "owner")
+****** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_role_set_name(self):
+        print "test_role_set_name"
+        role = Role(name=Name("admin"))
+        role.set_name(Name("user"))
+        self.assertEqual(role.name, "user")
 #+END_SRC
 
 
-*** setUsers Role, Users ---> NIL
+**** getName
 
-**** Implementation
-#+BEGIN_SRC python
-def set_users(self, users):
-    type_error = False
-    for user in users:
-        if not isinstance(user, User):
-            type_error = True
-            break
-
-    if not type_error:
-        self.users = users
-    else:
-        raise TypeError('`user` argument should be of type User.')
-#+END_SRC
-
-**** Test setUsers to a role
-#+BEGIN_SRC python
-def test_set_users_to_role(self):
-    print "test_set_users_to_role"
-    user = User(name=Name("Robin Smith"), 
-                email=Email("smith@gmail.com"),
-                roles=[])
-
-    user.save()
-    user = User(name=Name("Fela Kuti"), 
-                email=Email("fela@gmail.com"),
-                roles=[])
-    user.save()
-    print "======"
-    users = User.get_all()
-    for user in users:
-        print user.to_client()
-
-    role1 = Role(name=Name("admin"))
-    role2 = Role(name=Name("user"))
-    role1.set_users(users[0:1])
-    role2.set_users(users)
-    role1.save()
-    role2.save()
-    users = User.get_all()
-    for user in users:
-        print user.to_client()
-    self.assertEqual(len(users[1].roles), 1)
-    self.assertEqual(len(users[0].roles), 2)
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def get_name(self):
+        return self.name
 #+END_SRC
 
 
-*** getName
+**** getAll: Nil --> set[Role]
 
-#+BEGIN_SRC python
-def get_name(self):
-    return self.name
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def get_all():
+        return Role.roles
 #+END_SRC
 
 
-*** getUsers Role ---> set of Users
-#+BEGIN_SRC python
-def get_users(self):
-    return self.users
-#+END_SRC
-
-
-*** getId
-
-#+BEGIN_SRC python
-def get_id(self):
-    return self.id
-#+END_SRC
-
-
-*** getById : id --> Role
-
-**** Implementation
-#+BEGIN_SRC python
-@staticmethod
-def get_by_id(id):
-    return Role.query.get(id)
-#+END_SRC
-
-
-**** Test getById: Id --> Role
- #+BEGIN_SRC python
- def test_get_role_by_id(self):
-     print "test_get_role_by_id"
-     role = Role(name=Name("Admin"))
-     role.save()
-     self.assertEqual(role.get_by_id(1).name, "Admin")
-
+***** Test getAll: Nil --> set[Role]
+ #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_role_get_all(self):
+        print "test_role_get_all"
+#        role = Role(name=Name("admin"))
+        roles = Role.get_all()
+        for role in roles:
+            print role.to_client()
+        self.assertEqual("admin", roles[0].name)
  #+END_SRC
 
 
-**** Test updateRole: Role -> Role
-#+BEGIN_SRC python
-def test_update_role(self):
-    print "test_update_role"
-    role = Role(name=Name("Admin"))
-    role.save()
-    rl = Role.get_by_id(1)
-    rl.update(name=Name("owner"))
-    self.assertEqual(rl.get_by_id(1).name, "owner")
-#+END_SRC
-
-
-*** getAll: Nil --> set[Role]
-
-**** Implementation
-#+BEGIN_SRC python
-@staticmethod
-def get_all():
-    return Role.query.all()
-#+END_SRC
-
-
-**** Test getAll: Nil --> set[Role]
- #+BEGIN_SRC python
- def test_role_get_all(self):
-     print "test_role_get_all"
-     role = Role(name=Name("Admin"))
-     role.save()
-     roles = Role.get_all()
-     self.assertEqual("Admin", roles[0].name)
- #+END_SRC
-
-
-*** to_client
-#+BEGIN_SRC python
-def to_client(self):
-    return {
-        'id': self.id,
-        'name': self.name
-    }
+**** to_client
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def to_client(self):
+        return {
+            'name': self.name
+        }
 
 #+END_SRC
 
@@ -718,11 +513,10 @@ def to_client(self):
 
 * Run Test Cases
  
-#+BEGIN_SRC python
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
 if __name__ == '__main__':
     unittest.main()
 #+END_SRC
-
 
 
 
