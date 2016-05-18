@@ -276,7 +276,6 @@ class TestName(TestCase):
         self.assertRaises(TypeError, Name, "123dasd")
 #+END_SRC
 
-
 ** Email
 
 *** Construction
