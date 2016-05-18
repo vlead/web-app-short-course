@@ -45,6 +45,8 @@ init: pull-literate-tools
 
 build: init write-version
 	emacs  --script elisp/publish.el
+	cp -r ${SRC_DIR}/templates ${BUILD_DIR}/code/src/templates
+	cp -r ${SRC_DIR}/static ${BUILD_DIR}/code/src/static
 	rsync -a ${SRC_DIR}/${ORG_DIR} ${BUILD_DIR}/docs
 	rsync -a ${SRC_DIR}/${STYLE_DIR} ${BUILD_DIR}/docs
 	rm -f ${BUILD_DIR}/docs/*.html~
