@@ -299,7 +299,6 @@ class TestUser(TestCase):
                     role=Role(name=Name("admin")))
         self.assertEqual(user.role.name, "admin")   
         self.assertEqual(user.email, "smith@gmail.com")
-<<<<<<< HEAD
 
     def test_user_creation_with_wrong_type(self):
         print "test_user_creation_with_wrong_type"
@@ -308,18 +307,13 @@ class TestUser(TestCase):
                     email=Email("smith@gmail.com"),
                     role=Role(name=Name("admin")))
 
-=======
->>>>>>> b3676e02383a92698a8ade86940fc168e6f21ee8
  #+END_SRC
 
 
 *** Functions
 
 **** setEmail
-<<<<<<< HEAD
 ***** Definition
-=======
->>>>>>> b3676e02383a92698a8ade86940fc168e6f21ee8
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def set_email(self, email):
         if not isinstance(email, Email):
@@ -328,7 +322,7 @@ class TestUser(TestCase):
             self.email = email.value
 #+END_SRC
 
-<<<<<<< HEAD
+
 ***** Constructor
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_set_email_of_user(self):
@@ -339,8 +333,7 @@ class TestUser(TestCase):
         user.set_email(Email("smith1@gmail.com"));
         self.assertEqual(user.email, "smith1@gmail.com")
 #+END_SRC
-=======
->>>>>>> b3676e02383a92698a8ade86940fc168e6f21ee8
+
 
 **** setName
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
@@ -350,6 +343,7 @@ class TestUser(TestCase):
         else:
             self.name = name.value
 #+END_SRC
+
 
 **** setRole
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
@@ -547,7 +541,3 @@ if __name__ == '__main__':
 #+END_SRC
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> b3676e02383a92698a8ade86940fc168e6f21ee8
