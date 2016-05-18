@@ -64,6 +64,9 @@ lint:  install-pep
 
 build-with-lint: build lint
 
+run-py-tests:
+	find . -name '*test*.py' -exec python '{}' \;
+
 clean:	clean-literate
 	rm -rf ${BUILD_DIR}
 
