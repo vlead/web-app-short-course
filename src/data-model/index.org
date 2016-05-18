@@ -75,16 +75,21 @@ Encodes the following items of information:
 
 * Abstract Entity Types
 #+BEGIN_SRC spec :tangle spec.txt
-User
-Email
-Name
-Role
-Session
+
+;;; Entity Types
+TYPE User
+TYPE Email
+TYPE Name
+TYPE Role = {admin, user}
+TYPE Session
 #+END_SRC
 
 * Relations and cardinality constraints over entity types 
 For each relation, we define its inverse next to it.
 #+BEGIN_SRC spec :tangle spec.txt
+
+;;; Relations with cardinality constraints
+
 [email, user]  :  User?    > Email!
 [name, user]   :  User     > Name!
 [role, user]   :  User     > Role!
@@ -103,10 +108,6 @@ is a relation =r: A? > K!=.
 |---------+-------+---+---+---|
 
 
-* Disjoint Unions
-#+BEGIN_SRC spec :tangle spec.txt
-Role = user + admin
-#+END_SRC
 
 * System state
   The system's state is captured by a set of /state
@@ -117,6 +118,8 @@ For the purpose of /the application/, we maintain two primary
 state variables.  
 
  #+BEGIN_SRC spec
+
+;;; Primary state variables
  user-set    : set[User]    ; set of users in the system
  session-set : set[Session] ; set of sessions in the system
  #+END_SRC
@@ -124,6 +127,8 @@ state variables.
 and five relations
 
  #+BEGIN_SRC spec
+
+;;; Relations
  email:      User > Email!
  name :      User > Name!
  role:       User > Role!
@@ -132,8 +137,6 @@ and five relations
 
 *** Applying relations to sets
 #+begin_example
-
-
 1.role = admin
 2.role = user
 5.role = user
@@ -146,6 +149,8 @@ and five relations
 
 ** Derived Entity sets
  #+BEGIN_SRC spec :tangle spec.txt
+
+;;; Derived Entity sets
  email-set   : set[Email]   = user-set.email        ; set of emails in the system
  name-set    : set[Name]    = user-set.name         ; set of names in the system
  role-set    : set[Role]    = user-set.role         ; set of all roles of all users
@@ -154,8 +159,28 @@ and five relations
  #+END_SRC
 
 ** Referential Integrity Constraints over entity-sets
+
+*** =user-set=
+
+There is exactly one user (called =admin-user=) whose role is =admin=.
+
+    #+BEGIN_SRC spec :tangle spec.txt
+
+    ;;; The admin-user
+
+    admin-user: user-set ; there is a user called admin-user in user-set
+
+    admin-user.role = admin ; that user's role is admin.
+
+    FORALL u:user-set  u.role=admin IMPLIES u = admin-user   ; there is only
+                                                             ; one user with
+                                                             ; role admin.
+    #+END_SRC
+
 These specifications also capture referential integrity.
 #+BEGIN_SRC spec :tangle spec.txt
+
+;;; Relation variables with Referential Integrity
 [email, user]    :  user-set!    > email-set!
 [name, users]    :  user-set+    > name-set!    
 [role, users]    :  user-set+    > role-set!   
@@ -188,8 +213,8 @@ types of actors:  =system= and =session=.
 |----------------------------------------+------------------------+----------------+-------------------|
 | showUsers(s:Session)                   |                        | s:session-set  |                   |
 |----------------------------------------+------------------------+----------------+-------------------|
-| delUser(u:User, s:Session)             | s.user.role=admin      | u:user-set     | Succ or Fail      |
-|                                        |                        | s:session-set  |                   |
+| delUser(u:User, s:Session)             | s.user.role=admin AND  | u:user-set     | Succ or Fail      |
+|                                        | u.role != admin        | s:session-set  |                   |
 |----------------------------------------+------------------------+----------------+-------------------|
 | getUserByEmail(e: Email, s:Session)    |                        | s:session-set  | return user       |
 |----------------------------------------+------------------------+----------------+-------------------|
@@ -211,9 +236,6 @@ types of actors:  =system= and =session=.
 | setName(u: User, n:Name, s:Session)    | s.user.role =admin OR  | u:user-set     |                   |
 |                                        | s.user = u             | s:session-set  |                   |
 |----------------------------------------+------------------------+----------------+-------------------|
-| setRole(u: User, r:Role, s:Session)    | s.user.role=admin      | u:user-set     |                   |
-|                                        |                        | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
 | login(u: User, s:System)               |                        | u:user-set     | creates a session |
 |                                        |                        |                | and adds it to    |
 |                                        |                        |                | =session-set=     |
@@ -222,4 +244,14 @@ types of actors:  =system= and =session=.
 |----------------------------------------+------------------------+----------------+-------------------|
 | showSessions(s:Session)                | s.user.role=admin      |                |                   |
 |----------------------------------------+------------------------+----------------+-------------------|
+
+
+** Remarks
+
+- =makeUser(e: Email, n:Name, s: Session)= :: WHen a user is created by an
+     admin, that user is assigned the role =user=. 
+
+- =delUser(u:User, s: Session)= ::  Only =admin-user= can delete another user.
+     The =admin-user= may not delete him/herself.
+
 
