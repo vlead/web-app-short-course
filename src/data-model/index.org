@@ -15,9 +15,7 @@ If =A= is a set, then
     3. =A+= denotes  one or more elements of =A=
     4. =A*=  denotes at zero or more elements of =A=.  Often
        abbreviated as =A=.
-
     5. =A > B= denotes a relation /from/ =A= /to/ =B=.
-
 
 ** Relations and their cardinality type
 
@@ -37,7 +35,7 @@ zero, one or more elements of =B=.
 |--------------------------------+-----------+---+---|
    
 ** Example of Entity Relationship notation
-    
+   This example gives a formal representation of the requirement [[../requirements/index.org::*User][User]].
 #+begin_example
  [email, user] : User? > Email!
 #+end_example
@@ -72,10 +70,8 @@ Encodes the following items of information:
  user: Email > User?
  #+end_example
 
-
 * Abstract Entity Types
 #+BEGIN_SRC spec :tangle spec.txt
-
 ;;; Entity Types
 TYPE User
 TYPE Email
@@ -85,7 +81,7 @@ TYPE Session
 #+END_SRC
 
 * Relations and cardinality constraints over entity types 
-For each relation, we define its inverse next to it.
+  For each relation, we define its inverse next to it.
 #+BEGIN_SRC spec :tangle spec.txt
 
 ;;; Relations with cardinality constraints
@@ -101,12 +97,11 @@ For each relation, we define its inverse next to it.
 An entity =K= is called a /key for/ an entity =A= if there
 is a relation =r: A? > K!=.
 
-|---------+-------+---+---+---|
-| Entity  | Key   |   |   |   |
-|---------+-------+---+---+---|
-| User    | Email |   |   |   |
-|---------+-------+---+---+---|
-
+|--------+-------|
+| Entity | Key   |
+|--------+-------|
+| User   | Email |
+|--------+-------|
 
 
 * System state
@@ -162,7 +157,7 @@ and five relations
 
 *** =user-set=
 
-There is exactly one user (called =admin-user=) whose role is =admin=.
+    There is exactly one user (called =admin-user=) whose role is =admin=.
 
     #+BEGIN_SRC spec :tangle spec.txt
 
@@ -177,7 +172,7 @@ There is exactly one user (called =admin-user=) whose role is =admin=.
                                                              ; role admin.
     #+END_SRC
 
-These specifications also capture referential integrity.
+    These specifications also capture referential integrity.
 #+BEGIN_SRC spec :tangle spec.txt
 
 ;;; Relation variables with Referential Integrity
