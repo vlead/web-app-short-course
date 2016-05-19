@@ -299,18 +299,39 @@ class TestUser(TestCase):
                     role=Role(name=Name("admin")))
         self.assertEqual(user.role.name, "admin")   
         self.assertEqual(user.email, "smith@gmail.com")
+
+    def test_user_creation_with_wrong_type(self):
+        print "test_user_creation_with_wrong_type"
+        with self.assertRaises(TypeError):
+            user = User(name=Name("Robin@ Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role(name=Name("admin")))
+
  #+END_SRC
 
 
 *** Functions
 
 **** setEmail
+***** Definition
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def set_email(self, email):
         if not isinstance(email, Email):
             raise TypeError('`email` argument should be of type Email.')
         else:
             self.email = email.value
+#+END_SRC
+
+
+***** Constructor
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_set_email_of_user(self):
+        print "test_set_email_of_user"
+        user = User(name=Name("Robin Smith"), 
+                email=Email("smith@gmail.com"),
+                role=Role(name=Name("admin")))
+        user.set_email(Email("smith1@gmail.com"));
+        self.assertEqual(user.email, "smith1@gmail.com")
 #+END_SRC
 
 
@@ -322,6 +343,7 @@ class TestUser(TestCase):
         else:
             self.name = name.value
 #+END_SRC
+
 
 **** setRole
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
@@ -517,6 +539,5 @@ class TestRole(TestCase):
 if __name__ == '__main__':
     unittest.main()
 #+END_SRC
-
 
 
