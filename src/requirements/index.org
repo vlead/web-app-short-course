@@ -9,16 +9,14 @@
 
 * Application:  A web-based directory of users
 
- The application is a simple directory of users and some
- related information (name and email).  The system has
- users.  There is a special user called =admin=.  Once a
- user is logged in, the system allows for the following
- /operations/
+ The application is a simple directory of users and some related
+ information (name and email).  The system has users.  There is a
+ special user called =admin-user=.  Once a user is logged in, the
+ system allows for the following /operations/
 
-   
-  1. Viewing the details of a user
-  2. Creating a user, or
-  3. Updating the details of that user. 
+  1. Viewing the details of a user,
+  2. Creating a user,
+  3. Updating the details of that user,
   4. Deleting a user.  
 
 All interaction is via a login session.  That is, users need
@@ -31,7 +29,9 @@ user =u= is logged in, he/she may modify the details of user
 The rest of the sections have more detailed requirements. 
 
 * Users
-
+:PROPERTIES:
+:CUSTOM_ID:  req-User
+:END: 
 1. The system has users.
 
 2. Each user has an email address (string that corresponds to a
@@ -44,7 +44,9 @@ The rest of the sections have more detailed requirements.
 
 
 * Roles
-
+:PROPERTIES:
+:CUSTOM_ID:  req-Role
+:END: 
 1. There are two kinds of roles: =admin= and =user=. 
 
 2. Each user is mapped to exactly one role, either =admin=
@@ -63,6 +65,19 @@ The rest of the sections have more detailed requirements.
        users.  A user is not allowed to delete his/her
        account.
 
+* Sessions
+:PROPERTIES:
+:CUSTOM_ID:  req-Session
+:END: 
+1. Users are required to login into the system.  
+
+2. Once the user is logged in into the system, the system
+   creates a /login/ session.   
+
+3. Operations are permitted only if the actor is logged in
+   into the system. 
+
+4. Users can have at most one session at a given time.
 
 
 * Interaction with the system and privileges
@@ -83,16 +98,6 @@ The rest of the sections have more detailed requirements.
 | View the details of a user       | =a=   | always allowed           |   |
 |----------------------------------+-------+--------------------------+---|
 
-* Sessions
-
-1. Users are required to login into the system.  
-
-2. Once the user is logged in into the system, the system
-   creates a /login/ session.   
-
-3. Operations are permitted only if the actor is logged in
-   into the system. 
-
 * Questions/scenarios
 ** Deleting oneself?  
 - Question :: Can a user delete himself/herself?
@@ -112,7 +117,7 @@ The rest of the sections have more detailed requirements.
 - Question :: Is it possible for a user to be simultaneously
      logged in into the system in two different sessions?
 
-- Answer :: Yes. 
+- Answer :: No.
 
 
 
