@@ -8,14 +8,26 @@
 #+LATEX: Literal LaTeX code for export
 
 * Introduction
+The implementation of the mini version of the User Directory
+Application.
 
-The object implementation of the mini version of the User Directory
-Application.  
 
-We start by some initialization methods
+* System
 
-Then we define constructors for the entities =Name= and
-=Email=. 
+The  =system= object maintains the system
+variables:  =user_set= and =session_set=.    
+
+#+NAME: system
+#+begin_src python
+from sets import Set
+class System ():
+    users  = Set()
+    sessions = Set()
+
+    def __init__(self):
+        pass
+#+end_src
+
 
 
 * Initialization
@@ -721,7 +733,6 @@ class TestSession(TestCase):
 
         
 #+END_SRC
-
 
 * Run Test Cases
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
