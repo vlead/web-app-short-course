@@ -1,0 +1,30 @@
+#+TITLE: User Directory Web Application
+#+AUTHOR: Venkatesh Choppella,  Thirumal Ravula and Sripathi Kammari @ VLEAD, IIIT Hyderabad
+#+DATE: [2016-05-11 Wed]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ./org-templates/level-0.org
+#+options: ^:nil
+#+LATEX: Literal LaTeX code for export
+
+* Introduction
+
+The user directory application is a simple application that
+maintains user data.   The development of the application is
+divided into the following six phases:
+
+ 1. [[./requirements/index.org][Requirements]]
+
+ 2. [[./data-model/index.org][Data Model]]
+
+ 3. [[./implementation/objects/index.org][Object Implementation]]
+
+ 4. Persistence
+
+ 6. REST API and implementation
+
+ 7. Web front end
+
+ 8. Deployment
+
+

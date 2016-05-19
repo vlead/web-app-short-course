@@ -92,3 +92,8 @@ application life cycle will include the following phases:
 |-----+-------------------------+-----------------------+---------------------------+---|
 
 
+
+* Application
+
+As part of this course, we develop a [[./app.org][User Directory Web
+Application]].
