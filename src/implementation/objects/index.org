@@ -9,15 +9,13 @@
 
 * Introduction
 
-The implementation of the mini version of the User Directory
+The object implementation of the mini version of the User Directory
 Application.  
 
-We start by defining type predicates related to the
-entities.
+We start by some initialization methods
 
 Then we define constructors for the entities =Name= and
 =Email=. 
-
 
 
 * Initialization
@@ -26,6 +24,8 @@ Then we define constructors for the entities =Name= and
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 # -*- coding: utf-8 -*-
 from op_exceptions import AttributeRequired
+from op_exceptions import ConstraintError
+from op_exceptions import NotAuthorizedError
 from utils import *
 #+END_SRC
 
@@ -40,6 +40,8 @@ from datetime import datetime
 
 from src.obj import *
 from src.op_exceptions import AttributeRequired
+from src.op_exceptions import ConstraintError
+from src.op_exceptions import NotAuthorizedError
 
 #+END_SRC
 
@@ -70,6 +72,7 @@ print "tests package"
 
 
 * Object Model
+
 ** Custom Exceptions
    These are some of the custom exceptions used in the application.
 
@@ -87,8 +90,31 @@ class AttributeRequired(Exception):
 
 #+END_SRC
 
+*** Constraint Error
+#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no
+class ConstraintError(Exception):
+    str = None
 
+    def __init__(self, str):
+        self.str = str
 
+    def __str__(self):
+        return repr(self.str)
+
+#+END_SRC
+
+*** NotAuthorized Error
+#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no
+class NotAuthorizedError(Exception):
+    str = None
+
+    def __init__(self, str):
+        self.str = str
+
+    def __str__(self):
+        return repr(self.str)
+
+#+END_SRC
 
 ** Utility Functions
 
@@ -101,7 +127,7 @@ class AttributeRequired(Exception):
     consists of one or more alphabetic characters, period or
     space.
 
-
+**** Definition
 #+BEGIN_SRC  python :tangle ../../src/utils.py :eval no
 def is_alphabetic_string(value):
     if re.search('[^a-zA-Z. ]+', value):
@@ -113,15 +139,16 @@ def is_alphabetic_string(value):
 
 **** Tests/Examples
 #+begin_src python :tangle ../../tests/test_obj.py :eval no
-class Test_is_alphabetic_string(unittest.TestCase):
+class Test_is_alphabetic_string(TestCase):
+    TESTING = True
     """Tests for is_alphabetic_string."""
 
-    def test_one(self):
-        """test-Hello"""
+    def test_a_alphabetic_string_1(self):
+        print "test_a_alphabetic_string_1"
         self.assertTrue(is_alphabetic_string("Hello"))
 
-    def test_two(self):
-        """test-M N Ray"""
+    def test_a_alphabetic_string_2(self):
+        print "test_a_alphabetic_string_2"
         self.assertTrue(is_alphabetic_string("M. N. Ray"))
 #+end_src
 
@@ -130,11 +157,10 @@ There are some false positives, which slip in.  A more
 accurate definition of =is_alphabetic_string= should fix
 this.
 
-#+begin_src python :tangle utility-tests.py
-        def test_three(self):
-               """test-. ."""
-              self.assertTrue(is_alphabetic_string(".  ."))
-unittest.main()
+#+begin_src python :tangle ../../tests/test_obj.py :eval no
+    def test_three(self):
+        print "test_a_alphabetic_string_3"
+        self.assertTrue(is_alphabetic_string(".  ."))
 #+end_src
 
 
@@ -142,6 +168,7 @@ unittest.main()
     Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
     Following is the constructor for this class.
 
+**** Definition 
 #+BEGIN_SRC python :tangle ../../src/utils.py :eval no
 def is_email(value):
     if re.search('[^@]+@[^@]+\.[^@]+', value):
@@ -156,9 +183,11 @@ Python.  See [[http://stackoverflow.com/questions/8022530/python-check-for-valid
 
 **** Test cases 
 
-To be done.
+     To be done.
+
 
 ** Name
+
 
 *** Construction
 
@@ -197,6 +226,7 @@ class TestName(TestCase):
 
 ** Email
 
+
 *** Construction
 
      Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
@@ -233,6 +263,7 @@ class TestEmail(TestCase):
 
 ** User
 
+
 *** Mutable Data
 
      These are the data associated with User type, which are mutable
@@ -253,6 +284,7 @@ class User():
 
 
 *** Constructor
+
 
 **** Implementation
 
@@ -277,7 +309,7 @@ class User():
         self.set_email(kwargs['email'])
         self.set_name(kwargs['name'])
         self.set_role(kwargs['role'])
-        User.users.append(self)
+#        User.users.append(self)
 #+END_SRC
 
 
@@ -285,6 +317,12 @@ class User():
  #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
 class TestUser(TestCase):
     TESTING = True
+
+    def setUp(self):
+        setup()
+
+    def tearDown(self):
+        tearDown()
 
     def test_user_creation_without_role(self):
         print "test_user_creation_without_role"
@@ -296,8 +334,8 @@ class TestUser(TestCase):
         print "test_user_creation_with_role"
         user = User(name=Name("Robin Smith"), 
                     email=Email("smith@gmail.com"),
-                    role=Role(name=Name("admin")))
-        self.assertEqual(user.role.name, "admin")   
+                    role=Role.admin)
+        self.assertEqual(user.role, Role.admin)
         self.assertEqual(user.email, "smith@gmail.com")
 
     def test_user_creation_with_wrong_type(self):
@@ -305,14 +343,101 @@ class TestUser(TestCase):
         with self.assertRaises(TypeError):
             user = User(name=Name("Robin@ Smith"), 
                     email=Email("smith@gmail.com"),
-                    role=Role(name=Name("admin")))
+                    role=Role.admin)
 
  #+END_SRC
 
 
 *** Functions
 
+
+**** addUser
+
+***** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def add(user, session):
+        if session.user.role is not Role.admin:
+            raise NotAuthorizedError("only a user with admin role can add"
+                                     " user to the system")
+        else:
+            existing_users = filter(lambda x: x.email == user.email,
+                                    User.users)
+            if not existing_users:
+                User.users.append(user)
+            else:
+                raise ConstraintError('user already exists in the system')
+#+END_SRC
+
+
+***** Test
+
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_user_add(self):
+        print "test_user_add"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        
+        User.add(user, Session.admin)
+        self.assertEqual(User.users[1].email, "smith@gmail.com")
+
+    def test_user_duplicate_add(self):
+        print "test_user_duplicate_add"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        User.add(user, Session.admin)
+        with self.assertRaises(ConstraintError):
+            User.add(user, Session.admin)
+#+END_SRC
+
+
+**** showUsers
+
+***** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def show(session):
+        if session not in Session.sessions:
+            raise NotAuthorizedError("only a user with admin role or "
+                                     "user role can view all the users")
+        else:
+            existing_users = filter(lambda x: x.email == user.email,
+                                    User.users)
+            if not existing_users:
+                User.users.append(user)
+            else:
+                raise ConstraintError('user already exists in the system')
+#+END_SRC
+
+
+***** Test
+
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_user_add(self):
+        print "test_user_add"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        
+        User.add(user, Session.admin)
+        self.assertEqual(User.users[1].email, "smith@gmail.com")
+
+    def test_user_duplicate_add(self):
+        print "test_user_duplicate_add"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        User.add(user, Session.admin)
+        with self.assertRaises(ConstraintError):
+            User.add(user, Session.admin)
+#+END_SRC
+
+
 **** setEmail
+
+
 ***** Definition
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def set_email(self, email):
@@ -320,16 +445,17 @@ class TestUser(TestCase):
             raise TypeError('`email` argument should be of type Email.')
         else:
             self.email = email.value
+
 #+END_SRC
 
 
-***** Constructor
+***** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_set_email_of_user(self):
         print "test_set_email_of_user"
         user = User(name=Name("Robin Smith"), 
                 email=Email("smith@gmail.com"),
-                role=Role(name=Name("admin")))
+                role=Role.admin)
         user.set_email(Email("smith1@gmail.com"));
         self.assertEqual(user.email, "smith1@gmail.com")
 #+END_SRC
@@ -390,11 +516,11 @@ class TestUser(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_user_get_all(self):
         print "test_user_get_all"
-#        role = Role(name=Name("admin"))
-#        user = User(name=Name("Termite"), 
-#                    email=Email("tremite@gmail.com"),
-#                    role=role)
-
+        role = Role.admin
+        user = User(name=Name("Termite"), 
+                    email=Email("tremite@gmail.com"),
+                    role=role)
+        
         users = User.get_all()
         for user in users:
             print user.to_client()
@@ -425,6 +551,7 @@ class TestUser(TestCase):
         except himself.
    - User :: A User is a user who can view all other users and can modify himself.
 
+
 *** Mutable Data
 
      These are the data associated with Role type, which are mutable
@@ -436,7 +563,41 @@ class TestUser(TestCase):
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class Role():
     name = None
-    roles = []   ## This is a static variable and accessed by Role.roles
+    admin = None
+    user = None
+
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def to_client(self):
+        return {
+            'role': self.name
+        }
+
+#+END_SRC
+
+
+** Session
+
+*** Introduction
+    A session holds a user.  The maintenance of referential integrity and
+    provision of credentials for the operations in the system is done using a
+    session. 
+
+
+*** Mutable Data
+
+    + User
+
+
+*** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+class Session():
+    user = None
+    sessions = []   ## This is a static variable and accessed by Role.roles
 #+END_SRC
 
 
@@ -444,97 +605,150 @@ class Role():
 
     The signature of Role is defined as follows
     #+BEGIN_EXAMPLE
-    role = Role(name=<Object of Name>)
+    session = Session(user=<Object of User>)
     #+END_EXAMPLE
 
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def __init__(self, **kwargs):
-        if 'name' not in kwargs:
-            raise AttributeRequired("name is mandatory")
+        if 'user' not in kwargs:
+            raise AttributeRequired("user is mandatory")
 
-        self.set_name(kwargs['name'])
-        Role.roles.append(self)
+        self.set_user(kwargs['user'])
+        Session.sessions.append(self)
 #+END_SRC
 
 
 *** Test Constructor
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-class TestRole(TestCase):
+class TestSession(TestCase):
     TESTING = True
-    def test_role_creation(self):
-        print "test_role_creation"
-        role = Role(name=Name("admin"))
-        self.assertEqual(role.name, "admin")
 
+    def setUp(self):
+        setup()
+
+    def tearDown(self):
+        tearDown()
+
+    def test_session_creation(self):
+        print "test_session_creation"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        session = Session(user=user)
+        self.assertEqual(session.user.role.name, "user")
 #+END_SRC
 
 
 *** Functions
 
-**** setName
+
+**** setUser
+
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def set_name(self, name):
-        if not isinstance(name, Name):
-            raise TypeError('`name` argument should be of type Name.')
+    def set_user(self, user):
+        if not isinstance(user, User):
+            raise TypeError('`user` argument should be of type User.')
         else:
-            self.name = name.value
-#+END_SRC
-
-****** Test
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_role_set_name(self):
-        print "test_role_set_name"
-        role = Role(name=Name("admin"))
-        role.set_name(Name("user"))
-        self.assertEqual(role.name, "user")
+            self.user = user
 #+END_SRC
 
 
-**** getName
-
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def get_name(self):
-        return self.name
-#+END_SRC
+***** Test
 
 
-**** getAll: Nil --> set[Role]
+**** getAll: Nil --> set[Session]
+
 
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     @staticmethod
-    def get_all():
-        return Role.roles
+    def get_all(session):
+        if session.user.role is Role.admin:
+            return Session.sessions
+        else:
+            raise NotAuthorizedError("Only an admin can view all the sessions")
 #+END_SRC
 
 
-***** Test getAll: Nil --> set[Role]
- #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_role_get_all(self):
-        print "test_role_get_all"
-#        role = Role(name=Name("admin"))
-        roles = Role.get_all()
-        for role in roles:
-            print role.to_client()
-        self.assertEqual("admin", roles[0].name)
- #+END_SRC
+***** Test getAll: Nil --> set[Session]
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_session_get_all(self):
+        print "test_session_get_all"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        User.add(user, Session.admin)
+        sessions = Session.get_all(Session.admin)
+        for session in sessions:
+            print session.to_client()
+#+END_SRC
+
+
+**** deleteSession 
+
+     Delete a session for a user.  This scenario exists when a user logs out.
+
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def del_session(user):
+        sessions = filter(lambda session:
+                          user.email != session.user.email,
+                          Session.sessions)
+        Session.sessions = sessions
+#+END_SRC
+
+**** getSessionByUser: user > session
+
+***** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def del_session(user):
+        sessions = filter(lambda session:
+                          user.email != session.user.email,
+                          Session.sessions)
+        Session.sessions = sessions
+#+END_SRC
+***** Test
 
 
 **** to_client
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def to_client(self):
         return {
-            'name': self.name
+            'session': self.user.to_client()
         }
 
+        
 #+END_SRC
 
 
-
-
 * Run Test Cases
- 
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+def setup():
+    Role.admin = Role("admin")
+    Role.user  = Role("user")
+    user = User(name=Name("admin user"),
+                email=Email("admin-user@gmail.com"),
+                role=Role.admin)
+    User.admin = user
+    Session.admin = Session(user=user)
+    print "Session admin"
+    print Session.admin
+    print Role.admin
+    print "Role admin is " 
+    print User.admin
+    User.add(user, Session.admin)
+
+def tearDown():
+    User.users = []
+    Session.sessions = []
+    Role.admin = None
+    Role.user = None
+
+
+#+END_SRC 
+
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
 if __name__ == '__main__':
     unittest.main()
