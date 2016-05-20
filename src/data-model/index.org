@@ -71,26 +71,57 @@ Encodes the following items of information:
  #+end_example
 
 * Abstract Entity Types
+  The following are the abstract data types in our system. 
+  Requirement satisfied: [[file:../requirements/index.org::#user-type][User]]
 #+BEGIN_SRC spec :tangle spec.txt
 ;;; Entity Types
 TYPE User
+#+END_SRC
+  Requirement satisfied: [[file:../requirements/index.org::#email-address][Email]]
+#+BEGIN_SRC
 TYPE Email
+#+END_SRC
+  Requirement satisfied: [[file:../requirements/index.org::#user-name][Name]]
+#+BEGIN_SRC spec :tangle spec.txt
 TYPE Name
+#+END_SRC
+  Requirement satisfied: [[file:../requirements/index.org::#role-type][Role]]
+#+BEGIN_SRC spec :tangle spec.txt
 TYPE Role = {admin, user}
+#+END_SRC
+  Requirement satisfied: [[file:../requirements/index.org::#session][Session]]
+#+BEGIN_SRC spec :tangle spec.txt
 TYPE Session
 #+END_SRC
 
 * Relations and cardinality constraints over entity types 
-  For each relation, we define its inverse next to it.
+  For each relation, we define its inverse next to it. \\
+  Requirements satisfied: [[file:../requirements/index.org::#user-type][User]], [[file:../requirements/index.org::#email-address][Email]]
 #+BEGIN_SRC spec :tangle spec.txt
-
 ;;; Relations with cardinality constraints
-
 [email, user]  :  User?    > Email!
+#+END_SRC
+  Requirements satisfied: [[file:../requirements/index.org::#user-type][User]], [[file:../requirements/index.org::#user-name][Name]]
+#+BEGIN_SRC spec :tangle spec.txt
 [name, user]   :  User     > Name!
+#+END_SRC
+  Requirements satisfied: [[file:../requirements/index.org::#user-type][User]], [[file:../requirements/index.org::#user-role][Role]]
+#+BEGIN_SRC spec :tangle spec.txt
 [role, user]   :  User     > Role!
+#+END_SRC
+  Requirements satisfied: [[file:../requirements/index.org::#user-type][User]], [[file:../requirements/index.org::#one-session][Session]]
+#+BEGIN_SRC spec :tangle spec.txt
 [user, session]:  Session  > User!
 #+END_SRC
+
+  The following diagram summarizes all the cardinality constraints
+  across all entities.
+
+  #+CAPTION: Entity relationship diagram for the Mini Version User Directory Application
+  #+LABEL:  Entity relationship diagram for the Mini Version User Directory Application
+  [[../diagrams/er-diagram.jpg]]
+
+  To edit the image click [[https://docs.google.com/drawings/d/1960E6vwRV9OqUOaUfyOU07btK4hQJLSyZwy1TOPeOF4/edit?usp%3Dsharing][here]].
 
 ** Keys
 
@@ -108,7 +139,7 @@ is a relation =r: A? > K!=.
   The system's state is captured by a set of /state
   variables/.  
 ** Primary Entity sets
-
+   
 For the purpose of /the application/, we maintain two primary
 state variables.  
 
@@ -144,7 +175,6 @@ and five relations
 
 ** Derived Entity sets
  #+BEGIN_SRC spec :tangle spec.txt
-
 ;;; Derived Entity sets
  email-set   : set[Email]   = user-set.email        ; set of emails in the system
  name-set    : set[Name]    = user-set.name         ; set of names in the system
@@ -199,46 +229,46 @@ actor performing the operation.
 Operations are performed by Actors.  Our application has two
 types of actors:  =system= and =session=. 
 
-|----------------------------------------+------------------------+----------------+-------------------|
-| Operation                              | Actor                  | Ref.           | Result            |
-|                                        | Credentials            | Integrity      |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| addUser(u:User, s:Session)             | s.user.role=admin      | u:~user-set    | Succ or           |
-|                                        |                        | s:session-set  | Failure           |
-|----------------------------------------+------------------------+----------------+-------------------|
-| showUsers(s:Session)                   |                        | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| delUser(u:User, s:Session)             | s.user.role=admin AND  | u:user-set     | Succ or Fail      |
-|                                        | u.role != admin        | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| getUserByEmail(e: Email, s:Session)    |                        | s:session-set  | return user       |
-|----------------------------------------+------------------------+----------------+-------------------|
-| makeUser(e: Email, n:Name, s: Session) | s.user.role = admin    | e:~email-set   |                   |
-|                                        |                        | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| getEmail(u: User, s:Session)           |                        | u:user-set     |                   |
-|                                        |                        | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| getName(u: User,  s:Session)           |                        | u:user-set     |                   |
-|                                        |                        | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| getRole(u: User, s:Session)            |                        | u:user-set     |                   |
-|                                        |                        | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| setEmail(u: User, e:Email, s:Session)  | s.user.role = admin OR | u:user-set     |                   |
-|                                        | s.user = u             | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| setName(u: User, n:Name, s:Session)    | s.user.role =admin OR  | u:user-set     |                   |
-|                                        | s.user = u             | s:session-set  |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| login(u: User, s:System)               |                        | u:user-set     | creates a session |
-|                                        |                        |                | and adds it to    |
-|                                        |                        |                | =session-set=     |
-|----------------------------------------+------------------------+----------------+-------------------|
-| delSession(es:Session, s:System)       |                        | es:session-set |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-| showSessions(s:Session)                | s.user.role=admin      |                |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
+|--------------------------------------+------------------------+----------------+-------------------|
+| Operation                            | Actor                  | Ref.           | Result            |
+|                                      | Credentials            | Integrity      |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| addUser(u:[[file:../requirements/index.org::#user][User]], s:[[file:../requirements/index.org::#session][Session]])           | s.user.role=admin      | u:~user-set    | Succ or           |
+|                                      |                        | s:session-set  | Failure           |
+|--------------------------------------+------------------------+----------------+-------------------|
+| showUsers(s:[[file:../requirements/index.org::#session][Session]])                 |                        | s:session-set  |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| delUser(u:[[file:~/Reading%20material/web-app-short-course/src/requirements/index.org::#user][User]], s:[[file:../requirements/index.org::#session][Session]])           | s.user.role=admin AND  | u:user-set     | Succ or Fail      |
+|                                      | u.role != admin        | s:session-set  |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| getUserByEmail(e:[[file:../requirements/index.org::#email-address][Email]], s:[[file:../requirements/index.org::#session][Session]])   |                        | s:session-set  | return user       |
+|--------------------------------------+------------------------+----------------+-------------------|
+| makeUser(e:[[file:../requirements/index.org::#Email][Email]], n:[[file:../requirements/index.org::#name][Name]], s:[[file:../requirements/index.org::#session][Session]]) | s.user.role = admin    | e:~email-set   |                   |
+|                                      |                        | s:session-set  |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| getEmail(u: [[file:../requirements/index.org::#user][User]], s:[[file:../requirements/index.org::#session][Session]])         |                        | u:user-set     |                   |
+|                                      |                        | s:session-set  |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| getName(u:[[file:../requirements/index.org::#user][User]],  s:[[file:../requirements/index.org::#session][Session]])          |                        | u:user-set     |                   |
+|                                      |                        | s:session-set  |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| getRole(u:[[file:../requirements/index.org::#user][User]], s:[[file:../requirements/index.org::#session][Session]])           |                        | u:user-set     |                   |
+|                                      |                        | s:session-set  |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| setEmail(u:[[file:../requirements/index.org::#user][User]], e:[[file:../requirements/index.org::#email-address][Email]], s:[[file:../requirements/index.org::#session][Session]]) | s.user.role = admin OR | u:user-set     |                   |
+|                                      | s.user = u             | s:session-set  |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| setName(u:[[file:../requirements/index.org::#user][User]], n:[[file:../requirements/index.org::#user-name][Name]], s:[[file:../requirements/index.org::#session][Seassion]])  | s.user.role =admin OR  | u:user-set     |                   |
+|                                      | s.user = u             | s:session-set  |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| login(u:[[file:../requirements/index.org::#user][User]], s:System)              |                        | u:user-set     | creates a session |
+|                                      |                        |                | and adds it to    |
+|                                      |                        |                | =session-set=     |
+|--------------------------------------+------------------------+----------------+-------------------|
+| delSession(es:[[file:../requirements/index.org::#session][Session]], s:System)     |                        | es:session-set |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
+| showSessions(s:[[file:../requirements/index.org::#session][Session]])              | s.user.role=admin      |                |                   |
+|--------------------------------------+------------------------+----------------+-------------------|
 
 
 ** Remarks
