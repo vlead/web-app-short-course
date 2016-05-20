@@ -35,7 +35,7 @@ zero, one or more elements of =B=.
 |--------------------------------+-----------+---+---|
    
 ** Example of Entity Relationship notation
-   This example gives a formal representation of the requirement [[file:../requirements/index.org::*Users][User]].
+   This example gives a formal representation of the requirement [[file:../requirements/index.org::#req-User2][User]].
 #+begin_example
  [email, user] : User? > Email!
 #+end_example
