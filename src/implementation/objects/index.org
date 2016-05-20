@@ -28,18 +28,19 @@ which are not are decisions based on the end user
 requirements of the application.
 
 * Entities
+
 Each of the entities of the data model are implemented as
 objects.  Each entity is defined via a class definition, a
 constructor and getter and setter methods that access and
 mutate the fields of the entity. 
 
 ** Name
-*** Construction 
-     Elements of the entity type =Name= are built by
-     invoking the constructor =Name(value)=.  =value= needs
-     to be an alphabetic string.
 
-#+NAME class_Name
+Elements of the entity type =Name= are built by invoking the
+constructor =Name(value)=.  =value= needs to be an
+alphabetic string.
+
+#+NAME: class_Name
 #+BEGIN_SRC python
 class Name(object):
     value = None
@@ -69,8 +70,6 @@ class TestName(TestCase):
 #+END_SRC
 
 ** Email
-*** Construction
-
      Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
      Following is the constructor for this class.
 
@@ -87,8 +86,6 @@ class Email(object):
         return self.value
 #+END_SRC
 
-
-
 *** Test the Construction
 #+NAME: class_TestEmail
 #+BEGIN_SRC python 
@@ -102,8 +99,6 @@ class TestEmail(TestCase):
         # incorrect name
         self.assertRaises(TypeError, Email, "@@@@smithgmail.com")
 #+END_SRC
-
-
 
 ** User
 *** Fields
@@ -126,26 +121,15 @@ class User():
     A =User= is constructed as follows:
 
     #+BEGIN_EXAMPLE
-    usr = User(name=<object of Name>, email=<object of Email>, 
-              role=[<object of Role>, <object of Role> ...])
+    usr = User(<object of Name>, <object of Email>, <object of Role>)
     #+END_EXAMPLE
 
 #+NAME: init_User
 #+BEGIN_SRC python
-    def __init__(self, **kwargs):
-        if 'email' not in kwargs:
-            raise AttributeRequired("email is mandatory")
-
-        if 'name' not in kwargs:
-            raise AttributeRequired("name is mandatory")
-
-        if 'role' not in kwargs:
-            raise AttributeRequired("role is mandatory")
-
-        self.set_email(kwargs['email'])
-        self.set_name(kwargs['name'])
-        self._set_role(kwargs['role'])
-
+    def __init__(self, name, email, role):
+        self.set_email(email)
+        self.set_name(name)
+        self._set_role(role)
 #+END_SRC
 **** Test the constructor
  #+NAME: class_TestUser
@@ -159,27 +143,20 @@ class TestUser(TestCase):
     def tearDown(self):
         tearDown()
 
-    def test_user_creation_without_role(self):
-        print "test_user_creation_without_role"
-        with self.assertRaises(AttributeRequired):
-            user = User(name=Name("Robin Smith"), 
-                            email=Email("smith@gmail.com"))
-
     def test_user_creation_with_role(self):
         print "test_user_creation_with_role"
-        user = User(name=Name("Robin Smith"), 
-                    email=Email("smith@gmail.com"),
-                    role=Role.admin)
+        user = User(Name("Robin Smith"), 
+                    Email("smith@gmail.com"),
+                    Role.admin)
         self.assertEqual(user.role, Role.admin)
-        self.assertEqual(user.email, "smith@gmail.com")
+        self.assertEqual(user.email.value, "smith@gmail.com")
 
     def test_user_creation_with_wrong_type(self):
         print "test_user_creation_with_wrong_type"
         with self.assertRaises(TypeError):
-            user = User(name=Name("Robin@ Smith"), 
-                    email=Email("smith@gmail.com"),
-                    role=Role.admin)
-
+            user = User(Name("Robin@ Smith"), #invalid name
+                    Email("smith@gmail.com"),
+                    Role.admin)
  #+END_SRC
 
 
@@ -212,9 +189,9 @@ class TestUser(TestCase):
 #+BEGIN_SRC python 
     def test_set_email_of_user(self):
         print "test_set_email_of_user"
-        user = User(name=Name("Robin Smith"), 
-                email=Email("smith@gmail.com"),
-                role=Role.admin)
+        user = User(Name("Robin Smith"), 
+                Email("smith@gmail.com"),
+                Role.admin)
         user.set_email(Email("smith1@gmail.com"));
         self.assertEqual(user.email, "smith1@gmail.com")
 #+END_SRC
@@ -227,7 +204,7 @@ Note that =_set_role= is not part of the public interface of
 
 #+NAME: user_set_role 
 #+BEGIN_SRC python 
-    def set_role(self, role):
+    def _set_role(self, role):
         if not isinstance(role, Role):
             raise TypeError('`role` argument should be of type Role.')
         else:
@@ -274,9 +251,8 @@ as a dictionary.
 
 ** Role
 
-   There are two types of roles in the application:
-   - Admin 
-   - User 
+   =Role= is an enumerated type with two variants: =admin=
+   and =user=.   
 
 *** Definition
 #+NAME: class_Role
@@ -311,16 +287,13 @@ class Session():
 *** Constructor
     The signature of the Session constructor is:
     #+BEGIN_EXAMPLE
-    session = Session(user=<Object of User>)
+    session = Session(<Object of type User>)
     #+END_EXAMPLE
 
 #+NAME: init_Session
 #+BEGIN_SRC python
-    def __init__(self, **kwargs):
-        if 'user' not in kwargs:
-            raise AttributeRequired("user is mandatory")
-
-        self._set_user(kwargs['user'])
+    def __init__(self, user):
+        self._set_user(user)
 #+END_SRC
 
 
@@ -338,10 +311,10 @@ class TestSession(TestCase):
 
     def test_session_creation(self):
         print "test_session_creation"
-        user = User(name=Name("Robin Smith"), 
-                    email=Email("smith@gmail.com"),
-                    role=Role.user)
-        session = Session(user=user)
+        user = User(Name("Robin Smith"), 
+                    Email("smith@gmail.com"),
+                    Role.user)
+        session = Session(user)
         self.assertEqual(session.user.role.name, "user")
 #+END_SRC
 
@@ -378,7 +351,8 @@ Note that =_set_user= is used internally by the
    These are some of the custom exceptions used in the application.
 *** AttributeRequired
 
-#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no
+#+name: class_AttributeRequired
+#+BEGIN_SRC python
 class AttributeRequired(Exception):
     str = None
 
@@ -391,7 +365,8 @@ class AttributeRequired(Exception):
 #+END_SRC
 
 *** Constraint Error
-#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no
+#+name: class_ConstraintError
+#+BEGIN_SRC python
 class ConstraintError(Exception):
     str = None
 
@@ -404,7 +379,8 @@ class ConstraintError(Exception):
 #+END_SRC
 
 *** NotAuthorized Error
-#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no
+#+name: class_NotAuthorizedError
+#+BEGIN_SRC python
 class NotAuthorizedError(Exception):
     str = None
 
@@ -427,7 +403,8 @@ class NotAuthorizedError(Exception):
     space.
 
 **** Definition
-#+BEGIN_SRC  python :tangle ../../src/utils.py :eval no
+#+name: def_is_alphabetic_string
+#+BEGIN_SRC  python
 def is_alphabetic_string(value):
     if re.search('[^a-zA-Z. ]+', value):
         return False
@@ -437,7 +414,8 @@ def is_alphabetic_string(value):
 
 
 **** Tests/Examples
-#+begin_src python :tangle ../../tests/test_obj.py :eval no
+#+name: class_Test_is_alphabetic_string
+#+begin_src python
 class Test_is_alphabetic_string(TestCase):
     TESTING = True
     """Tests for is_alphabetic_string."""
@@ -455,8 +433,8 @@ class Test_is_alphabetic_string(TestCase):
 There are some false positives, which slip in.  A more
 accurate definition of =is_alphabetic_string= should fix
 this.
-
-#+begin_src python :tangle ../../tests/test_obj.py :eval no
+#+name: def_test_three
+#+begin_src python
     def test_three(self):
         print "test_a_alphabetic_string_3"
         self.assertTrue(is_alphabetic_string(".  ."))
@@ -468,7 +446,8 @@ this.
     Following is the constructor for this class.
 
 **** Definition 
-#+BEGIN_SRC python :tangle ../../src/utils.py :eval no
+#+NAME: def_is_email
+#+BEGIN_SRC python
 def is_email(value):
     if re.search('[^@]+@[^@]+\.[^@]+', value):
         return True
@@ -497,16 +476,29 @@ from sets import Set
 class System ():
     user_set  = Set()
     session_set = Set()
+    already_instantiated = False
 
     def __init__(self):
-        admin_user = User(name=Name("admin"), 
-                          email=Email("app-admin@vlabs.ac.in"), 
-                          role=Role.admin)
-        self.user_set.add(admin_user)
+        if System.already_instantiated:
+            raise ConstraintError('System already instantiated')
+        else:
+            admin_user = User(Name(Config.admin_name), 
+                              Email(Config.admin_email), 
+                              Role.admin)
+            self.user_set.add(admin_user)
+            System.already_instantiated = True
 #+end_src
 
 ** Operations on =System= 
 *** =add_user=
+
+#+begin_src python
+def add_user(self, user, session):
+    ...
+    self.user_set.add(user)
+
+
+#+end_src
 *** =del_user=
 *** =show_users=
 
@@ -578,11 +570,11 @@ print "tests package"
 * Run Test Cases
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 def setup():
-    user = User(name=Name("admin user"),
-                email=Email("admin-user@gmail.com"),
-                role=Role.admin)
+    user = User(Name("admin user"),
+                Email("admin-user@gmail.com"),
+                Role.admin)
     User.admin = user
-    Session.admin = Session(user=user)
+    Session.admin = Session(user)
     print "Session admin"
     print Session.admin
     print Role.admin
@@ -634,9 +626,14 @@ if __name__ == '__main__':
 
 *** Exceptions
 #+BEGIN_SRC python :tangle ../../src/op-exceptions.py :eval no :noweb yes
+<<class_AttributeRequired>>
+<<class_ConstraintError>>
+<<class_NotAuthorizedError>>
 #+end_src
 *** Utilities
 #+BEGIN_SRC python :tangle ../../src/utils.py :eval no :noweb yes
+<<def_is_alphabetic_string>>
+<<def_is_email>>
 #+end_src
 ** tests
 *** Test init
@@ -649,5 +646,7 @@ if __name__ == '__main__':
 <<class_TestUser>>
 <<test_set_email_of_user>>
 <<class_TestSession>>
+<<class_Test_is_alphabetic_string>>
+<<def_test_three>>
 #+END_SRC
 
