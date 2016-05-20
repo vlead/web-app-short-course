@@ -30,28 +30,50 @@ The rest of the sections have more detailed requirements.
 
 * Users
 :PROPERTIES:
-:CUSTOM_ID:  req-User
+:CUSTOM_ID: req-User
+:END: 
+** Req 1
+:PROPERTIES:
+:CUSTOM_ID: req-User1
 :END: 
 1. The system has users.
-
+** Req 2
+:PROPERTIES:
+:CUSTOM_ID: req-User2
+:END: 
 2. Each user has an email address (string that corresponds to a
    valid email addr).  
-
+** Req 3
+:PROPERTIES:
+:CUSTOM_ID: req-User3
+:END: 
 3. Email identifies a user.  Two users with the same email
    are the same users. 
-
+** Req 4
+:PROPERTIES:
+:CUSTOM_ID: req-User4
+:END: 
 4. Each user has a Name (string).
-
 
 * Roles
 :PROPERTIES:
-:CUSTOM_ID:  req-Role
+:CUSTOM_ID: req-Role
+:END:
+** Req 1 
+:PROPERTIES:
+:CUSTOM_ID: req-Role1
 :END: 
 1. There are two kinds of roles: =admin= and =user=. 
-
+** Req 2
+:PROPERTIES:
+:CUSTOM_ID: req-Role2
+:END: 
 2. Each user is mapped to exactly one role, either =admin=
    or =user=.
-
+** Req 3
+:PROPERTIES:
+:CUSTOM_ID: req-Role3
+:END: 
 3. Each role determines what data access privileges are
    available to the user:
 
@@ -65,18 +87,35 @@ The rest of the sections have more detailed requirements.
        users.  A user is not allowed to delete his/her
        account.
 
+
 * Sessions
 :PROPERTIES:
-:CUSTOM_ID:  req-Session
+:CUSTOM_ID: reqSession
+:END: 
+** Req 1
+:PROPERTIES:
+:CUSTOM_ID: reqSession1
 :END: 
 1. Users are required to login into the system.  
 
+** Req 2
+:PROPERTIES:
+:CUSTOM_ID: reqSession2
+:END: 
 2. Once the user is logged in into the system, the system
    creates a /login/ session.   
 
+** Req 3
+:PROPERTIES:
+:CUSTOM_ID: reqSession3
+:END: 
 3. Operations are permitted only if the actor is logged in
    into the system. 
 
+** Req 4
+:PROPERTIES:
+:CUSTOM_ID: reqSession4
+:END: 
 4. Users can have at most one session at a given time.
 
 
@@ -121,4 +160,4 @@ The rest of the sections have more detailed requirements.
 
 
 
-
+   
