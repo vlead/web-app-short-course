@@ -45,6 +45,9 @@ init: pull-literate-tools
 
 build: init write-version
 	emacs  --script elisp/publish.el
+
+
+ign:
 	rsync -a ${SRC_DIR}/implementation/web/templates ${BUILD_DIR}/code/src/templates
 	rsync -a ${SRC_DIR}/implementation/web/static ${BUILD_DIR}/code/src/static
 	rsync -a ${SRC_DIR}/${ORG_DIR} ${BUILD_DIR}/docs
@@ -68,6 +71,9 @@ build-with-lint: build lint
 
 run-py-tests:
 	find . -name '*test*.py' -exec python '{}' \;
+
+run-tests:
+	(cd ${BUILD_DIR}/code; python -m tests.test_obj)
 
 clean:	clean-literate
 	rm -rf ${BUILD_DIR}
