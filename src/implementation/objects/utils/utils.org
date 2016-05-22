@@ -1,0 +1,163 @@
+#+title:  Utility Functions
+
+* Predicate checks
+
+A check is a function that takes an argument and returns the
+argument after performing a check on it.  If the check
+fails, the check function raises an exception.  
+
+We start with implementing a generic function that checks
+predicates.  =check_pred= takes a predicate =p= and returns
+a function that takes an argument =a= and returns =a= if =a=
+satisfies =p=, and raises a =TypeError= otherwise.
+
+#+name: def_check_pred
+#+begin_src python
+def check_pred(p):
+    def fn(a):
+        if p(a):
+            return a
+        else:
+            raise TypeError('arg %s does not satisfy type predicate %s' % (a, p))
+    return fn
+#+end_src
+
+*** Tests for =check_pred=
+#+name: test_check_pred
+#+begin_src python
+from utils import *
+
+def rem(a, b):
+    return a % b
+
+check_even = check_pred(lambda a: isinstance(a,int) & rem(a,2) == 0)
+
+class TestCheckPred(TestCase):
+    TESTING = True
+    print "test_check_pred"
+
+    def test_check_even(self):
+        self.assertEqual(check_even(4), 4)
+        self.assertRaises(TypeError, check_even, 5)
+        self.assertEqual(check_even(False), False)  # False == 0 in Python
+#+end_src
+** =check_inst= 
+
+=check_inst= takes a class and returns a function that
+checks if its argument is an instance that class.
+
+#+name: def_check_inst
+#+begin_src python
+def check_inst(cls):
+    return check_pred(lambda arg: isinstance(arg, cls))
+#+end_src
+
+* Utility Functions
+** =is_alphabetic_str=
+    This function take an argument and checks whether the argument contains
+    only alphabets.
+
+    This function take an argument and checks whether the
+    argument is an alphabetic string.  An alphabetic string
+    consists of one or more alphabetic characters, period or
+    space.
+
+*** Definition
+#+name: def_is_alphabetic_str
+#+BEGIN_SRC  python
+def is_alphabetic_str(value):
+    if re.search('[^a-zA-Z. ]+', value):
+        return False
+    else:
+        return True
+#+END_SRC
+
+
+*** Tests/Examples
+#+name: class_Test_is_alphabetic_str
+#+begin_src python
+class Test_is_alphabetic_str(TestCase):
+    TESTING = True
+    """Tests for is_alphabetic_str."""
+
+    def test_a_alphabetic_string_1(self):
+        print "test_a_alphabetic_string_1"
+        self.assertTrue(is_alphabetic_str("Hello"))
+
+    def test_a_alphabetic_string_2(self):
+        print "test_a_alphabetic_string_2"
+        self.assertTrue(is_alphabetic_str("M. N. Ray"))
+#+end_src
+
+
+There are some false positives, which slip in.  A more
+accurate definition of =is_alphabetic_str= should fix
+this.
+#+name: def_test_three
+#+begin_src python
+    def test_three(self):
+        print "test_a_alphabetic_string_3"
+        self.assertTrue(is_alphabetic_str(".  ."))
+#+end_src
+
+
+** =is_email_str=
+    Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
+    Following is the constructor for this class.
+
+*** Definition 
+#+NAME: def_is_email_str
+#+BEGIN_SRC python
+def is_email_str(value):
+    if re.search('[^@]+@[^@]+\.[^@]+', value):
+        return True
+    else:
+        return False
+#+END_SRC
+
+(We may want to instead use the =validate_email= package of
+Python.  See [[http://stackoverflow.com/questions/8022530/python-check-for-valid-email-address][this]] Stack Overflow discussion.)
+
+
+*** Test cases 
+
+     To be done.
+
+
+
+
+
+* Test Infra
+
+** Imports for tests 
+#+name: imports_for_tests
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+import unittest
+from unittest import TestCase
+from datetime import datetime
+#+end_src
+
+** Running tests
+#+NAME: run_test_cases
+#+BEGIN_SRC python
+if __name__ == '__main__':
+    unittest.main()
+#+END_SRC
+
+* Tangling
+*** sources
+**** =utils.py=
+#+BEGIN_SRC python :tangle utils.py :eval no :noweb yes
+<<def_check_pred>>
+#+end_src
+*** tests
+#+BEGIN_SRC python :tangle test_utils.py :eval no :noweb yes
+<<imports_for_tests>>
+<<test_check_pred>>
+<<run_test_cases>>
+#+end_src
+
+
+
+

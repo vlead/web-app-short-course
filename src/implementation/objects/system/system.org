@@ -1,0 +1,182 @@
+#+title:  Mini Version of User Directory Application: System
+#+AUTHOR: VLEAD
+#+DATE: [2016-05-18 Wed]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ../../org-templates/level-2.org
+#+options: ^:nil
+#+LATEX: Literal LaTeX code for export
+* Introduction
+
+A system has clear boundaries of input, output and state.
+In the context of our application, the system interacts with
+the external world (through command line function calls)
+and also manages the entity objects in such a way that the
+system invariants are maintained. 
+
+
+The system holds two state variables:
+
+ - =user_set= :: The set of users in the system
+ - =session_set= :: The set of sessions in the system
+
+The system's inputs are in terms of /operations/.  Each
+operation consists of an operation name and a sequence of
+arguments.  
+
+In this implementation, an operation is identified by a
+class.  The dictionary =ops_table= maps operation names to
+their corresponding classes.
+
+Each operation is divided into five checks.  A /check/ is a
+predicate that either returns true or throws an exception.
+
+The following checks are performed:
+
+  - Arity check :: checks if the operation has the right
+       number  of arguments.
+
+  - Type check :: checks if the arguments have the correct
+       type. 
+
+  - Auth check :: checks if the session performing the
+       operation is authorized to do so.
+
+  - State check :: checks if the operation meets all the
+       constraints imposed by the state of the system
+       (referential integrity constraints, etc.)
+ 
+
+** Structure of each operation class
+
+The class corresponding to each operation has five fields:
+
+  - arg_types :: a list of type predicates.  The length of
+       this list is the arity of the operation.  The arity
+       check is simply a comparison of the length of this
+       list with the length of the list of arguments.  Each
+       predicate in the =arg_types= list is applied to the
+       corresponding argument to check the type of that
+       argument.
+
+  - auth_check :: a function that checks if the  =args= (which
+       may include a session) together satisfy the
+       authorization conditions imposed by the operation. 
+
+  - state_check :: a function that checks =args= and checks
+       if the particular state invariant holds.
+
+  - action :: a function on args that (presumably) changes
+       the state of the system and also returns an answer.
+       An exception thrown by this function indicates a
+       serious failure in the application (e.g., out of
+       memory error). 
+
+* The =System= class
+
+** Constructor
+
+The constructor ensures that the system ensures the presence
+of at least one user with role =admin=. 
+
+
+#+NAME: class_system
+#+begin_src python
+class System ():
+    admin_user = User(Name(Config.admin_name), 
+                      Email(Config.admin_email), 
+                      Role.admin)
+    user_set = [admin_user]
+    session_set = []
+
+    ops_table = {'add_user' : AddUser, 
+                 'del_user' : DelUser}
+
+    def __init__(self):
+        raise Error('Can not instantiate')
+#+end_src
+
+** Arity and Type check methods 
+
+The =do= method is the main work-horse of =Controller=.  
+
+#+begin_src python
+	@staticmethod
+    def arity_check(args, n):
+       if  (len(args) != n) :
+          raise ArityError("arity mismatch: size of args %s does not match operation arity %d" % (args n))
+
+	@staticmethod
+    def type_check(args, arg_types):
+        for i in range(len(args)):
+            if not (arg_types[i](args[i]):
+                raise TypeError("type mismatch: type of argument %s at position %f does not match specified type %s" % (arg[i] i arg_types[i])
+               
+#+end_src
+
+** =do= method 
+#+begin_src python
+    @staticmethod   
+    def do(op, *args):
+        cls = System.ops_table[op]
+        arg_types  = cls.arg_types
+        auth_check = cls.auth_check
+        state_check = cls.state_check
+
+        try:
+            System.arity_check(args, len(arg_types)
+            System.type_check(args, arg_types)
+            auth_check(args)
+            state_check(args)
+        except (ArityError, TypeError, AuthError, StateError) as err:
+            print str(err)
+        else: 
+            cls.action(args)
+#+end_src
+
+* =AddUser=
+
+#+begin_src python
+class AddUser():
+    arg_types = [is_User, is_Session]
+    auth_check = System.is_session_admin
+
+    @staticmethod
+    def state_check(args):
+        u = args[0]
+        s = args[1]
+        if not (s in System.session_set):
+            raise StateError("user not in session %s" % s.user.name)
+        if (u in System.user_set):
+            raise StateError("user %s already in System" % u.name)
+            
+    @staticmethod
+    def action(args):
+        u = args[0]
+        s = args[1]
+        System.user_set.append(u)
+#+end_src
+
+** =del_user=
+** =show_users=
+
+** =get_user_by_email=
+** =make_user=
+** =get_email_of_user=
+** =get_name_of_user=
+** =get_role_of_user=
+** =login=
+** =del_session=
+** =show_sessions=
+
+* Imports
+
+* Tangle Targets
+
+** =src/=
+
+*** =app_system.py=
+
+#+begin_src python :tangle ../../tests/test_obj.py :eval no :noweb yes
+<<imports_for_test_obj>>
+#+end_src

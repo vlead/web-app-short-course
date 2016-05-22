@@ -6,13 +6,17 @@
 #+SETUPFILE: ../../org-templates/level-2.org
 #+options: ^:nil
 #+LATEX: Literal LaTeX code for export
-
 * Introduction
 
 In the object implementation of the mini version of the User
 Directory Application, all entities are Objects.  In
 addition, there is an object called =System= that holds the
 state of the application (=user-set=, =session-set=, etc.).
+
+Each of the entities of the data model are implemented as
+objects.  Each entity is defined via a class definition, a
+constructor and getter and setter methods that access and
+mutate the fields of the entity. 
 
 The main idea in the object model is that certain relations
 of the data model (those that are total functions) are
@@ -29,10 +33,6 @@ requirements of the application.
 
 * Entities
 
-Each of the entities of the data model are implemented as
-objects.  Each entity is defined via a class definition, a
-constructor and getter and setter methods that access and
-mutate the fields of the entity. 
 
 ** Name
 
@@ -40,6 +40,22 @@ Elements of the entity type =Name= are built by invoking the
 constructor =Name(value)=.  =value= needs to be an
 alphabetic string.
 
+#+begin_src python
+class Name():
+    pass
+
+ValueClassTemplate.populate_class(Name, is_alphabetic_string)
+
+class Email():
+    pass
+
+ValueClassTemplate.populate_class(Email, is_email_str)
+
+
+
+
+
+#+end_src
 #+NAME: class_Name
 #+BEGIN_SRC python
 class Name(object):
@@ -80,7 +96,7 @@ class TestName(TestCase):
 class Email(object):
     value = None
     def __init__(self, value):
-        if not is_email(value):
+        if not is_email_str(value):
             raise TypeError('%s is not an email!' % value)
         self.value = value
 
@@ -88,7 +104,7 @@ class Email(object):
         return self.value
 
     def __eq__(self, other):
-        if instanceof(other, self.__class__):
+        if isinstance(other, self.__class__):
             return self.value == other.value
         else:
             return False
@@ -400,134 +416,11 @@ class NotAuthorizedError(Exception):
 
 #+END_SRC
 
-** Utility Functions
-*** is_alphabetic_string(value)
-    This function take an argument and checks whether the argument contains
-    only alphabets.
 
-    This function take an argument and checks whether the
-    argument is an alphabetic string.  An alphabetic string
-    consists of one or more alphabetic characters, period or
-    space.
-
-**** Definition
-#+name: def_is_alphabetic_string
-#+BEGIN_SRC  python
-def is_alphabetic_string(value):
-    if re.search('[^a-zA-Z. ]+', value):
-        return False
-    else:
-        return True
-#+END_SRC
-
-
-**** Tests/Examples
-#+name: class_Test_is_alphabetic_string
-#+begin_src python
-class Test_is_alphabetic_string(TestCase):
-    TESTING = True
-    """Tests for is_alphabetic_string."""
-
-    def test_a_alphabetic_string_1(self):
-        print "test_a_alphabetic_string_1"
-        self.assertTrue(is_alphabetic_string("Hello"))
-
-    def test_a_alphabetic_string_2(self):
-        print "test_a_alphabetic_string_2"
-        self.assertTrue(is_alphabetic_string("M. N. Ray"))
-#+end_src
-
-
-There are some false positives, which slip in.  A more
-accurate definition of =is_alphabetic_string= should fix
-this.
-#+name: def_test_three
-#+begin_src python
-    def test_three(self):
-        print "test_a_alphabetic_string_3"
-        self.assertTrue(is_alphabetic_string(".  ."))
-#+end_src
-
-
-*** is_email(value)
-    Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
-    Following is the constructor for this class.
-
-**** Definition 
-#+NAME: def_is_email
-#+BEGIN_SRC python
-def is_email(value):
-    if re.search('[^@]+@[^@]+\.[^@]+', value):
-        return True
-    else:
-        return False
-#+END_SRC
-
-(We may want to instead use the =validate_email= package of
-Python.  See [[http://stackoverflow.com/questions/8022530/python-check-for-valid-email-address][this]] Stack Overflow discussion.)
-
-
-**** Test cases 
-
-     To be done.
-
-
-
-* System
-
-The =system= singleton object maintains the system
-variables: =user_set= and =session_set=.
-
-#+NAME: class_system
-#+begin_src python
-from sets import Set
-class System ():
-    user_set  = Set()
-    session_set = Set()
-    already_instantiated = False
-
-    def __init__(self):
-        if System.already_instantiated:
-            raise ConstraintError('System already instantiated')
-        else:
-            admin_user = User(Name(Config.admin_name), 
-                              Email(Config.admin_email), 
-                              Role.admin)
-            self.user_set.add(admin_user)
-            System.already_instantiated = True
-#+end_src
-
-** Operations on =System= 
-*** =add_user=
-
-#+begin_src python
-def add_user(self, user, session):
-    ...
-    self.user_set.add(user)
-
-
-#+end_src
-*** =del_user=
-*** =show_users=
-
-*** =get_user_by_email=
-*** =make_user=
-*** =get_email_of_user=
-*** =get_name_of_user=
-*** =get_role_of_user=
-*** =login=
-*** =del_session=
-*** =show_sessions=
-
-
-| Operation | Predicate |   |   |   |
-|-----------+-----------+---+---+---|
-|           |           |   |   |   |
-
-
-* Initialization
+* initialization
 ** Imports for Python API
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+name: imports_for_obj
+#+BEGIN_SRC python
 # -*- coding: utf-8 -*-
 from op_exceptions import AttributeRequired
 from op_exceptions import ConstraintError
@@ -538,7 +431,8 @@ from utils import *
 
 ** Imports and Initialization of testcases for Python API
 
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+#+name: imports_for_test_obj
+#+BEGIN_SRC python
 # -*- coding: utf-8 -*-
 import unittest
 from unittest import TestCase
@@ -554,7 +448,8 @@ from src.op_exceptions import NotAuthorizedError
 
 ** Imports for utility functions
 
-#+BEGIN_SRC python :tangle ../../src/utils.py :eval no
+#+NAME: imports_for_utils
+#+BEGIN_SRC python
 
 # module to hold all utilities/helper functions
 
@@ -566,56 +461,31 @@ import re
 #+END_SRC
 
 
-** Init Files
-#+BEGIN_SRC python :tangle ../../src/__init__.py :eval no
-import obj
-#+END_SRC
-
-#+BEGIN_SRC python :tangle ../../tests/__init__.py :eval no
-print "tests package"
-#+END_SRC
-
-
-
 
 * Run Test Cases
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+NAME: run_test_cases
+#+BEGIN_SRC python
 def setup():
     user = User(Name("admin user"),
                 Email("admin-user@gmail.com"),
                 Role.admin)
-    User.admin = user
-    Session.admin = Session(user)
-    print "Session admin"
-    print Session.admin
-    print Role.admin
-    print "Role admin is " 
-    print User.admin
-    User.add(user, Session.admin)
-
+      
 def tearDown():
-    User.users = []
-    Session.sessions = []
-    Role.admin = None
-    Role.user = None
+    pass
 
-
-#+END_SRC 
-
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
 if __name__ == '__main__':
     unittest.main()
 #+END_SRC
 
-
-
 * Tangling
-** src
-*** Init
+** =src/=
+*** =__init__.py=
 #+BEGIN_SRC python :tangle ../../src/__init__.py :eval no :noweb yes
+import obj
 #+end_src
-*** Class Definitions
+*** =obj.py=
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no :noweb yes
+<<imports_for_obj>>
 <<class_Name>>
 <<class_Email>>
 <<class_User>>
@@ -635,29 +505,39 @@ if __name__ == '__main__':
 <<session_to_client>>
 #+END_SRC
 
-*** Exceptions
-#+BEGIN_SRC python :tangle ../../src/op-exceptions.py :eval no :noweb yes
+*** =op-exceptions.py=
+#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no :noweb yes
 <<class_AttributeRequired>>
 <<class_ConstraintError>>
 <<class_NotAuthorizedError>>
 #+end_src
-*** Utilities
+*** =utils.py=
 #+BEGIN_SRC python :tangle ../../src/utils.py :eval no :noweb yes
-<<def_is_alphabetic_string>>
-<<def_is_email>>
+<<imports_for_utils>>
+<<def_check_pred>>
+<<def_check_inst>>
+<<def_is_alphabetic_str>>
+<<def_is_email_str>>
 #+end_src
-** tests
-*** Test init
+** =tests/=
+*** =__init__.py=
 #+BEGIN_SRC python :tangle ../../tests/__init__.py :eval no :noweb yes
+print "tests"
 #+end_src
-*** Test cases
+*** =test_obj.py=
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no :noweb yes
+<<imports_for_test_obj>>
 <<class_TestName>>
 <<class_TestEmail>>
 <<class_TestUser>>
 <<test_set_email_of_user>>
 <<class_TestSession>>
-<<class_Test_is_alphabetic_string>>
+<<class_Test_is_alphabetic_str>>
 <<def_test_three>>
+<<run_test_cases>>
 #+END_SRC
 
+*** =test_utils.py=
+#+begin_src python :tangle ../../tests/test_utils.py :eval no :noweb yes
+
+#+end_src
