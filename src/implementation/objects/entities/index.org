@@ -32,47 +32,27 @@ which are not are decisions based on the end user
 requirements of the application.
 
 * Entities
-
-
 ** Name
-
 Elements of the entity type =Name= are built by invoking the
 constructor =Name(value)=.  =value= needs to be an
 alphabetic string.
-
+#+NAME: class_Name
 #+begin_src python
 class Name():
     pass
 
-ValueClassTemplate.populate_class(Name, is_alphabetic_string)
-
+ValueClassTemplate.populate_class(Name, is_alphabetic_str)
+check_Name = check_inst(Name)
+#+end_src
+** Email
+#+NAME: class_Email
+#+begin_src python
 class Email():
     pass
 
 ValueClassTemplate.populate_class(Email, is_email_str)
-
-
-
-
-
+check_Email = check_inst(Email)
 #+end_src
-#+NAME: class_Name
-#+BEGIN_SRC python
-class Name(object):
-    value = None
-    def __init__(self, value):
-        # value: String
-        if is_alphabetic_string(value):
-            self.value = value
-        else:
-            raise TypeError('%s is not a Name!' % value)
-
-    def __str__(self):
-        return self.value
-
-  
-#+END_SRC
-
 *** Test the Construction
 #+NAME: class_TestName
 #+BEGIN_SRC python 
@@ -87,41 +67,31 @@ class TestName(TestCase):
         self.assertRaises(TypeError, Name, "123dasd")
 #+END_SRC
 
-** Email
-     Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
-     Following is the constructor for this class.
+** Role
 
-#+NAME: class_Email
+   =Role= is an enumerated type with two variants: =admin=
+   and =user=.   
+
+*** Definition
+#+NAME: class_Role
 #+BEGIN_SRC python
-class Email(object):
-    value = None
-    def __init__(self, value):
-        if not is_email_str(value):
-            raise TypeError('%s is not an email!' % value)
-        self.value = value
+class Role():
+    name = None
+    admin = None
+    user = None
+
+    def __init__(self, name):
+        self.name = name
 
     def __str__(self):
-        return self.value
+        return self.name
 
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.value == other.value
-        else:
-            return False
-#+END_SRC
-
-*** Test the Construction
-#+NAME: class_TestEmail
-#+BEGIN_SRC python 
-class TestEmail(TestCase):
-    TESTING = True
-    def test_email_type(self):
-        print "test_email_type"
-        new_email = Email("smith@gmail.com")
-        # correct name
-        self.assertEqual(new_email.value, "smith@gmail.com")
-        # incorrect name
-        self.assertRaises(TypeError, Email, "@@@@smithgmail.com")
+    def to_client(self):
+        return {
+            'role': self.name
+        }
+Role.admin = Role("admin")
+Role.user  = Role("user")
 #+END_SRC
 
 ** User
@@ -182,7 +152,6 @@ class TestUser(TestCase):
                     Email("smith@gmail.com"),
                     Role.admin)
  #+END_SRC
-
 
 *** Setters and Getters
 **** =set_name=
@@ -273,33 +242,6 @@ as a dictionary.
         }
 #+END_SRC
 
-** Role
-
-   =Role= is an enumerated type with two variants: =admin=
-   and =user=.   
-
-*** Definition
-#+NAME: class_Role
-#+BEGIN_SRC python
-class Role():
-    name = None
-    admin = None
-    user = None
-
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return self.name
-
-    def to_client(self):
-        return {
-            'role': self.name
-        }
-Role.admin = Role("admin")
-Role.user  = Role("user")
-#+END_SRC
-
 ** Session
     A session holds a user.
 #+NAME: class_Session
@@ -371,6 +313,8 @@ Note that =_set_user= is used internally by the
             'session': self.user.to_client()
         }
 #+END_SRC
+
+
 ** Custom Exceptions
    These are some of the custom exceptions used in the application.
 *** AttributeRequired
@@ -541,3 +485,4 @@ print "tests"
 #+begin_src python :tangle ../../tests/test_utils.py :eval no :noweb yes
 
 #+end_src
+

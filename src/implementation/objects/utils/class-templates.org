@@ -1,0 +1,217 @@
+#+title:  Class Templates
+#+SETUPFILE: ../../../org-templates/level-0.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+
+This module introduces automation techniques for building
+standard classes.  
+
+* Value Classes
+** Definition
+A /value/ class of type =p= is a class that holds one state
+variable, called =value= that is guaranteed to satisfy =p.
+
+A value class has the following methods: =__init__=,
+=__eq__=, =__str__=, =get_value= and =set_value=.  
+
+The class =ValueClassTemplate= defines static methods that
+populate a value class with the above standard methods.
+Note the type checks on the =__init__= and =set_value=
+methods. 
+
+#+name: class_ValueClassTemplate
+#+BEGIN_SRC python
+from type_utils import *
+class ValueClassTemplate():
+
+    @staticmethod
+    def mk_init(type_check):
+        def fn(obj, val):
+            obj.value = type_check(val)
+        return fn
+
+    @staticmethod
+    def mk_get():
+        def fn(obj):
+            return obj.value
+        return fn
+
+    @staticmethod
+    def mk_eq():
+        def fn(obj, other) :
+            if isinstance(other, obj.__class__):
+                return obj.value == other.value
+            else:
+                return False
+        return fn
+
+    @staticmethod
+    def mk_str():
+        def fn(obj):
+            return str(obj.value)
+        return fn
+
+    @staticmethod
+    def populate(cls, type_check):
+        cls.__init__ = ValueClassTemplate.mk_init(type_check)
+        cls.get = ValueClassTemplate.mk_get()
+        cls.set = ValueClassTemplate.mk_init(type_check)
+        cls.__eq__   = ValueClassTemplate.mk_eq()
+        cls.__str__  = ValueClassTemplate.mk_str()
+#+END_SRC
+** Test cases
+#+name: class_TestValueClassTemplate
+#+BEGIN_SRC python
+class Name():
+    pass
+
+class TestValueClassTemplate(TestCase):
+
+    def setUp(self):
+        ValueClassTemplate.populate(Name, check_alphabetic_str)
+        Name.n1 = Name("ravi")
+        Name.n2 = Name("Ravi")
+        
+    def test_value_class_template(self):
+        print "test_value_class_template"
+        self.assertEqual(Name.n1.get(), "ravi", "n1.get()")
+        Name.n1.set("Ravi")
+        self.assertTrue(Name.n1.get()==Name.n2.get(), "n1.get()==n2.get()")
+#+END_SRC
+
+* Class template
+The class This is a general template for making classes.
+Here is an example usage of it.
+** Example usage
+#+BEGIN_EXAMPLE
+class User:
+    pass
+
+ClassTemplate.populate(User, name=check_str, 
+                             id=check_non_neg_int)
+
+User.__eq__ = ClassTemplate.mk_eq(User, lambda a,b: a.id == b.id)
+u = User(name="ravi", id=23)
+u.get('name').get() => "ravi"
+u.get('name').set("Ravi Chandran Ashwin")
+u.get('name').get() => "Ravi Chandran Ashwin"
+
+#+END_EXAMPLE
+
+** Implementation
+
+#+name: class_ClassTemplate 
+#+BEGIN_SRC python
+class ClassTemplate():
+    @staticmethod
+    def mk_init(cls):
+        # args is a dictionary
+        def fn(obj, **args): 
+            check_dict(args)
+            # keywords must match formal_keys
+            check_pred(lambda a: sorted(a.keys()) == cls.formal_keys)(args)
+            obj.state = {}
+            for key, value in args.iteritems():
+                # apply type checking to the value first
+                obj.state[key] = check_pred(cls.formals[key])(value)
+        return fn
+
+    @staticmethod
+    def mk_getter(cls):
+        def fn(obj,k):
+            if str(k) and (k in cls.formal_keys):
+                return obj.state[k]
+            else:
+                raise TypeError("get: Invalid key %s" % k)
+        return fn
+
+    @staticmethod
+    def mk_setter(cls):
+        def fn(obj, k, val):
+            if str(k) and (k in cls.formal_keys):
+                obj.state[k] = check_pred(cls.formals[k])(val)
+            else:
+                raise TypeError("set: Invalid key %s" % k)
+        return fn
+
+
+    @staticmethod
+    def mk_eq(cls, pred):
+        def fn(obj, other):
+            return isinstance(other, obj.__class__) and pred(obj, other)
+        return fn
+
+    @staticmethod
+    def populate(cls, **formals):
+        print formals
+        cls.formals = check_dict(formals)
+        cls.formal_keys = sorted(cls.formals.keys())
+        cls.__init__ = ClassTemplate.mk_init(cls)
+        cls.get = ClassTemplate.mk_getter(cls)
+        cls.set = ClassTemplate.mk_setter(cls)
+        cls.to_client = ClassTemplate.mk_setter(cls)
+
+    @staticmethod
+    def to_client(cls):
+        def fn(obj):
+            return obj.state
+        return fn
+#+END_SRC
+
+
+* Tests
+#+name: class_TestClassTemplate
+#+BEGIN_SRC python
+class Foo():
+    pass
+
+class TestClassTemplate(TestCase):
+
+    def setUp(self):
+        ClassTemplate.populate(Foo, x=check_int, y=check_str)
+        Foo.foo = Foo(x=4, y="hello")
+
+    def test_class_template(self):
+        print "test_class_template"
+        self.assertEqual(Foo.foo.get("x"), 4, "foo.get(x)==4")
+        self.assertEqual(Foo.foo.get("y"), "hello", "foo.get(y)==hello")
+
+        Foo.foo.set("x", 7)
+        self.assertEqual(Foo.foo.get("x"), 7, "foo.get(x)==7")
+#+END_SRC
+
+* Test Infra													:boilerplate:
+** Imports for tests 
+#+name: imports_for_tests
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+import unittest
+from unittest import TestCase
+from datetime import datetime
+from type_utils import *
+from class_templates import *
+#+end_src
+
+** Running tests
+#+NAME: run_test_cases
+#+BEGIN_SRC python
+if __name__ == '__main__':
+    unittest.main()
+#+END_SRC
+
+* Tangling														:boilerplate:
+*** sources
+**** =type_type_utils.py=
+#+BEGIN_SRC python :tangle class_templates.py :eval no :noweb yes
+<<class_ValueClassTemplate>>
+<<class_ClassTemplate>>
+#+end_src
+*** tests
+#+BEGIN_SRC python :tangle test_class_templates.py :eval no :noweb yes
+<<imports_for_tests>>
+<<class_TestValueClassTemplate>>
+<<class_TestClassTemplate>>
+<<run_test_cases>>
+#+end_src
+
+

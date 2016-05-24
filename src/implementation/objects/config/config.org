@@ -1,0 +1,13 @@
+#+title:  Configuration Parameters
+#+AUTHOR: VLEAD
+#+SETUPFILE: ../../org-templates/level-1.org
+
+* Introduction
+
+This holds the application's configuration parameters.
+
+#+BEGIN_SRC python :tangle config.py :noweb yes
+class Config:
+    admin_name = "admin"
+    admin_email = "app-admin@vlabs.ac.in"
+#+END_SRC

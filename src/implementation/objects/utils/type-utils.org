@@ -1,0 +1,183 @@
+#+title:  Type Predicates and Checks
+#+SETUPFILE: ../../../org-templates/level-0.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+This module defines basic type predicates and type checks. 
+
+* Type predicates
+A type predicate is a function that takes one argument and
+returns a boolean.
+
+** =is_alphabetic_str=
+
+    This function take an argument and checks whether the
+    argument is an alphabetic string.  An alphabetic string
+    consists of one or more alphabetic characters, period or
+    space.
+
+#+name: def_is_alphabetic_str
+#+BEGIN_SRC  python
+import re
+
+def is_alphabetic_str(value):
+    if (isinstance(value, str) and re.search('[a-zA-Z. ]+', value)):
+        return True
+    else:
+        return False
+#+END_SRC
+
+** =is_email_str=
+    Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
+    Following is the constructor for this class.
+
+
+#+NAME: def_is_email_str
+#+BEGIN_SRC python
+def is_email_str(value):
+    if isinstance(value, str) and re.search('[^@]+@[^@]+\.[^@]+', value):
+        return True
+    else:
+        return False
+#+END_SRC
+
+(We may want to instead use the =validate_email= package of
+Python.  See [[http://stackoverflow.com/questions/8022530/python-check-for-valid-email-address][this]] Stack Overflow discussion.)
+
+* Checks
+** =check_pred=
+
+A /check/ is a partial function that takes an argument and
+acts as as filter.  If the check fails, the check function
+raises an exception.  If the check passes, then the function
+returns the argument.
+
+We start with implementing a generic function that checks
+predicates.  =check_pred= takes a predicate =p= and returns
+a function that takes an argument =a= and returns =a= if =a=
+satisfies =p=, and raises a =TypeError= otherwise.
+
+#+name: def_check_pred
+#+begin_src python
+def check_pred(p):
+    def fn(a):
+        if p(a):
+            return a
+        else:
+            raise TypeError('arg %s does not satisfy type predicate %s' % (a, p))
+    return fn
+
+check_alphabetic_str = check_pred(is_alphabetic_str)
+check_email_str = check_pred(is_email_str)
+#+end_src
+
+*** Tests for =check_pred=
+#+name: class_TestCheckPred
+#+begin_src python
+from type_utils import *
+
+def rem(a, b):
+    return a % b
+
+check_even = check_pred(lambda a: isinstance(a,int) & rem(a,2) == 0)
+
+class TestCheckPred(TestCase):
+    TESTING = True
+    print "test_check_pred"
+
+    def test_check_even(self):
+        self.assertEqual(check_even(4), 4)
+        self.assertRaises(TypeError, check_even, 5)
+        self.assertEqual(check_even(False), False)  # False == 0 in Python
+#+end_src
+** =check_inst= 
+
+=check_inst= takes a class and returns a function that
+checks if its argument is an instance that class.
+
+#+name: def_check_inst
+#+begin_src python
+def check_inst(cls):
+    return check_pred(lambda arg: isinstance(arg, cls))
+
+import types
+
+check_function =  check_inst((types.BuiltinFunctionType, types.FunctionType))
+check_dict = check_inst(dict)
+check_str = check_inst(str)
+check_int = check_inst(int)
+check_pos_int = check_pred(lambda arg: check_int(arg) and arg > 0)
+check_non_neg_int = check_pred(lambda arg: check_int(arg) and arg >= 0)
+
+#+end_src
+
+* Tests
+#+name: class_TestCheckAlphabeticStr
+#+begin_src python
+class TestTypeUtils(TestCase):
+    TESTING = True
+    """Tests for type_utils"""
+    def test_check_alphabetic_str(self):
+        print "test_check_alphabetic_str"
+        self.assertEqual(check_alphabetic_str("Hello"), "Hello")
+        self.assertEqual(check_alphabetic_str("M. N. Ray"), "M. N. Ray")
+        self.assertRaises(TypeError, check_alphabetic_str, "123")
+
+    def test_check_inst(self):
+        print "test_check_inst"
+        self.assertEqual(check_int(3), 3)
+        self.assertEqual(check_str("abc"), "abc")
+        check_dict({'x': 3, 'y': 5})
+        check_function(check_function)
+
+        self.assertRaises(TypeError, check_pos_int, 0)
+        self.assertRaises(TypeError, check_non_neg_int, -1)
+#+end_src
+
+There are some false positives that slip in with
+=alphabetic_str=.  A more accurate definition of
+=is_alphabetic_str= should fix this.
+#+name: def_test_4
+#+begin_src python
+    def test_4(self):
+        # this looks wierd!  Should it be a name?
+        self.assertEqual(check_alphabetic_str(".  ."), ".  .")
+#+end_src
+
+* Test Infra													:boilerplate:
+** Imports for tests 
+#+name: imports_for_tests
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+import unittest
+from unittest import TestCase
+from datetime import datetime
+#+end_src
+
+** Running tests
+#+NAME: run_test_cases
+#+BEGIN_SRC python
+if __name__ == '__main__':
+    unittest.main()
+#+END_SRC
+
+* Tangling														:boilerplate:
+*** sources
+**** =type_type_utils.py=
+#+BEGIN_SRC python :tangle type_utils.py :eval no :noweb yes
+<<def_is_alphabetic_str>>
+<<def_is_email_str>>
+<<def_check_pred>>
+<<def_check_inst>>
+#+end_src
+*** tests
+#+BEGIN_SRC python :tangle test_type_utils.py :eval no :noweb yes
+<<imports_for_tests>>
+<<class_TestCheckPred>>
+<<class_TestCheckAlphabeticStr>>
+<<def_test_4>>
+<<run_test_cases>>
+#+end_src
+
+
+
+
