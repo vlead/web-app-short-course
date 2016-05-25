@@ -97,3 +97,163 @@ application life cycle will include the following phases:
 
 As part of this course, we develop a [[./app.org][User Directory Web
 Application]].
+
+
+* Code structure
+
+  build/code
+      - src
+          - implemtation
+              - objects
+              - persistence
+                   - serialize
+                   - orm
+              - rest
+              - web
+      - tests
+         - implemtation
+              - objects
+              - persistence
+                   - serialize
+                   - orm
+              - rest
+              - web
+    
+
+** Tangling
+
+*** =build/code/=
+**** =__init__.py=
+#+BEGIN_SRC python :tangle __init__.py :eval no :noweb yes
+print "code package"
+import os
+import sys
+
+__all__ = ['set_import_search_path']
+
+def set_import_search_path():
+    # The assumption here is that this script is in the src directory
+    # which is one directory above ovpl
+    webapp_directory_path = os.path.dirname(os.path.abspath(__file__))
+    src_path = webapp_directory_path + "/src"
+    tests_path = webapp_directory_path + "/tests"
+    s_implementation_path = src_path + "/implementation"
+    t_implementation_path = tests_path + "/implementation"
+    s_objects_path = src_path + "/implementation/objects"
+    t_objects_path = tests_path + "/implementation/objects"
+    deployment_path = src_path + "/deployment"
+
+    if webapp_directory_path not in sys.path:
+        sys.path.append(webapp_directory_path)
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    if tests_path not in sys.path:
+        sys.path.append(tests_path)
+    if s_implementation_path not in sys.path:
+        sys.path.append(s_implementation_path)
+    if t_implementation_path not in sys.path:
+        sys.path.append(t_implementation_path)
+    if s_objects_path not in sys.path:
+        sys.path.append(s_objects_path)
+    if t_objects_path not in sys.path:
+        sys.path.append(t_objects_path)
+    if deployment_path not in sys.path:
+        sys.path.append(deployment_path)
+
+
+set_import_search_path()
+
+#+end_src
+*** =src/=
+**** =__init__.py=
+#+BEGIN_SRC python :tangle ./src/__init__.py :eval no :noweb yes
+print "src package"
+import os
+import sys
+
+__all__ = ['set_import_search_path']
+
+
+def set_import_search_path():
+    # The assumption here is that this script is in the src directory
+    # which is one directory above ovpl
+    webapp_directory_path = os.path.dirname(os.path.abspath(__file__))
+    path_list = webapp_directory_path.split("/")
+    path_list = path_list[:-1]  # remove src - till code
+    webapp_directory_path = "/".join(path_list)
+    src_path = webapp_directory_path + "/src"
+    tests_path = webapp_directory_path + "/tests"
+    s_implementation_path = src_path + "/implementation"
+    t_implementation_path = tests_path + "/implementation"
+    s_objects_path = src_path + "/implementation/objects"
+    t_objects_path = tests_path + "/implementation/objects"
+    deployment_path = src_path + "/deployment"
+
+    if webapp_directory_path not in sys.path:
+        sys.path.append(webapp_directory_path)
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    if tests_path not in sys.path:
+        sys.path.append(tests_path)
+    if s_implementation_path not in sys.path:
+        sys.path.append(s_implementation_path)
+    if t_implementation_path not in sys.path:
+        sys.path.append(t_implementation_path)
+    if s_objects_path not in sys.path:
+        sys.path.append(s_objects_path)
+    if t_objects_path not in sys.path:
+        sys.path.append(t_objects_path)
+    if deployment_path not in sys.path:
+        sys.path.append(deployment_path)
+
+
+set_import_search_path()
+
+#+end_src
+*** =tests/=
+**** =__init__.py=
+#+BEGIN_SRC python :tangle ./tests/__init__.py :eval no :noweb yes
+print "tests package"
+
+import os
+import sys
+
+__all__ = ['set_import_search_path']
+
+
+def set_import_search_path():
+    # The assumption here is that this script is in the src directory
+    # which is one directory above ovpl
+    webapp_directory_path = os.path.dirname(os.path.abspath(__file__))
+    path_list = webapp_directory_path.split("/")
+    path_list = path_list[:-1]  # remove src - till code
+    webapp_directory_path = "/".join(path_list)
+    src_path = webapp_directory_path + "/src"
+    tests_path = webapp_directory_path + "/tests"
+    s_implementation_path = src_path + "/implementation"
+    t_implementation_path = tests_path + "/implementation"
+    s_objects_path = src_path + "/implementation/objects"
+    t_objects_path = tests_path + "/implementation/objects"
+    deployment_path = src_path + "/deployment"
+
+    if webapp_directory_path not in sys.path:
+        sys.path.append(webapp_directory_path)
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    if tests_path not in sys.path:
+        sys.path.append(tests_path)
+    if s_implementation_path not in sys.path:
+        sys.path.append(s_implementation_path)
+    if t_implementation_path not in sys.path:
+        sys.path.append(t_implementation_path)
+    if s_objects_path not in sys.path:
+        sys.path.append(s_objects_path)
+    if t_objects_path not in sys.path:
+        sys.path.append(t_objects_path)
+    if deployment_path not in sys.path:
+        sys.path.append(deployment_path)
+
+
+set_import_search_path()
+
+#+end_src

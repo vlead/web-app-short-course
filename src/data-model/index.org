@@ -71,7 +71,7 @@ Encodes the following items of information:
  #+end_example
 
 * Abstract Entity Types
-#+BEGIN_SRC spec :tangle spec.txt
+#+BEGIN_SRC spec :tangle ../src/data-model/spec.txt
 ;;; Entity Types
 TYPE User
 TYPE Email
@@ -82,7 +82,7 @@ TYPE Session
 
 * Relations and cardinality constraints over entity types 
   For each relation, we define its inverse next to it.
-#+BEGIN_SRC spec :tangle spec.txt
+#+BEGIN_SRC spec :tangle ../src/data-model/spec.txt
 
 ;;; Relations with cardinality constraints
 
@@ -143,7 +143,7 @@ and five relations
 #+end_example
 
 ** Derived Entity sets
- #+BEGIN_SRC spec :tangle spec.txt
+ #+BEGIN_SRC spec :tangle ../src/data-model/spec.txt
 
 ;;; Derived Entity sets
  email-set   : set[Email]   = user-set.email        ; set of emails in the system
@@ -159,7 +159,7 @@ and five relations
 
     There is exactly one user (called =admin-user=) whose role is =admin=.
 
-    #+BEGIN_SRC spec :tangle spec.txt
+    #+BEGIN_SRC spec :tangle ../src/data-model/spec.txt
 
     ;;; The admin-user
 
@@ -173,7 +173,7 @@ and five relations
     #+END_SRC
 
     These specifications also capture referential integrity.
-#+BEGIN_SRC spec :tangle spec.txt
+#+BEGIN_SRC spec :tangle ../src/data-model/spec.txt
 
 ;;; Relation variables with Referential Integrity
 [email, user]    :  user-set!    > email-set!

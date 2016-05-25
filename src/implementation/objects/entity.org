@@ -6,6 +6,7 @@
 #+SETUPFILE: ../../org-templates/level-2.org
 #+options: ^:nil
 #+LATEX: Literal LaTeX code for export
+
 * Introduction
 
 In the object implementation of the mini version of the User
@@ -30,6 +31,7 @@ implementation that is /complete/ with respect to the data
 model.  Which elements of the data model are implemented and
 which are not are decisions based on the end user
 requirements of the application.
+
 
 * Entities
 
@@ -371,54 +373,10 @@ Note that =_set_user= is used internally by the
             'session': self.user.to_client()
         }
 #+END_SRC
-** Custom Exceptions
-   These are some of the custom exceptions used in the application.
-*** AttributeRequired
-
-#+name: class_AttributeRequired
-#+BEGIN_SRC python
-class AttributeRequired(Exception):
-    str = None
-
-    def __init__(self, str):
-        self.str = str
-
-    def __str__(self):
-        return repr(self.str)
-
-#+END_SRC
-
-*** Constraint Error
-#+name: class_ConstraintError
-#+BEGIN_SRC python
-class ConstraintError(Exception):
-    str = None
-
-    def __init__(self, str):
-        self.str = str
-
-    def __str__(self):
-        return repr(self.str)
-
-#+END_SRC
-
-*** NotAuthorized Error
-#+name: class_NotAuthorizedError
-#+BEGIN_SRC python
-class NotAuthorizedError(Exception):
-    str = None
-
-    def __init__(self, str):
-        self.str = str
-
-    def __str__(self):
-        return repr(self.str)
-
-#+END_SRC
 
 
-* initialization
-** Imports for Python API
+* Initialization
+** Imports for Object Implementation
 #+name: imports_for_obj
 #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
@@ -429,7 +387,7 @@ from utils import *
 #+END_SRC
 
 
-** Imports and Initialization of testcases for Python API
+** Imports and Initialization of testcases for Object
 
 #+name: imports_for_test_obj
 #+BEGIN_SRC python
@@ -437,29 +395,13 @@ from utils import *
 import unittest
 from unittest import TestCase
 from datetime import datetime
-
-from src.obj import *
-from src.op_exceptions import AttributeRequired
-from src.op_exceptions import ConstraintError
-from src.op_exceptions import NotAuthorizedError
-
-#+END_SRC
-
-
-** Imports for utility functions
-
-#+NAME: imports_for_utils
-#+BEGIN_SRC python
-
-# module to hold all utilities/helper functions
-
-import json
-
-import re
-
+from __init__ import *
+from obj import *
+from op_exceptions import AttributeRequired
+from op_exceptions import ConstraintError
+from op_exceptions import NotAuthorizedError
 
 #+END_SRC
-
 
 
 * Run Test Cases
@@ -477,14 +419,58 @@ if __name__ == '__main__':
     unittest.main()
 #+END_SRC
 
+
 * Tangling
+
 ** =src/=
 *** =__init__.py=
-#+BEGIN_SRC python :tangle ../../src/__init__.py :eval no :noweb yes
-import obj
+#+BEGIN_SRC python :tangle ../../src/implementation/objects/__init__.py :eval no :noweb yes
+print "objects package"
+import os
+import sys
+
+__all__ = ['set_import_search_path']
+
+
+def set_import_search_path():
+    # The assumption here is that this script is in the src directory
+    # which is one directory above ovpl
+    webapp_directory_path = os.path.dirname(os.path.abspath(__file__))
+    path_list = webapp_directory_path.split("/")
+    path_list = path_list[:-3]  # till code
+    webapp_directory_path = "/".join(path_list)
+    src_path = webapp_directory_path + "/src"
+    tests_path = webapp_directory_path + "/tests"
+    s_implementation_path = src_path + "/implementation"
+    t_implementation_path = tests_path + "/implementation"
+    s_objects_path = src_path + "/implementation/objects"
+    t_objects_path = tests_path + "/implementation/objects"
+    deployment_path = src_path + "/deployment"
+
+    if webapp_directory_path not in sys.path:
+        sys.path.append(webapp_directory_path)
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    if tests_path not in sys.path:
+        sys.path.append(tests_path)
+    if s_implementation_path not in sys.path:
+        sys.path.append(s_implementation_path)
+    if t_implementation_path not in sys.path:
+        sys.path.append(t_implementation_path)
+    if s_objects_path not in sys.path:
+        sys.path.append(s_objects_path)
+    if t_objects_path not in sys.path:
+        sys.path.append(t_objects_path)
+    if deployment_path not in sys.path:
+        sys.path.append(deployment_path)
+
+
+set_import_search_path()
+
 #+end_src
+
 *** =obj.py=
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no :noweb yes
+#+BEGIN_SRC python :tangle ../../src/implementation/objects/obj.py :eval no :noweb yes
 <<imports_for_obj>>
 <<class_Name>>
 <<class_Email>>
@@ -505,27 +491,56 @@ import obj
 <<session_to_client>>
 #+END_SRC
 
-*** =op-exceptions.py=
-#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no :noweb yes
-<<class_AttributeRequired>>
-<<class_ConstraintError>>
-<<class_NotAuthorizedError>>
-#+end_src
-*** =utils.py=
-#+BEGIN_SRC python :tangle ../../src/utils.py :eval no :noweb yes
-<<imports_for_utils>>
-<<def_check_pred>>
-<<def_check_inst>>
-<<def_is_alphabetic_str>>
-<<def_is_email_str>>
-#+end_src
+
 ** =tests/=
 *** =__init__.py=
-#+BEGIN_SRC python :tangle ../../tests/__init__.py :eval no :noweb yes
-print "tests"
+#+BEGIN_SRC python :tangle ../../tests/implementation/objects/__init__.py :eval no :noweb yes
+
+print "tests objects package"
+import os
+import sys
+
+__all__ = ['set_import_search_path']
+
+
+def set_import_search_path():
+    # The assumption here is that this script is in the src directory
+    # which is one directory above ovpl
+    webapp_directory_path = os.path.dirname(os.path.abspath(__file__))
+    path_list = webapp_directory_path.split("/")
+    path_list = path_list[:-3]  # till code
+    webapp_directory_path = "/".join(path_list)
+    src_path = webapp_directory_path + "/src"
+    tests_path = webapp_directory_path + "/tests"
+    s_implementation_path = src_path + "/implementation"
+    t_implementation_path = tests_path + "/implementation"
+    s_objects_path = src_path + "/implementation/objects"
+    t_objects_path = tests_path + "/implementation/objects"
+    deployment_path = src_path + "/deployment"
+
+    if webapp_directory_path not in sys.path:
+        sys.path.append(webapp_directory_path)
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    if tests_path not in sys.path:
+        sys.path.append(tests_path)
+    if s_implementation_path not in sys.path:
+        sys.path.append(s_implementation_path)
+    if t_implementation_path not in sys.path:
+        sys.path.append(t_implementation_path)
+    if s_objects_path not in sys.path:
+        sys.path.append(s_objects_path)
+    if t_objects_path not in sys.path:
+        sys.path.append(t_objects_path)
+    if deployment_path not in sys.path:
+        sys.path.append(deployment_path)
+
+
+set_import_search_path()
+
 #+end_src
 *** =test_obj.py=
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no :noweb yes
+#+BEGIN_SRC python :tangle ../../tests/implementation/objects/test_obj.py :eval no :noweb yes
 <<imports_for_test_obj>>
 <<class_TestName>>
 <<class_TestEmail>>
@@ -537,7 +552,3 @@ print "tests"
 <<run_test_cases>>
 #+END_SRC
 
-*** =test_utils.py=
-#+begin_src python :tangle ../../tests/test_utils.py :eval no :noweb yes
-
-#+end_src

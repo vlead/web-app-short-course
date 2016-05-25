@@ -177,6 +177,6 @@ class AddUser():
 
 *** =app_system.py=
 
-#+begin_src python :tangle ../../tests/test_obj.py :eval no :noweb yes
+#+begin_src python
 <<imports_for_test_obj>>
 #+end_src

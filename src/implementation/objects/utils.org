@@ -1,4 +1,11 @@
 #+title:  Utility Functions
+#+AUTHOR: VLEAD
+#+DATE: [2016-05-18 Wed]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ../../org-templates/level-2.org
+#+options: ^:nil
+#+LATEX: Literal LaTeX code for export
 
 * Predicate checks
 
@@ -22,10 +29,9 @@ def check_pred(p):
     return fn
 #+end_src
 
-*** Tests for =check_pred=
+* Tests for =check_pred=
 #+name: test_check_pred
 #+begin_src python
-from utils import *
 
 def rem(a, b):
     return a % b
@@ -41,6 +47,7 @@ class TestCheckPred(TestCase):
         self.assertRaises(TypeError, check_even, 5)
         self.assertEqual(check_even(False), False)  # False == 0 in Python
 #+end_src
+
 ** =check_inst= 
 
 =check_inst= takes a class and returns a function that
@@ -51,6 +58,7 @@ checks if its argument is an instance that class.
 def check_inst(cls):
     return check_pred(lambda arg: isinstance(arg, cls))
 #+end_src
+
 
 * Utility Functions
 ** =is_alphabetic_str=
@@ -125,6 +133,14 @@ Python.  See [[http://stackoverflow.com/questions/8022530/python-check-for-valid
 
 
 
+* Source Infra
+
+** Imports for source
+#+name: imports_for_source
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+import re
+#+end_src
 
 
 * Test Infra
@@ -136,28 +152,36 @@ Python.  See [[http://stackoverflow.com/questions/8022530/python-check-for-valid
 import unittest
 from unittest import TestCase
 from datetime import datetime
+
+from utils import *
 #+end_src
+
 
 ** Running tests
-#+NAME: run_test_cases
-#+BEGIN_SRC python
+ #+NAME: run_test_cases
+ #+BEGIN_SRC python
 if __name__ == '__main__':
     unittest.main()
-#+END_SRC
+ #+END_SRC
 
-* Tangling
-*** sources
-**** =utils.py=
-#+BEGIN_SRC python :tangle utils.py :eval no :noweb yes
+
+ * Tangling
+
+ ** sources
+ *** =utils.py=
+#+BEGIN_SRC python :tangle ../../src/implementation/utils.py :eval no :noweb yes
+<<imports_for_source>>
 <<def_check_pred>>
+<<def_check_inst>>
+<<def_is_alphabetic_str>>
+<<def_is_email_str>>
 #+end_src
+
 *** tests
-#+BEGIN_SRC python :tangle test_utils.py :eval no :noweb yes
+#+BEGIN_SRC python :tangle ../../tests/implementation/utils.py :eval no :noweb yes
 <<imports_for_tests>>
 <<test_check_pred>>
+<<class_Test_is_alphabetic_str>>
+<<def_test_three>>
 <<run_test_cases>>
 #+end_src
-
-
-
-

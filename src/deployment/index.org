@@ -16,7 +16,8 @@
   Here we use the =setuptools= module from the standard lib, to make a
   =setup.py= file, which will install all the python library dependencies.
 
-#+BEGIN_SRC python :tangle ../setup.py :eval no
+#+NAME: setup-tools
+#+BEGIN_SRC python
 from setuptools import setup
 
 requires = [
@@ -37,7 +38,8 @@ setup(
 #+END_SRC
 
 * Program to set up the database
-#+BEGIN_SRC python :tangle ../db_setup.py :eval no
+#+NAME: setup-database
+#+BEGIN_SRC python
 
 from src.app import create_app
 from src.db import *
@@ -69,7 +71,8 @@ if __name__ == "__main__":
   setup the database, configure the webserver, and finally deploy the
   application.
 
-#+BEGIN_SRC sh :tangle ../setup.sh :eval no
+#+NAME: setup-app
+#+BEGIN_SRC sh
 #!/bin/bash
 # Shell script to install deb package dependencies as well as python package
 # dependencies for dataservice.
@@ -146,7 +149,8 @@ exit 0
   to use WSGI and use the application scripts, and finally calls the database
   setup scripts to actually setup the database with tables.
 
-#+BEGIN_SRC sh :tangle ../configure.sh :eval no
+#+NAME: configure-app
+#+BEGIN_SRC
 #!/bin/bash
 # Configure the application in the deployment environment
 # 1. Update the config.py file with appropriate values
@@ -243,3 +247,67 @@ exit 0;
 
 
 
+* Tangling
+** =setup-tools=
+#+BEGIN_SRC python :tangle ../src/deployment/setup.py :eval no :noweb yes
+<<setup-tools>>
+#+END_SRC
+** =setup-database=
+#+BEGIN_SRC python :tangle ../src/deployment/db_setup.py :eval no :noweb yes
+<<setup-database>>
+#+END_SRC
+** =setup-app=
+#+BEGIN_SRC sh :tangle ../src/deployment/setup.sh :eval no :noweb yes
+<<setup-app>>
+#+END_SRC
+** =configure-app=
+#+BEGIN_SRC sh :tangle ../src/deployment/configure.sh :eval no :noweb yes
+<<configure-app>
+#+END_SRC
+
+** =__init__.py=
+#+BEGIN_SRC python :tangle ../src/deployment/__init__.py :eval no :noweb yes
+print "deployment package"
+
+import os
+import sys
+
+__all__ = ['set_import_search_path']
+
+
+def set_import_search_path():
+    # The assumption here is that this script is in the src directory
+    # which is one directory above ovpl
+    webapp_directory_path = os.path.dirname(os.path.abspath(__file__))
+    path_list = webapp_directory_path.split("/")
+    path_list = path_list[:-2]  # till code
+    webapp_directory_path = "/".join(path_list)
+    src_path = webapp_directory_path + "/src"
+    tests_path = webapp_directory_path + "/tests"
+    s_implementation_path = src_path + "/implementation"
+    t_implementation_path = tests_path + "/implementation"
+    s_objects_path = src_path + "/implementation/objects"
+    t_objects_path = tests_path + "/implementation/objects"
+    deployment_path = src_path + "/deployment"
+
+    if webapp_directory_path not in sys.path:
+        sys.path.append(webapp_directory_path)
+    if src_path not in sys.path:
+        sys.path.append(src_path)
+    if tests_path not in sys.path:
+        sys.path.append(tests_path)
+    if s_implementation_path not in sys.path:
+        sys.path.append(s_implementation_path)
+    if t_implementation_path not in sys.path:
+        sys.path.append(t_implementation_path)
+    if s_objects_path not in sys.path:
+        sys.path.append(s_objects_path)
+    if t_objects_path not in sys.path:
+        sys.path.append(t_objects_path)
+    if deployment_path not in sys.path:
+        sys.path.append(deployment_path)
+
+
+set_import_search_path()
+
+#+END_SRC
