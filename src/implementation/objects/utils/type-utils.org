@@ -8,6 +8,22 @@ This module defines basic type predicates and type checks.
 A type predicate is a function that takes one argument and
 returns a boolean.
 
+** Instance predicate
+An instance predicate checks if the argument is in an
+instance of a class.
+#+name: def_is_inst
+#+BEGIN_SRC python
+def is_inst(cls):
+    def fn(a):
+        return isinstance(a, cls)
+    return fn
+
+is_int = is_inst(int)
+is_str = is_inst(str)
+is_dict = is_inst(dict)
+#+END_SRC
+
+
 ** =is_alphabetic_str=
 
     This function take an argument and checks whether the
@@ -110,6 +126,25 @@ check_non_neg_int = check_pred(lambda arg: check_int(arg) and arg >= 0)
 
 #+end_src
 
+** =check_inv=
+An invariant is a predicate on a dictionary.  =check-inv=
+takes an invariant and an optional class name and returns an
+invariant check. 
+
+#+name: def_check_inv
+#+BEGIN_SRC python
+def check_inv(inv, *name):
+    # args is a dictionary
+    def fn(args):
+        if inv(args):
+            args
+        else:
+            if name == []:
+                raise TypeError("invariant fails on args %s" % args)
+            else:
+                raise TypeError("invariant for class %s fails on args %s" % (name[0], args))
+    return fn
+#+END_SRC
 * Tests
 #+name: class_TestCheckAlphabeticStr
 #+begin_src python
@@ -168,6 +203,7 @@ if __name__ == '__main__':
 <<def_is_email_str>>
 <<def_check_pred>>
 <<def_check_inst>>
+<<def_check_inv>>
 #+end_src
 *** tests
 #+BEGIN_SRC python :tangle test_type_utils.py :eval no :noweb yes

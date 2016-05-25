@@ -3,8 +3,38 @@
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
 
-This module introduces automation techniques for building
-standard classes.  
+* Introduction
+
+This module introduces metaprogramming techniques for
+building  classes and populating the
+
+
+* Creating classes on the fly
+
+See [[http://stackoverflow.com/questions/2461751/python-class-factory-using-user-input-as-class-names][this discussion]] on Stack Overflow about how to create
+classes on the fly:
+
+#+name: def_meta
+#+BEGIN_SRC python
+def meta(name):
+    class cls(object):
+        @staticmethod
+        def inv(args):
+            pass
+
+    cls.__name__ = name
+    return cls
+#+END_SRC
+
+** Test cases
+#+name: class_TestMeta
+#+BEGIN_SRC python
+class TestMeta(TestCase):
+    def test_meta(self):
+        Bar = meta("Bar")
+        bar = Bar()
+        self.assertTrue(isinstance(bar, Bar))
+#+END_SRC
 
 * Value Classes
 ** Definition
@@ -52,27 +82,27 @@ class ValueClassTemplate():
         return fn
 
     @staticmethod
-    def populate(cls, type_check):
+    def populate(name, type_check):
+        cls = meta(name) 
         cls.__init__ = ValueClassTemplate.mk_init(type_check)
         cls.get = ValueClassTemplate.mk_get()
         cls.set = ValueClassTemplate.mk_init(type_check)
         cls.__eq__   = ValueClassTemplate.mk_eq()
         cls.__str__  = ValueClassTemplate.mk_str()
+        return cls
 #+END_SRC
 ** Test cases
 #+name: class_TestValueClassTemplate
 #+BEGIN_SRC python
-class Name():
-    pass
-
 class TestValueClassTemplate(TestCase):
 
-    def setUp(self):
-        ValueClassTemplate.populate(Name, check_alphabetic_str)
-        Name.n1 = Name("ravi")
-        Name.n2 = Name("Ravi")
+    Name = ValueClassTemplate.populate("Name", check_alphabetic_str)
+    Name.n1 = Name("ravi")
+    Name.n2 = Name("Ravi")
+
         
     def test_value_class_template(self):
+        Name = TestValueClassTemplate.Name
         print "test_value_class_template"
         self.assertEqual(Name.n1.get(), "ravi", "n1.get()")
         Name.n1.set("Ravi")
@@ -80,46 +110,64 @@ class TestValueClassTemplate(TestCase):
 #+END_SRC
 
 * Class template
-The class This is a general template for making classes.
-Here is an example usage of it.
+This is a template for making classes.  Here is an example
+usage of it.
 ** Example usage
 #+BEGIN_EXAMPLE
-class User:
-    pass
-
-ClassTemplate.populate(User, name=check_str, 
+ClassTemplate.populate("User", name=check_str, 
                              id=check_non_neg_int)
 
-User.__eq__ = ClassTemplate.mk_eq(User, lambda a,b: a.id == b.id)
 u = User(name="ravi", id=23)
-u.get('name').get() => "ravi"
-u.get('name').set("Ravi Chandran Ashwin")
-u.get('name').get() => "Ravi Chandran Ashwin"
-
+u.get('name') => "ravi"
+u.set(name="Ravi Chandran Ashwin")
+u.get('name') => "Ravi Chandran Ashwin"
 #+END_EXAMPLE
 
 ** Implementation
 
+A class is created with no fields.  It is then populated
+with =ClassTemplate.populate=, which takes a class and a
+dictionary mapping state variable names to their type
+checks.  The keywords may contain a field called 'inv' which
+is mapped to an invariant predicate that returns true or false.
+
 #+name: class_ClassTemplate 
 #+BEGIN_SRC python
 class ClassTemplate():
+
+    @staticmethod
+    def inv_true(obj, args):
+        return True
+
     @staticmethod
     def mk_init(cls):
         # args is a dictionary
         def fn(obj, **args): 
             check_dict(args)
-            # keywords must match formal_keys
-            check_pred(lambda a: sorted(a.keys()) == cls.formal_keys)(args)
-            obj.state = {}
-            for key, value in args.iteritems():
-                # apply type checking to the value first
-                obj.state[key] = check_pred(cls.formals[key])(value)
-        return fn
 
+            # match arg keys with state_vars list
+            check_pred(lambda a: sorted(a.keys()) == cls.sorted_state_vars)(args)
+
+            obj.state = {}
+
+            # each arg should satisfy its typecheck 
+            for key, value in args.iteritems():
+                cls.state_var_type_checks[key](value)
+
+            # invariant must be true on args
+#            check_inv(cls.inv,cls)args)
+            if not obj.inv(args):
+                raise TypeError("invariant for class %s violated for init args %s" %(cls.__name__, args))
+
+            # initialize the state
+            for key, value in args.iteritems():
+                    obj.state[key] = value
+        return fn
+        
     @staticmethod
     def mk_getter(cls):
         def fn(obj,k):
-            if str(k) and (k in cls.formal_keys):
+            if str(k) and (k in cls.sorted_state_vars):
                 return obj.state[k]
             else:
                 raise TypeError("get: Invalid key %s" % k)
@@ -127,11 +175,27 @@ class ClassTemplate():
 
     @staticmethod
     def mk_setter(cls):
-        def fn(obj, k, val):
-            if str(k) and (k in cls.formal_keys):
-                obj.state[k] = check_pred(cls.formals[k])(val)
-            else:
-                raise TypeError("set: Invalid key %s" % k)
+        def fn(obj, **args):
+            print "args = ", args
+            check_dict(args)
+            tmp = obj.state.copy()
+            print "tmp =", tmp
+            
+            # args should be a subset of the cls.state_var_type_checks
+            # check the type predicates on each of the args
+            for key, value in args.iteritems():
+                if key in cls.sorted_state_vars:
+                    cls.state_var_type_checks[key](value)
+                    tmp[key]=value
+                else:
+                    raise TypeError("set: Invalid field name %s" % key)
+            # now check the invariant on tmp
+#            check_inv(cls.inv,cls)(tmp)
+            if not obj.inv(tmp):
+                raise TypeError("invariant for class %s violated for init args %s" %(cls.__name__, args))
+
+            # now save the state
+            obj.state = tmp
         return fn
 
 
@@ -142,42 +206,72 @@ class ClassTemplate():
         return fn
 
     @staticmethod
-    def populate(cls, **formals):
-        print formals
-        cls.formals = check_dict(formals)
-        cls.formal_keys = sorted(cls.formals.keys())
-        cls.__init__ = ClassTemplate.mk_init(cls)
-        cls.get = ClassTemplate.mk_getter(cls)
-        cls.set = ClassTemplate.mk_setter(cls)
-        cls.to_client = ClassTemplate.mk_setter(cls)
-
-    @staticmethod
-    def to_client(cls):
+    def mk_to_client(cls):
         def fn(obj):
             return obj.state
         return fn
+
+    @staticmethod
+    def populate(name, **formals):
+        print formals
+        
+        # check if formals is a dictionary
+        check_dict(formals)
+
+        cls = meta(name)
+
+        # set the invariant
+        if 'inv' in formals:
+            cls.inv = formals['inv']
+            del formals['inv']
+        else:
+            cls.inv = ClassTemplate.inv_true
+        # sorted list of state variables
+        cls.sorted_state_vars = sorted(formals.keys())
+
+        # formal specs of the state variables
+        cls.state_var_type_checks=formals.copy()
+        cls.__init__ = ClassTemplate.mk_init(cls)
+        cls.get = ClassTemplate.mk_getter(cls)
+        cls.set = ClassTemplate.mk_setter(cls)
+        cls.to_client = ClassTemplate.mk_to_client(cls)
+        return cls
 #+END_SRC
 
 
 * Tests
 #+name: class_TestClassTemplate
 #+BEGIN_SRC python
-class Foo():
-    pass
-
 class TestClassTemplate(TestCase):
+    Foo = ClassTemplate.populate("Foo",  x=check_int, y=check_str)
+    Foo.foo = Foo(x=4, y="hello")
 
-    def setUp(self):
-        ClassTemplate.populate(Foo, x=check_int, y=check_str)
-        Foo.foo = Foo(x=4, y="hello")
+    def temp_inv(obj, args):
+        return args["min"] <= args["max"]
+                
+    Temp = ClassTemplate.populate("Temp", min=check_int, max=check_int, inv=lambda ob, args: args["min"] <= args["max"])
+    Temp.temp = Temp(min=4, max=5)
 
-    def test_class_template(self):
-        print "test_class_template"
+    def test_class_template_with_Foo(self):
+        print "test_class_template_with_Foo"
+        Foo = TestClassTemplate.Foo
+
         self.assertEqual(Foo.foo.get("x"), 4, "foo.get(x)==4")
         self.assertEqual(Foo.foo.get("y"), "hello", "foo.get(y)==hello")
 
-        Foo.foo.set("x", 7)
+        Foo.foo.set(x=7)
         self.assertEqual(Foo.foo.get("x"), 7, "foo.get(x)==7")
+        self.assertTrue(Foo.foo.inv({'x':Foo.foo.get("x")}), "Foo.foo.inv")
+
+    def test_class_template_with_Temp(self):
+        print "test_class_template_with_Temp"
+        Temp = TestClassTemplate.Temp
+        self.assertEqual(Temp.temp.get("min"), 4, "temp.get(min)==4")
+        self.assertEqual(Temp.temp.get("max"), 5, "temp.get(max)==5")
+
+        Temp.temp.set(min=0)
+        self.assertEqual(Temp.temp.get("min"), 0, "temp.get(min)==0")
+        self.assertRaises(TypeError, lambda: Temp.temp.set(min=9), "temp.set(min=9) Error")
 #+END_SRC
 
 * Test Infra													:boilerplate:
@@ -203,12 +297,14 @@ if __name__ == '__main__':
 *** sources
 **** =type_type_utils.py=
 #+BEGIN_SRC python :tangle class_templates.py :eval no :noweb yes
+<<def_meta>>
 <<class_ValueClassTemplate>>
 <<class_ClassTemplate>>
 #+end_src
 *** tests
 #+BEGIN_SRC python :tangle test_class_templates.py :eval no :noweb yes
 <<imports_for_tests>>
+<<class_TestMeta>>
 <<class_TestValueClassTemplate>>
 <<class_TestClassTemplate>>
 <<run_test_cases>>
