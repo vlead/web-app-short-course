@@ -176,21 +176,25 @@ class ClassTemplate():
     @staticmethod
     def mk_setter(cls):
         def fn(obj, **args):
+            #obj is the object whose variables are being set
+            # args is a dictionary of new variable bindings
+
             print "args = ", args
             check_dict(args)
             tmp = obj.state.copy()
             print "tmp =", tmp
-            
-            # args should be a subset of the cls.state_var_type_checks
-            # check the type predicates on each of the args
+
             for key, value in args.iteritems():
+                # arg variables should be a subset of those in the formal spec
                 if key in cls.sorted_state_vars:
+                    # and they should pass the type checking
                     cls.state_var_type_checks[key](value)
+                    # if so update tmp with the new bindings in args
                     tmp[key]=value
                 else:
                     raise TypeError("set: Invalid field name %s" % key)
+
             # now check the invariant on tmp
-#            check_inv(cls.inv,cls)(tmp)
             if not obj.inv(tmp):
                 raise TypeError("invariant for class %s violated for init args %s" %(cls.__name__, args))
 
@@ -213,27 +217,39 @@ class ClassTemplate():
 
     @staticmethod
     def populate(name, **formals):
+        # name is the name of the class to be created
+        # formals is a dictionary of name and typecheck pairs
         print formals
         
         # check if formals is a dictionary
         check_dict(formals)
 
+        # create a class with name
         cls = meta(name)
 
         # set the invariant
+        # if absent in formals, use default (inv_true)
         if 'inv' in formals:
             cls.inv = formals['inv']
             del formals['inv']
         else:
             cls.inv = ClassTemplate.inv_true
-        # sorted list of state variables
+
+        # create sorted list of state variables
         cls.sorted_state_vars = sorted(formals.keys())
 
-        # formal specs of the state variables
+        # create a vector of type checks  for the  state variables
         cls.state_var_type_checks=formals.copy()
+        # __init__
         cls.__init__ = ClassTemplate.mk_init(cls)
+
+        # get
         cls.get = ClassTemplate.mk_getter(cls)
+
+        # set
         cls.set = ClassTemplate.mk_setter(cls)
+
+        # to_client
         cls.to_client = ClassTemplate.mk_to_client(cls)
         return cls
 #+END_SRC
