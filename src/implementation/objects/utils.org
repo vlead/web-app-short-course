@@ -29,6 +29,7 @@ def check_pred(p):
     return fn
 #+end_src
 
+
 * Tests for =check_pred=
 #+name: test_check_pred
 #+begin_src python
