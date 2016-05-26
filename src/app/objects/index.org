@@ -12,5 +12,5 @@ The =objects= package hold two sub packages
 
 * Tangle :boilerplate:
 #+BEGIN_SRC python :eval no :tangle __init__.py
-__all__ = 
+__all__ = ['entities', 'system']
 #+END_SRC
