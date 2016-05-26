@@ -94,6 +94,22 @@ application life cycle will include the following phases:
 
 
 * Application
+The user directory application is a simple application that
+maintains user data.   The development of the application is
+divided into the following six phases:
 
-As part of this course, we develop a [[./app.org][User Directory Web
-Application]].
+ 1. [[./requirements/index.org][Requirements]]
+
+ 2. [[./data-model/index.org][Data Model]]
+
+ 3. [[./implementation/objects/index.org][Object Implementation]]
+
+ 4. Persistence
+
+ 6. REST API and implementation
+
+ 7. Web front end
+
+ 8. Deployment
+
+
