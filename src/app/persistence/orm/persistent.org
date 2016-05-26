@@ -1,0 +1,43 @@
+
+
+class User():
+   ...
+
+
+PersistedUser (persisted)
+
+
+class PersistedUser(Entity):
+   user  = None
+
+   table 'user'
+   email  = db.col 
+   name   = db.col
+   role   = db.col
+
+
+   def __init__(self, e, n, r):
+         
+         self.user = User(e,n,r)
+         self.email = self.user.email 
+         self.name = self.user.name
+         self.role = self.user.role
+         self.save()
+
+
+   def set_email(self,e):
+      self.user.set_email(e)
+      self.email = self.user.email
+      self.save()
+
+
+
+   def get_email(self):
+      return self.user.email
+
+
+
+
+         
+
+         

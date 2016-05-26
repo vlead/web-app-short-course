@@ -1,0 +1,166 @@
+* Extra stuff
+* showUsers
+** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def show(session):
+        if session not in Session.sessions:
+            raise NotAuthorizedError("only a user with admin role or "
+                                     "user role can view all the users")
+        else:
+            existing_users = filter(lambda x: x.email == user.email,
+                                    User.users)
+            if not existing_users:
+                User.users.append(user)
+            else:
+                raise ConstraintError('user already exists in the system')
+#+END_SRC
+
+
+** Test
+
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_user_add(self):
+        print "test_user_add"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        
+        User.add(user, Session.admin)
+        self.assertEqual(User.users[1].email, "smith@gmail.com")
+
+    def test_user_duplicate_add(self):
+        print "test_user_duplicate_add"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        User.add(user, Session.admin)
+        with self.assertRaises(ConstraintError):
+            User.add(user, Session.admin)
+#+END_SRC
+
+
+* addUser
+
+** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def add(user, session):
+        if session.user.role is not Role.admin:
+            raise NotAuthorizedError("only a user with admin role can add"
+                                     " user to the system")
+        else:
+            existing_users = filter(lambda x: x.email == user.email,
+                                    User.users)
+            if not existing_users:
+                User.users.append(user)
+            else:
+                raise ConstraintError('user already exists in the system')
+#+END_SRC
+
+
+** Test
+
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_user_add(self):
+        print "test_user_add"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        
+        User.add(user, Session.admin)
+        self.assertEqual(User.users[1].email, "smith@gmail.com")
+
+    def test_user_duplicate_add(self):
+        print "test_user_duplicate_add"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        User.add(user, Session.admin)
+        with self.assertRaises(ConstraintError):
+            User.add(user, Session.admin)
+#+END_SRC
+
+
+
+* getAll: Nil --> set[User]
+
+** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def get_all():
+        return User.users
+#+END_SRC
+
+
+** Test getAll
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_user_get_all(self):
+        print "test_user_get_all"
+        role = Role.admin
+        user = User(name=Name("Termite"), 
+                    email=Email("tremite@gmail.com"),
+                    role=role)
+        
+        users = User.get_all()
+        for user in users:
+            print user.to_client()
+        self.assertEqual("admin", users[0].role.name)
+#+END_SRC
+
+
+** getAll: Nil --> set[Session]
+
+
+*** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def get_all(session):
+        if session.user.role is Role.admin:
+            return Session.sessions
+        else:
+            raise NotAuthorizedError("Only an admin can view all the sessions")
+#+END_SRC
+
+
+*** Test getAll: Nil --> set[Session]
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_session_get_all(self):
+        print "test_session_get_all"
+        user = User(name=Name("Robin Smith"), 
+                    email=Email("smith@gmail.com"),
+                    role=Role.user)
+        User.add(user, Session.admin)
+        sessions = Session.get_all(Session.admin)
+        for session in sessions:
+            print session.to_client()
+#+END_SRC
+
+
+** deleteSession 
+
+     Delete a session for a user.  This scenario exists when a user logs out.
+
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def del_session(user):
+        sessions = filter(lambda session:
+                          user.email != session.user.email,
+                          Session.sessions)
+        Session.sessions = sessions
+#+END_SRC
+
+** getSessionByUser: user > session
+
+*** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def del_session(user):
+        sessions = filter(lambda session:
+                          user.email != session.user.email,
+                          Session.sessions)
+        Session.sessions = sessions
+#+END_SRC
+*** Test
+
+

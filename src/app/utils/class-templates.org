@@ -55,9 +55,9 @@ from type_utils import *
 class ValueClassTemplate():
 
     @staticmethod
-    def mk_init(type_check):
+    def mk_init(type_pred):
         def fn(obj, val):
-            obj.value = type_check(val)
+            obj.value = check_pred(type_pred)(val)
         return fn
 
     @staticmethod
@@ -82,11 +82,11 @@ class ValueClassTemplate():
         return fn
 
     @staticmethod
-    def populate(name, type_check):
+    def mk_class(name, type_pred):
         cls = meta(name) 
-        cls.__init__ = ValueClassTemplate.mk_init(type_check)
+        cls.__init__ = ValueClassTemplate.mk_init(type_pred)
         cls.get = ValueClassTemplate.mk_get()
-        cls.set = ValueClassTemplate.mk_init(type_check)
+        cls.set = ValueClassTemplate.mk_init(type_pred)
         cls.__eq__   = ValueClassTemplate.mk_eq()
         cls.__str__  = ValueClassTemplate.mk_str()
         return cls
@@ -96,7 +96,7 @@ class ValueClassTemplate():
 #+BEGIN_SRC python
 class TestValueClassTemplate(TestCase):
 
-    Name = ValueClassTemplate.populate("Name", check_alphabetic_str)
+    Name = ValueClassTemplate.mk_class("Name", is_alphabetic_str)
     Name.n1 = Name("ravi")
     Name.n2 = Name("Ravi")
 
@@ -110,23 +110,50 @@ class TestValueClassTemplate(TestCase):
 #+END_SRC
 
 * Class template
-This is a template for making classes.  Here is an example
-usage of it.
-** Example usage
-#+BEGIN_EXAMPLE
-ClassTemplate.populate("User", name=check_str, 
-                             id=check_non_neg_int)
+This is a template for making classes.  The class template
+is useful for creating data classes, i.e., classes whose
+objects have state variables that are typed and that have an
+invariant holding them together.  These data classes come
+with a standard set of setters and getters.  Equality
+predicate may be added later (see =Temp= example below)
 
-u = User(name="ravi", id=23)
-u.get('name') => "ravi"
-u.set(name="Ravi Chandran Ashwin")
-u.get('name') => "Ravi Chandran Ashwin"
+
+Class templates take a 
+ - the name of the class to be created (string)
+
+ - A specification of the names of the state variables and
+   their types (dictionary)
+
+ - An invariant which is a function of an instance of the
+   class and a dictionary of the state variables.  The
+   invariant is optional, but if present is part of the same
+   dictionary that specifies the state variables, against
+   the key =inv=. 
+
+#+BEGIN_EXAMPLE
+   Temp = ClassTemplate.mk_class("Temp", min=is_int, max=is_int, 
+                                 inv=lambda self, args: 
+								      args["min"] <= args["max"])
+
+   Temp = ClassTemplate.mk_class("Temp", min=is_int, max=is_int, 
+                                 inv=lambda self, args: 
+								      args["min"] <= args["max"])
+
 #+END_EXAMPLE
+
+=Temp= is now a class with two state variables =min= and
+=max=, both satisfying the type predicate =is_int= and
+together satisfying the invariant =min= is less than equal
+to =max=.  Since =inv= ends up being a method in =Temp=, its
+needs to carry as its first argument an object =self=, even
+though the invariant itself is defined on elements of the
+dictionary =args=.
+
 
 ** Implementation
 
-A class is created with no fields.  It is then populated
-with =ClassTemplate.populate=, which takes a class and a
+A class is created with no fields.  It is then mk_classd
+with =ClassTemplate.mk_class=, which takes a class and a
 dictionary mapping state variable names to their type
 checks.  The keywords may contain a field called 'inv' which
 is mapped to an invariant predicate that returns true or false.
@@ -141,6 +168,7 @@ class ClassTemplate():
 
     @staticmethod
     def mk_init(cls):
+        # obj is an instance of cls
         # args is a dictionary
         def fn(obj, **args): 
             check_dict(args)
@@ -216,9 +244,13 @@ class ClassTemplate():
         return fn
 
     @staticmethod
-    def populate(name, **formals):
+    def mk_class(name, **formals):
         # name is the name of the class to be created
-        # formals is a dictionary of name and typecheck pairs
+        # formals is a dictionary of name, type_pred pairs
+        # example of formals: 
+        # {'min': is_int, 
+        #  'max': is_int, 
+        #  'inv': lambda self, args: args['min'] <= args['max']}
         print formals
         
         # check if formals is a dictionary
@@ -236,15 +268,26 @@ class ClassTemplate():
             cls.inv = ClassTemplate.inv_true
 
         # create sorted list of state variables
+        # ['max', 'min']
         cls.sorted_state_vars = sorted(formals.keys())
 
-        # create a vector of type checks  for the  state variables
-        cls.state_var_type_checks=formals.copy()
+        # create a dictionary of type preds  for the  state variables
+        # ['min': is_int, 'max': is_int]
+        cls.state_var_type_preds=formals.copy()
+
+        # ['min': check_int, 'max': check_int]
+        cls.state_var_type_checks = \
+        {k: check_pred(v) for k, v in cls.state_var_type_preds.items()}
+
         # __init__
         cls.__init__ = ClassTemplate.mk_init(cls)
 
         # get
         cls.get = ClassTemplate.mk_getter(cls)
+
+        # eq
+        # to be done
+
 
         # set
         cls.set = ClassTemplate.mk_setter(cls)
@@ -259,14 +302,8 @@ class ClassTemplate():
 #+name: class_TestClassTemplate
 #+BEGIN_SRC python
 class TestClassTemplate(TestCase):
-    Foo = ClassTemplate.populate("Foo",  x=check_int, y=check_str)
+    Foo = ClassTemplate.mk_class("Foo",  x=is_int, y=is_str)
     Foo.foo = Foo(x=4, y="hello")
-
-    def temp_inv(obj, args):
-        return args["min"] <= args["max"]
-                
-    Temp = ClassTemplate.populate("Temp", min=check_int, max=check_int, inv=lambda ob, args: args["min"] <= args["max"])
-    Temp.temp = Temp(min=4, max=5)
 
     def test_class_template_with_Foo(self):
         print "test_class_template_with_Foo"
@@ -279,6 +316,20 @@ class TestClassTemplate(TestCase):
         self.assertEqual(Foo.foo.get("x"), 7, "foo.get(x)==7")
         self.assertTrue(Foo.foo.inv({'x':Foo.foo.get("x")}), "Foo.foo.inv")
 
+
+    def temp_inv(obj, args):
+        return args["min"] <= args["max"]
+                
+    Temp = ClassTemplate.mk_class("Temp", min=is_int, max=is_int, inv=temp_inv)
+    Temp.temp = Temp(min=4, max=5)
+    def eq_fn(self, other):
+        return \
+            isinstance(other, self.__class__) and \
+            self.get("min") == other.get("min") and \
+            self.get("max") == other.get("max")
+    Temp.__eq__ = eq_fn
+
+
     def test_class_template_with_Temp(self):
         print "test_class_template_with_Temp"
         Temp = TestClassTemplate.Temp
@@ -287,7 +338,13 @@ class TestClassTemplate(TestCase):
 
         Temp.temp.set(min=0)
         self.assertEqual(Temp.temp.get("min"), 0, "temp.get(min)==0")
-        self.assertRaises(TypeError, lambda: Temp.temp.set(min=9), "temp.set(min=9) Error")
+        self.assertRaises(TypeError, lambda: Temp.temp.set(min=9), 
+                          "temp.set(min=9) Error")
+
+        
+        temp2 = Temp(min=0, max=5)
+
+        self.assertTrue(Temp.temp == temp2, "temp==temp2")
 #+END_SRC
 
 * Test Infra													:boilerplate:

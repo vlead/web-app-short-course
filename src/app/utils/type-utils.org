@@ -19,6 +19,7 @@ def is_inst(cls):
     return fn
 
 is_int = is_inst(int)
+is_bool = is_inst(bool)
 is_str = is_inst(str)
 is_dict = is_inst(dict)
 #+END_SRC
@@ -199,6 +200,7 @@ if __name__ == '__main__':
 *** sources
 **** =type_type_utils.py=
 #+BEGIN_SRC python :tangle type_utils.py :eval no :noweb yes
+<<def_is_inst>>
 <<def_is_alphabetic_str>>
 <<def_is_email_str>>
 <<def_check_pred>>

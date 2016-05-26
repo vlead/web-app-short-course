@@ -1,0 +1,49 @@
+#+title:  Custom Exceptions
+#+SETUPFILE: ../../../org-templates/level-0.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+* Custom Exceptions
+   These are some of the custom exceptions used in the application.
+*** AttributeRequired
+
+#+name: class_AttributeRequired
+#+BEGIN_SRC python
+class AttributeRequired(Exception):
+    str = None
+
+    def __init__(self, str):
+        self.str = str
+
+    def __str__(self):
+        return repr(self.str)
+
+#+END_SRC
+
+*** Constraint Error
+#+name: class_ConstraintError
+#+BEGIN_SRC python
+class ConstraintError(Exception):
+    str = None
+
+    def __init__(self, str):
+        self.str = str
+
+    def __str__(self):
+        return repr(self.str)
+
+#+END_SRC
+
+*** NotAuthorized Error
+#+name: class_NotAuthorizedError
+#+BEGIN_SRC python
+class NotAuthorizedError(Exception):
+    str = None
+
+    def __init__(self, str):
+        self.str = str
+
+    def __str__(self):
+        return repr(self.str)
+
+#+END_SRC
+

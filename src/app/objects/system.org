@@ -180,3 +180,43 @@ class AddUser():
 #+begin_src python :tangle ../../tests/test_obj.py :eval no :noweb yes
 <<imports_for_test_obj>>
 #+end_src
+** Imports for Python API
+#+name: imports_for_obj
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+from op_exceptions import AttributeRequired
+from op_exceptions import ConstraintError
+from op_exceptions import NotAuthorizedError
+from utils import *
+#+END_SRC
+
+** Imports and Initialization of testcases for Python API
+
+#+name: imports_for_test_obj
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+import unittest
+from unittest import TestCase
+from datetime import datetime
+
+from src.obj import *
+from src.op_exceptions import AttributeRequired
+from src.op_exceptions import ConstraintError
+from src.op_exceptions import NotAuthorizedError
+
+#+END_SRC
+
+** Imports for utility functions
+
+#+NAME: imports_for_utils
+#+BEGIN_SRC python
+
+# module to hold all utilities/helper functions
+
+import json
+
+import re
+
+
+#+END_SRC
+
