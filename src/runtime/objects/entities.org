@@ -131,7 +131,7 @@ class TestEntities(TestCase):
 import unittest
 from unittest import TestCase
 from datetime import datetime
-from ..util.class_templates import *
+from util.class_templates import *
 #+end_src
 
 ** Tests

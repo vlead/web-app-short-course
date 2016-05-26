@@ -149,12 +149,14 @@ class AddUser():
             raise StateError("user not in session %s" % s.user.name)
         if (u in System.user_set):
             raise StateError("user %s already in System" % u.name)
+
             
     @staticmethod
     def action(args):
         u = args[0]
         s = args[1]
         System.user_set.append(u)
+        return u
 #+end_src
 
 ** =del_user=
