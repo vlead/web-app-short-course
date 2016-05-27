@@ -12,6 +12,7 @@
 - =mini= :: Version with only Users and Sessions as the main
      Entities.  No  Roles. 
 
+
 * Goal
 
 The Goal of this course is to walk you through an end-to-end
@@ -20,6 +21,7 @@ deployment of a small web application.  In the process, you
 will learn to use various technologies and will be
 introduced to well-established processes and good software
 development practices that we use here at VLEAD.
+
 
 * Components of a web application
 A /web application/ consists of a collection of continuously
@@ -51,6 +53,7 @@ The web application allows access to its underlying data via
 /URL addresses/ (sometime along with form fields).  The
 specification of the mapping of the urls to operations on
 the data is called a /REST API/. 
+
 
 * Software Development Life Cycle  (SDLC)
 
@@ -120,10 +123,10 @@ Application]].
               - web
     
 
-** Tangling
+* Tangling
 
-*** =build/code/=
-**** =__init__.py=
+** =build/code/=
+*** =__init__.py=
 #+BEGIN_SRC python :tangle __init__.py :eval no :noweb yes
 print "code package"
 import os
@@ -164,8 +167,8 @@ def set_import_search_path():
 set_import_search_path()
 
 #+end_src
-*** =src/=
-**** =__init__.py=
+** =src/=
+*** =__init__.py=
 #+BEGIN_SRC python :tangle ./src/__init__.py :eval no :noweb yes
 print "src package"
 import os
@@ -210,8 +213,8 @@ def set_import_search_path():
 set_import_search_path()
 
 #+end_src
-*** =tests/=
-**** =__init__.py=
+** =tests/=
+*** =__init__.py=
 #+BEGIN_SRC python :tangle ./tests/__init__.py :eval no :noweb yes
 print "tests package"
 
