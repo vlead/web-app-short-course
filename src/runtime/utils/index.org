@@ -1,16 +1,17 @@
 #+title: The =utils= Package
-#+SETUPFILE: ../../../org-templates/level-0.org
+#+SETUPFILE: ../../org-templates/level-2.org
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
 
 The =utils= package hold two modules
 
- - =type_utils=
+ - [[./type-utils.org][=type_utils=]]
 
- - =class_templates=
+ - [[./class-templates.org][=class_templates=]]
 
 
-* Tangle :boilerplate:
+* Tangle                          :boilerplate:
 #+BEGIN_SRC python :eval no :tangle __init__.py
 __all__ = ['type_utils', 'class_templates']
 #+END_SRC

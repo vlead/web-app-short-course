@@ -1,9 +1,15 @@
-#+title:  Custom Exceptions
-#+SETUPFILE: ../../../org-templates/level-0.org
+#+TITLE:  Custom Exceptions
+#+SETUPFILE: ../../org-templates/level-2.org
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
+
+All custom exceptions used by the application are defined here.
+
 * Custom Exceptions
-   These are some of the custom exceptions used in the application.
+
+  These are some of the custom exceptions used in the application.
+
 *** AttributeRequired
 
 #+name: class_AttributeRequired
@@ -47,3 +53,17 @@ class NotAuthorizedError(Exception):
 
 #+END_SRC
 
+
+
+* Tangling                                        :boilerplate:
+** =__init__.py=
+#+BEGIN_SRC python :eval no :tangle __init__.py :eval no
+print "exceptions package"
+#+END_SRC
+
+** =exceptions.py=
+#+BEGIN_SRC python :tangle exceptions.py :eval no :noweb yes
+<<class_AttributeRequired>>
+<<class_ConstraintError>>
+<<class_NotAuthorizedError>>
+#+END_SRC

@@ -1,0 +1,25 @@
+#+title: The =objects= Package
+#+SETUPFILE: ../org-templates/level-1.org
+#+options: ^:nil
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+
+The =runtime= package holds other sub packages
+
+ - =objects=  
+
+ - =persistence=
+
+ - =rest=
+
+ - =web=
+
+ - =utils=
+
+ - =exceptions=
+
+
+* Tangle                                       :boilerplate:
+#+BEGIN_SRC python :eval no :tangle __init__.py
+print "runtime package"
+#+END_SRC

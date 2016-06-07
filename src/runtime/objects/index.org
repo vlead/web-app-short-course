@@ -1,16 +1,17 @@
 #+title: The =objects= Package
-#+SETUPFILE: ../../../org-templates/level-0.org
+#+SETUPFILE: ../../org-templates/level-2.org
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
 
-The =objects= package hold two sub packages
+The =objects= package holds two modules
 
  - =entities=  
 
- - =utils=     
+ - =system=     
 
 
 * Tangle :boilerplate:
 #+BEGIN_SRC python :eval no :tangle __init__.py
+print "objects package"
 __all__ = ['entities', 'system']
 #+END_SRC
