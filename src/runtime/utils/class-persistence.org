@@ -11,13 +11,14 @@
 * Make Persistent
 #+NAME: class_ClassPersistentTemplate
 #+BEGIN_SRC python
+
 class ClassPersistenceTemplate():
 
     @staticmethod
     def mk_save(cls):
         def fn(obj):
             for key, value in obj.state.iteritems():
-                    obj.key = value
+                setattr(obj, key, value)
 
             db.session.add(obj)
             db.session.commit()
@@ -44,26 +45,16 @@ class ClassPersistenceTemplate():
 
     @staticmethod
     def mk_get_by_id(cls):
-        def fn():
+        def fn(id):
             db.session.autoflush = False
-            obj = cls.query.get(id)
-            return_obj = cls()
-            for key in return_obj.state.iteritems():
-                    return_obj.state[key] = obj.key
+            return cls.query.get(id)
         return staticmethod(fn)
 
     @staticmethod
     def mk_get_all(cls):
         def fn():
             db.session.autoflush = False
-            objs = cls.query.all()
-            return_objs = []
-            for obj in objs:
-                return_obj = cls()
-                for key in return_obj.state.iteritems():
-                    return_obj.state[key] = obj.key
-                return_objs.append(return_obj)
-
+            return cls.query.all()
         return staticmethod(fn)
 
     @staticmethod
@@ -73,12 +64,13 @@ class ClassPersistenceTemplate():
             setattr(cls, key, value)
         '''http://stackoverflow.com/questions/9539052/how-to-dynamically-change-base-class-of-instances-at-runtime
 '''
-        cls.__bases__ = (db.Model, )
+        cls = type(cls.__name__, (db.Model,), dict(cls.__dict__))
 
-        cls.save = classPersistenceTemplate.mk_save(cls)
-        cls.update = classPersistenceTemplate.mk_update(cls)
-        cls.get_by_id = classPersistenceTemplate.mk_get_by_id(cls)
-        cls.get_all = classPersistenceTemplate.mk_get_all(cls)
+        cls.save = ClassPersistenceTemplate.mk_save(cls)
+        cls.update = ClassPersistenceTemplate.mk_update(cls)
+        cls.get_by_id = ClassPersistenceTemplate.mk_get_by_id(cls)
+        cls.get_all = ClassPersistenceTemplate.mk_get_all(cls)
+        return cls
 
 #+END_SRC
 * Tests
@@ -97,6 +89,19 @@ class TestPersistence(TestCase):
     def tearDown(self):
         db.session.remove()
         db.drop_all()
+
+    def testCreationOfAPersistentClass(self):
+        print "testCreationOfAPersistentClass"
+        args = {"__tablename__": "names",
+                "id": db.Column(db.Integer, primary_key=True),
+                "name": db.Column(db.String(128), nullable=False)
+                }
+        PName = ClassPersistenceTemplate.mk_persistent(entities.Name, **args)
+        self.setUp()
+        p_name = PName(name="Jimi Hendrix")
+        p_name.save()
+        name = PName.get_by_id(1)
+        self.assertEqual(name.get("name"), "Jimi Hendrix")
 
 
 #+END_SRC
@@ -123,9 +128,11 @@ db = SQLAlchemy()
 import unittest
 from flask.ext.testing import TestCase
 from datetime import datetime
-
-from class_persistent_template import *
+from type_utils import *
+from class_templates import *
+from class_persistence_template import *
 from runtime.rest.app import create_app
+import runtime.objects.entities as entities
 
 config = {
     'SQLALCHEMY_DATABASE_URI': ''
@@ -144,13 +151,14 @@ if __name__ == '__main__':
 * Tangling                                                 :boilerplate:
 
 *** sources
-#+BEGIN_SRC python :tangle class_persistent_template.py :eval no :noweb yes
+#+BEGIN_SRC python :tangle class_persistence_template.py :eval no :noweb yes
 <<imports_for_sources>>
 <<class_ClassPersistentTemplate>>
 #+end_src
 
 *** tests
-#+BEGIN_SRC python :tangle test_class_templates.py :eval no :noweb yes
+#+BEGIN_SRC python :tangle test_class_persistence_template.py :eval no :noweb yes
 <<imports_for_tests>>
+<<persistence_tests>>
 <<run_test_cases>>
 #+end_src

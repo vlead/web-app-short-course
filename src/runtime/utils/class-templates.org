@@ -18,7 +18,7 @@ classes on the fly:
 #+name: def_meta
 #+BEGIN_SRC python
 def meta(_name):
-    class cls(object):
+    class cls():
         @staticmethod
         def inv(args):
             pass
@@ -300,9 +300,6 @@ class ClassTemplate():
         # to_client
         cls.to_client = ClassTemplate.mk_to_client(cls)
         return cls
-
-    @staticmethod
-    def mk_persistent(_name, **formals):
 
 #+END_SRC
 
