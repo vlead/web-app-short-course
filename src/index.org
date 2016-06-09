@@ -2,9 +2,9 @@
 #+AUTHOR: Venkatesh Choppella,  Thirumal Ravula and Sripathi Kammari @ VLEAD, IIIT Hyderabad
 #+DATE: [2016-05-11 Wed]
 #+SETUPFILE: ./org-templates/level-0.org
-#+options: ^:nil
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
 
 * Version/Branch History
 
@@ -101,16 +101,9 @@ divided into the following six phases:
 
  2. [[./data-model/index.org][Data Model]]
 
- 3. [[./runtime/objects/index.org][Object Implementation]]
+ 3. [[./runtime/index.org][Runtime]]
 
- 4. Persistence
-
- 6. REST API and implementation
-
- 7. Web front end
-
- 8. Deployment
-
+ 4. [[./deployment/index.org][Deployment]]
 
 * Tangle                                       :boilerplate:
 #+BEGIN_SRC python :eval no :tangle __init__.py

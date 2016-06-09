@@ -1,11 +1,11 @@
-#+title:  Mini Version of User Directory Application: System
+#+TITLE: Mini Version of User Directory Application: System
 #+AUTHOR: VLEAD
-#+DATE: [2016-05-18 Wed]
-#+PROPERTY: results output
-#+PROPERTY: exports code
-#+SETUPFILE: ../../org-templates/level-2.org
-#+options: ^:nil
-#+LATEX: Literal LaTeX code for export
+#+DATE: [2016-06-07 Tue]
+#+SETUPFILE: ../../org-templates/level-2.orgss
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
+
 * Introduction
 
 A system has clear boundaries of input, output and state.

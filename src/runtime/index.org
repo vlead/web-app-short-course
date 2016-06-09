@@ -1,22 +1,24 @@
-#+title: The =objects= Package
+#+TITLE: Runtime of Application
+#+AUTHOR: VLEAD
+#+DATE: [2016-06-07 Tue]
 #+SETUPFILE: ../org-templates/level-1.org
-#+options: ^:nil
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
 
-The =runtime= package holds other sub packages
+The =runtime= of the application is defined by:
 
- - =objects=  
+ - [[./objects/index.org][=Objects=]]  
 
- - =persistence=
+ - =Persistence=
 
- - =rest=
+ - =REST API=
 
- - =web=
+ - =Web Front End=
 
- - =utils=
+ - [[./utils/index.org][=Utilities=]]
 
- - =exceptions=
+ - [[./exceptions/exceptions.org][=Exceptions=]]
 
 
 * Tangle                                       :boilerplate:

@@ -1,8 +1,10 @@
-#+title:  Entities
+#+TITLE: Entities
+#+AUTHOR: VLEAD
+#+DATE: [2016-06-07 Tue]
 #+SETUPFILE: ../../org-templates/level-2.org
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
-#+options: ^:nil
+#+OPTIONS: ^:nil
 
 * Introduction
 
@@ -56,11 +58,17 @@ class TestName(TestCase):
 
 #+END_SRC
 
+
 * Email
 =Name= is a value class with type =is_email_str=.
 #+NAME: class_Email
 #+begin_src python
 Email = ClassTemplate.mk_class("Email", email=check_email_str)
+
+Email.__eq__ = lambda self, other: \
+                  isinstance(other, self.__class__) and \
+                  self.get("email") == other.get("email")
+
 is_email = is_inst(Email)
 check_email = check_pred(is_email)
 
@@ -79,7 +87,17 @@ class TestEmail(TestCase):
                          "jimi@gnu.org")
         self.assertRaises(TypeError, Name, name="jimi@@gnu.org")
 
+
+    def test_equality_of_email(self):
+        print "test_equality_of_email"
+        em1 = Email(email="jimi@gnu.org")
+        self.assertEqual(em1 == em1, True)
+
+        em2 = Email(email="didley@gnu.org")
+        self.assertEqual(em1 == em2, False)
+
 #+END_SRC
+
 
 * Role
    =Role= is an entity that has a field =name= which is an alphabetic string
@@ -102,9 +120,17 @@ class TestRole(TestCase):
     def test_instantiate_role(self):
         print "test_instantiate_role"
         self.assertEqual(is_role(Role(name="admin")), True)
+        a_role = Role(name="admin")
+        self.assertEqual(check_role(a_role), a_role)
         self.assertEqual(Role(name="admin").get("name"), "admin")
         self.assertRaises(TypeError, Role, name="admin123")
 
+    def test_sets_on_role(self):
+        print "test_sets_on_role"
+        u_role = Role(name="user")
+        self.assertEqual(u_role.get("name"), "user")
+        u_role.set(name="admin")
+        self.assertEqual(u_role.get("name"), "admin")
 #+END_SRC
 
 
@@ -121,7 +147,7 @@ User = ClassTemplate.mk_class("User",
 
 User.__eq__ = lambda self, other: \
                   isinstance(other, self.__class__) and \
-                  self.email == other.email
+                  self.get("email") == other.get("email")
 
 is_user = is_inst(User)
 check_user = check_pred(is_user)
@@ -129,13 +155,46 @@ check_user = check_pred(is_user)
 #+END_SRC
 
 ** Test User
-#+NAME: 
-#+BEGIN_SRC 
+#+NAME: class_TestUser
+#+BEGIN_SRC python
+class TestUser(TestCase):
+    TESTING = True
+
+    def test_instantiate_user(self):
+        print "test_instantiate_user"
+        user = User(name=Name(name="Jimi Hendrix"),
+                    email=Email(email="jimi@gnu.org"),
+                    role=Role(name="admin"))
+        self.assertEqual(is_user(user), True)
+
+    def test_sets_on_user(self):
+        print "test_sets_on_user"
+        user = User(name=Name(name="Jimi Hendrix"),
+                    email=Email(email="jimi@gnu.org"),
+                    role=Role(name="admin"))
+
+        user.set(name=Name(name="Bo Didley"),
+                 email=Email(email="didley@gnu.org"),
+                 role=Role(name="user"))
+
+        self.assertEqual(user.get("name").get("name"), "Bo Didley")
+        self.assertEqual(user.get("email").get("email"), "didley@gnu.org")
+        self.assertEqual(user.get("role").get("name"), "user")
+
+        
+    def test_equality_on_user(self):
+        print "test_equality_on_user"
+        user1 = User(name=Name(name="Jimi Hendrix"),
+                    email=Email(email="jimi@gnu.org"),
+                    role=Role(name="admin"))
+        self.assertEqual(user1 == user1, True)
 
 #+END_SRC
 
+
 * Session
-    A session holds a user.
+    A session stores the user information.  The session object defines the set
+    of operations allowed by the system.  
 
 #+NAME: class_Session
 #+BEGIN_SRC python
@@ -146,6 +205,39 @@ check_session = check_pred(is_session)
 
 #+END_SRC
 
+** Test Session
+
+   Test cases to test Seesion entity
+
+#+NAME: class_TestSession
+#+BEGIN_SRC python
+    TESTING = True
+
+    def test_instantiate_session(self):
+        print "test_instantiate_user"
+        user = User(name=Name(name="Jimi Hendrix"),
+                    email=Email(email="jimi@gnu.org"),
+                    role=Role(name="admin"))
+        session = Session(user=user)
+        self.assertEqual(is_session(session), True)
+
+    def test_sets_on_session(self):
+        print "test_sets_on_session"
+        user = User(name=Name(name="Jimi Hendrix"),
+                    email=Email(email="jimi@gnu.org"),
+                    role=Role(name="admin"))
+
+        session = Session(user=user)
+
+        user = User(name=Name(name="Bo Didley"),
+                    email=Email(email="didley@gnu.org"),
+                    role=Role(name="user"))
+
+        session.set(user=user)
+        self.assertEqual(session.get("user").get("email").get("email"),
+                         "didley@gnu.org")
+
+#+END_SRC
 
 * Infra                                                         :boilerplate:
 
@@ -199,5 +291,7 @@ if __name__ == '__main__':
 <<class_TestName>>
 <<class_TestEmail>>
 <<class_TestRole>>
+<<class_TestUser>>
+<<class_TestSession>>
 <<run_test_cases>>
 #+end_src

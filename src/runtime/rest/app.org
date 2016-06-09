@@ -1,0 +1,44 @@
+#+TITLE: The Flask Web Server
+#+AUTHOR: VLEAD
+#+DATE: [2016-06-07 Tue]
+#+SETUPFILE: ../../org-templates/level-2.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
+
+The application that runs the FLASK web server
+
+#+NAME: application
+#+BEGIN_SRC python
+
+# -*- coding: utf-8 -*-
+import os
+
+from flask import Flask, jsonify, make_response
+# from flask.ext.cors import CORS
+
+from runtime.utils.class_persistence_template import db
+
+
+def create_app(config):
+    # init our app
+    app = Flask(__name__)
+    app.secret_key = 'djfjsdkjXXS7979dfdfd'
+    app.config.from_object(config)
+    # init sqlalchemy db instance
+    db.init_app(app)
+    db.app = app
+    return app
+
+
+if __name__ == "__main__":
+    app = create_app(config)
+    app.run(debug=True, host='0.0.0.0', threaded=True)
+
+#+END_SRC
+
+* Tangle                          :boilerplate:
+
+#+BEGIN_SRC python :tangle app.py :eval no :noweb yes
+<<application>>
+#+END_SRC

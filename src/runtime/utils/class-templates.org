@@ -208,10 +208,8 @@ class ClassTemplate():
             #obj is the object whose variables are being set
             # args is a dictionary of new variable bindings
 
-            print "args = ", args
             check_dict(args)
             tmp = obj.state.copy()
-            print "tmp =", tmp
 
             for key, value in args.iteritems():
                 # arg variables should be a subset of those in the formal spec
@@ -259,7 +257,6 @@ class ClassTemplate():
         # {'min': is_int, 
         #  'max': is_int, 
         #  'inv': lambda self, args: args['min'] <= args['max']}
-        print formals
         
         # check if formals is a dictionary
         check_dict(formals)
@@ -303,6 +300,10 @@ class ClassTemplate():
         # to_client
         cls.to_client = ClassTemplate.mk_to_client(cls)
         return cls
+
+    @staticmethod
+    def mk_persistent(_name, **formals):
+
 #+END_SRC
 
 
@@ -370,7 +371,7 @@ class TestClassTemplate(TestCase):
 
 #+END_SRC
 
-* Test Infra													:boilerplate:
+* Test Infra                                                    :boilerplate:
 ** Imports for tests 
 #+name: imports_for_tests
 #+BEGIN_SRC python
@@ -389,9 +390,9 @@ if __name__ == '__main__':
     unittest.main()
 #+END_SRC
 
-* Tangling														:boilerplate:
+* Tangling                                                      :boilerplate:
 *** sources
-**** =type_type_utils.py=
+**** =class_templates.py=
 #+BEGIN_SRC python :tangle class_templates.py :eval no :noweb yes
 <<def_meta>>
 <<class_ValueClassTemplate>>
