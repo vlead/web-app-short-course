@@ -12,6 +12,8 @@ The =utils= package hold two modules
 
  - [[./class-templates.org][=class_templates=]]
 
+ - [[./class-persistence.org][=class_persistence_template=]]
+
 
 * Tangle                          :boilerplate:
 #+BEGIN_SRC python :eval no :tangle __init__.py

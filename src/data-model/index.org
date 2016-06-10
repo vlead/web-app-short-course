@@ -6,6 +6,7 @@
 #+SETUPFILE: ../org-templates/level-1.org
 #+options: ^:nil
 #+LATEX: Literal LaTeX code for export
+
 * Notation
 ** Sets, cardinality and relations
 
@@ -70,6 +71,7 @@ Encodes the following items of information:
  user: Email > User?
  #+end_example
 
+
 * Abstract Entity Types
 #+BEGIN_SRC spec :tangle spec.txt
 ;;; Entity Types
@@ -79,6 +81,7 @@ TYPE Name
 TYPE Role = {admin, user}
 TYPE Session
 #+END_SRC
+
 
 * Relations and cardinality constraints over entity types 
   For each relation, we define its inverse next to it.
@@ -181,6 +184,7 @@ and five relations
 [role, users]    :  user-set+    > role-set!   
 [role, session]  :  session-set  >  role-set!
 #+END_SRC
+
 
 * Operations 
 CRUD operations.  

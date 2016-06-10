@@ -1,14 +1,53 @@
 #+TITLE: Class Persistence
 #+AUTHOR: VLEAD
 #+DATE: [2016-06-09 Thu]
-#+SETUPFILE: ../../org-templates/level-0.org
+#+SETUPFILE: ../../org-templates/level-2.org
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
 #+OPTIONS: ^:nil
 
 * Introduction
+  This document builds on the [[./class-templates.org][=class_templates=]] meta programming techniques to
+  make objects persistent.
 
-* Make Persistent
+
+* Persistence
+  The entities of the system defined in the [[../../data-model/index.org][data model]] are implemented as
+  [[../objects/entities.org][objects]].  Any practical system entails persistence of these entities
+  implemented as objects so that the information is not lost when the system is
+  shut down.
+
+  This document captures a way that takes these [[../objects/entities.org][objects]] and provides an API for
+  persisting them.  The technology used for persistence is [[https://www.mysql.com/][mysql]] and since this
+  application is built using [[https://www.python.org/download/releases/2.7/][python]], [[http://www.sqlalchemy.org/][sqlalchemy]] - a python based [[https://en.wikipedia.org/wiki/Object-relational_mapping][ORM]] is used
+  for database access.
+
+  A entity with no persistence is provided persistence the following way.
+  #+BEGIN_EXAMPLE
+  args = {"__tablename__": "names",
+  "id": db.Column(db.Integer, primary_key=True),
+  "name": db.Column(db.String(128), nullable=False)
+  }
+  Name = ClassPersistenceTemplate.mk_persistent(Name, **table_args)
+  #+END_EXAMPLE
+
+  Now, an API to perform CRUD (create, read, update and delete) operations is
+  available for an object of type Name.
+  
+
+** Implementation
+
+   ClassPersistentTemplate provides a method =mk_persistent= that takes a class
+   created by =ClassTemplates= and provides persistence to it. 
+
+   =mk_persistent= takes:
+
+   - a class and 
+
+   - a dictionary that contains name-value pairs defining a table in mysql 
+   
+   as arguments and returns a class.
+
 #+NAME: class_ClassPersistentTemplate
 #+BEGIN_SRC python
 
@@ -36,8 +75,6 @@ class ClassPersistenceTemplate():
     @staticmethod
     def mk_delete(cls):
         def fn(obj):
-            for key, value in obj.state.iteritems():
-                    obj.key = value
             db.session.delete(obj)
             db.session.commit()
 
@@ -68,12 +105,15 @@ class ClassPersistenceTemplate():
 
         cls.save = ClassPersistenceTemplate.mk_save(cls)
         cls.update = ClassPersistenceTemplate.mk_update(cls)
+        cls.delete = ClassPersistenceTemplate.mk_delete(cls)
         cls.get_by_id = ClassPersistenceTemplate.mk_get_by_id(cls)
         cls.get_all = ClassPersistenceTemplate.mk_get_all(cls)
         return cls
 
 #+END_SRC
-* Tests
+
+
+** Tests
 #+NAME: persistence_tests
 #+BEGIN_SRC python
 class TestPersistence(TestCase):
@@ -102,9 +142,15 @@ class TestPersistence(TestCase):
         p_name.save()
         name = PName.get_by_id(1)
         self.assertEqual(name.get("name"), "Jimi Hendrix")
+        p_name.update(name="Bo Didley")
+        names = PName.get_all()
+        self.assertEqual(names[0].get("name"), "Bo Didley")
+        names[0].delete()
+        names = PName.get_all()
+        self.assertEqual(names, [])
 
+ #+END_SRC
 
-#+END_SRC
 
 * Infra                                                    :boilerplate:
 
@@ -155,6 +201,7 @@ if __name__ == '__main__':
 <<imports_for_sources>>
 <<class_ClassPersistentTemplate>>
 #+end_src
+
 
 *** tests
 #+BEGIN_SRC python :tangle test_class_persistence_template.py :eval no :noweb yes

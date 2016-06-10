@@ -7,7 +7,7 @@
 * Introduction
 
 This module introduces metaprogramming techniques for
-building  classes and populating the
+building  classes and populating them.
 
 
 * Creating classes on the fly
@@ -36,6 +36,7 @@ class TestMeta(TestCase):
         bar = Bar()
         self.assertTrue(isinstance(bar, Bar))
 #+END_SRC
+
 
 * Value Classes
 ** Definition
@@ -109,6 +110,7 @@ class TestValueClassTemplate(TestCase):
         Name.n1.set("Ravi")
         self.assertTrue(Name.n1.get()==Name.n2.get(), "n1.get()==n2.get()")
 #+END_SRC
+
 
 * Class template
 This is a template for making classes.  The class template

@@ -7,6 +7,7 @@
 * Introduction
   This module defines basic type predicates and type checks. 
 
+
 * Type predicates
   A type predicate is a function that takes one argument and
   returns a boolean.
