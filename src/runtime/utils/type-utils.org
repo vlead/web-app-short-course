@@ -21,7 +21,7 @@
 #+BEGIN_SRC python
 def is_inst(cls):
     def fn(a):
-        return isinstance(a, cls)
+        return a.__class__.__name__ == cls.__name__
     return fn
 
 is_int = is_inst(int)

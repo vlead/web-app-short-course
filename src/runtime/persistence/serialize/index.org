@@ -1,1 +1,0 @@
-#+title:  Serialization Model for Mini Version of User Directory Application
