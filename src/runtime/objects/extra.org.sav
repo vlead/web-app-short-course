@@ -1,7 +1,7 @@
 * Extra stuff
 * showUsers
 ** Definition
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+BEGIN_SRC python 
     @staticmethod
     def show(session):
         if session not in Session.sessions:
@@ -19,7 +19,7 @@
 
 ** Test
 
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+#+BEGIN_SRC python 
     def test_user_add(self):
         print "test_user_add"
         user = User(name=Name("Robin Smith"), 
@@ -43,7 +43,7 @@
 * addUser
 
 ** Definition
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+BEGIN_SRC python 
     @staticmethod
     def add(user, session):
         if session.user.role is not Role.admin:
@@ -61,7 +61,7 @@
 
 ** Test
 
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+#+BEGIN_SRC python 
     def test_user_add(self):
         print "test_user_add"
         user = User(name=Name("Robin Smith"), 
@@ -86,7 +86,7 @@
 * getAll: Nil --> set[User]
 
 ** Implementation
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+BEGIN_SRC python
     @staticmethod
     def get_all():
         return User.users
@@ -94,7 +94,7 @@
 
 
 ** Test getAll
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+#+BEGIN_SRC python 
     def test_user_get_all(self):
         print "test_user_get_all"
         role = Role.admin
@@ -113,7 +113,7 @@
 
 
 *** Implementation
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+BEGIN_SRC python
     @staticmethod
     def get_all(session):
         if session.user.role is Role.admin:
@@ -124,7 +124,7 @@
 
 
 *** Test getAll: Nil --> set[Session]
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+#+BEGIN_SRC python 
     def test_session_get_all(self):
         print "test_session_get_all"
         user = User(name=Name("Robin Smith"), 
@@ -141,7 +141,7 @@
 
      Delete a session for a user.  This scenario exists when a user logs out.
 
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+BEGIN_SRC python
     @staticmethod
     def del_session(user):
         sessions = filter(lambda session:
@@ -153,7 +153,7 @@
 ** getSessionByUser: user > session
 
 *** Definition
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+BEGIN_SRC python 
     @staticmethod
     def del_session(user):
         sessions = filter(lambda session:
