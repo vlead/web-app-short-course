@@ -24,7 +24,7 @@
 
   A entity with no persistence is provided persistence the following way.
   #+BEGIN_EXAMPLE
-  args = {"__tablename__": "names",
+  table_args = {"__tablename__": "names",
   "id": db.Column(db.Integer, primary_key=True),
   "name": db.Column(db.String(128), nullable=False)
   }

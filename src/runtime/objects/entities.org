@@ -38,7 +38,7 @@ requirements of the application.
 
 #+NAME: class_Name
 #+begin_src python
-Name = ClassTemplate.mk_class("Name", name=check_alphabetic_str)
+Name = ClassTemplate.mk_class("Name", name=is_alphabetic_str)
 is_name = is_inst(Name)
 check_name = check_pred(is_name)
 
@@ -63,7 +63,7 @@ class TestName(TestCase):
 =Name= is a value class with type =is_email_str=.
 #+NAME: class_Email
 #+begin_src python
-Email = ClassTemplate.mk_class("Email", email=check_email_str)
+Email = ClassTemplate.mk_class("Email", email=is_email_str)
 
 Email.__eq__ = lambda self, other: \
                   isinstance(other, self.__class__) and \
@@ -104,7 +104,7 @@ class TestEmail(TestCase):
 
 #+NAME: class_Role
 #+BEGIN_SRC python
-Role = ClassTemplate.mk_class("Role", name=check_alphabetic_str)
+Role = ClassTemplate.mk_class("Role", name=is_alphabetic_str)
 is_role = is_inst(Role)
 check_role = check_pred(is_role)
 Role.is_admin = lambda role: role.name == 'admin'
@@ -141,9 +141,9 @@ class TestRole(TestCase):
 #+NAME: class_User
 #+BEGIN_SRC python
 User = ClassTemplate.mk_class("User", 
-                              name=check_name, 
-                              email=check_email, 
-                              role=check_role)
+                              name=is_name, 
+                              email=is_email, 
+                              role=is_role)
 
 User.__eq__ = lambda self, other: \
                   isinstance(other, self.__class__) and \

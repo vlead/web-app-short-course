@@ -6,8 +6,9 @@
 
 This holds the application's configuration parameters.
 
-#+BEGIN_SRC python :tangle config.py :noweb yes
+#+BEGIN_SRC python :tangle config.py :eval no :noweb yes
 class Config:
     admin_name = "admin"
     admin_email = "app-admin@vlabs.ac.in"
+    admin_role = "admin"
 #+END_SRC
