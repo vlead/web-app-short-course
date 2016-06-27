@@ -95,7 +95,7 @@ application life cycle will include the following phases:
 * Application
 The user directory application is a simple application that
 maintains user data.   The development of the application is
-divided into the following six phases:
+divided into the following phases:
 
  1. [[./requirements/index.org][Requirements]]
 
