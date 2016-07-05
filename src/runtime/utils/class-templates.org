@@ -180,7 +180,7 @@ class ClassTemplate():
             check_pred(lambda a: sorted(a.keys()) == cls.sorted_state_vars)(args)
 
             obj.state = {}
-
+            
             # each arg should satisfy its typecheck 
             for key, value in args.iteritems():
                 cls.state_var_type_checks[key](value)
@@ -193,8 +193,9 @@ class ClassTemplate():
             # initialize the state
             for key, value in args.iteritems():
                     obj.state[key] = value
+
         return fn
-        
+
     @staticmethod
     def mk_getter(cls):
         def fn(obj,k):
@@ -229,6 +230,10 @@ class ClassTemplate():
 
             # now save the state
             obj.state = tmp
+
+            for handler in cls.custom_handlers:
+                handler(obj)
+
         return fn
 
 
@@ -301,6 +306,8 @@ class ClassTemplate():
 
         # to_client
         cls.to_client = ClassTemplate.mk_to_client(cls)
+
+        cls.custom_handlers = []
         return cls
 
 #+END_SRC

@@ -19,7 +19,7 @@
 #+begin_src python
 args = {"__tablename__": "names",
         "id": db.Column(db.Integer, primary_key=True),
-        "name": db.Column(db.String(128), nullable=False),
+        "name": db.Column(db.String(128), unique=True, nullable=False),
         "users": db.relationship('User', backref='name')
         }
 
@@ -51,15 +51,16 @@ class TestPersistentName(TestCase):
         self.assertEqual(is_name(na), True)
         na.save()
         new_name = Name.get_by_id(1)
+
         self.assertEqual(new_name.get("name"), "Jimi Hendrix")
         self.assertRaises(TypeError, Name, name="Jimi 123 Hendrix")
+
 
     def test_update_name(self):
         print "test update name"
         na = Name(name="Jimi Hendrix")
         na.save()
-        na.update(name="Bo Didley")
-        na.save()
+        na.set(name="Bo Didley")
         self.assertEqual(na.get("name"), "Bo Didley")
 
     def test_delete_name(self):
@@ -80,7 +81,8 @@ class TestPersistentName(TestCase):
 args = {"__tablename__": "emails",
         "id": db.Column(db.Integer, primary_key=True),
         "email": db.Column(db.String(128), unique=True, nullable=False),
-        "user": db.relationship('User', backref=db.backref('email', uselist=False))
+        "user": db.relationship('User',
+                                backref=db.backref('email', uselist=False))
         }
 
 Email = ClassPersistenceTemplate.mk_persistent(Email, **args)
@@ -120,8 +122,7 @@ class TestPersistenceEmail(TestCase):
         print "test update email"
         em = Email(email="jimi@gnu.org")
         em.save()
-        em.update(email="didley@gnu.org")
-        em.save()
+        em.set(email="didley@gnu.org")
         em = Email.get_by_id(1)
         self.assertEqual(em.get("email"), "didley@gnu.org")
 
@@ -192,8 +193,7 @@ class TestPersistenceRole(TestCase):
         print "test update role"
         ro = Role(name="admin")
         ro.save()
-        ro.update(name="user")
-        ro.save()
+        ro.set(name="user")
         ro = Role.get_by_id(1)
         self.assertEqual(ro.get("name"), "user")
 
@@ -284,12 +284,12 @@ class TestPersistenceUser(TestCase):
         usr = User(name=na1, email=em1, role=ro1)
         usr.save()
 
-        usr.update(name=na2, email=em2, role=ro2)
+        usr.set(name=na2, email=em2, role=ro2)
         n_usr = User.get_by_id(1)
 
         self.assertEqual(n_usr.get("name").get("name"), "Bo Didley")
 
-    def test_delete_role(self):
+    def test_delete_user(self):
         print "test delete user"
         na = Name(name="Jimi Hendrix")
         na.save()
