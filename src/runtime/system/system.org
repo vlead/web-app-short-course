@@ -83,19 +83,14 @@ The class corresponding to each operation has five fields:
 #+NAME: class_system
 #+begin_src python
 class System ():
-    handlers = {}
-    role_set = []
-    user_set = []
     session_set = []
 
     def __init__(self):
         raise Error('Can not instantiate')
 
     @staticmethod
-    def initialize_system():
-        System.handlers = populate_handlers()
-        System.role_set = System.handlers['initialize_role_set']()
-        System.user_set = System.handlers['initialize_user_set']()
+    def initialize_system(cls):
+        System.handler = cls()
         System.session_set = []
 
     @staticmethod
@@ -115,23 +110,24 @@ class TestSystemConstructor(TestCase):
     TESTING = True
 
     def setUp(self):
-        System.initialize_system()
+        System.initialize_system(ObjectHandler)
 
     def tearDown(self):
-        pass
+        System.handler = None
+        System.session_set = []
    
     def test_system_constructor(self):
         print "test_system_constructor"
-        self.assertEqual(System.user_set[0].get("name").get("name"),
+        self.assertEqual(System.handler.user_set[0].get("name").get("name"),
                          Config.admin_name)
-        self.assertEqual(System.user_set[0].get("email").get("email"),
+        self.assertEqual(System.handler.user_set[0].get("email").get("email"),
                          Config.admin_email)
-        self.assertEqual(System.user_set[0].get('role').get('name'),
+        self.assertEqual(System.handler.user_set[0].get('role').get('name'),
                          Config.admin_role)
 
     def test_is_session_admin(self):
         print "test_is_session_admin"
-        admin_user=System.user_set[0]
+        admin_user=System.handler.user_set[0]
         session = Session(user=admin_user)
         System.session_set.append(session)
         self.assertEqual(System.is_session_admin(session), True)
@@ -170,6 +166,12 @@ class TestSystemConstructor(TestCase):
 #+BEGIN_SRC python
 class TestSystemArityAndType(TestCase):
     TESTING = True
+
+    def setUp(self):
+        System.initialize_system(ObjectHandler)
+
+    def tearDown(self):
+        System.handler = None
 
     def test_arity(self):
         print "test_arity"
@@ -241,14 +243,14 @@ class AddUser():
     @staticmethod
     def state_check(args):
         user = args["user"]
-        if (System.handlers['user_already_exists'](System.user_set, user)):
+        if System.handler.user_exists(user):
             raise StateError("user %s already exists in System"
                              % user.get("name").get("name"))
 
     @staticmethod
     def action(args):
         user = args["user"]
-        System.handlers['add_user'](System.user_set, user)
+        user = System.handler.add_user(user)
         return user
 #+end_src
 *** Test AddUser
@@ -256,85 +258,27 @@ class AddUser():
 #+BEGIN_SRC python
 class TestAddUser(TestCase):
     TESTING = True
+
     def setUp(self):
-        pass
+        System.initialize_system(ObjectHandler)
 
     def tearDown(self):
-        admin = filter( lambda x: x.get("email").get("email") ==
-                        "app-admin@vlabs.ac.in", System.user_set)
-        System.user_set = admin
-        System.session_set = []
-        System.institute_set = []
-        System.oc_set = []
-        System.nc_set = []
+        System.handler = None
+
     def test_add_user_by_admin(self):
         print "test_add_user_by_admin"
-        admin_user=System.user_set[0]
-        session = Session(user=admin_user,role=Role.admin)
+        admin_user=System.handler.user_set[0]
+        session = Session(user=admin_user)
         System.session_set.append(session)
  
-        user=User(name=Name(name="me"),email=Email(email="abc@gmail.com"),
-                  roles=[],user_status="active")
+        user=User(name=Name(name="me"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.handler.role_set[1])
 
-        System.do("add_user",user=user,session=session)
+        System.do("add_user", user=user, session=session)
         
-        u=System.user_set[1]
+        u=System.handler.user_set[1]
         self.assertEqual(u.get("name").get("name"),"me")
-
-    def test_add_user_noc_by_admin(self):
-        print "test_add_user_by_noc"
-        admin_user=System.user_set[0]
-        session = Session(user=admin_user,role=Role.admin)
-        System.session_set.append(session)
- 
-        noc_user=User(name=Name(name="nocuser"),
-                      email=Email(email="abc@gmail.com"),
-                      roles=[],user_status="active")
-
-        System.do("add_user",user=noc_user,session=session)
-
-        session_noc = Session(user=noc_user,role=Role.noc)
-        System.session_set.append(session_noc)
-
-        u=System.user_set[1]
-        self.assertEqual(u.get("name").get("name"),"nocuser")
-
-    def test_add_user_by_noc(self):
-        print "test_add_user_by_noc"
-        admin_user=System.user_set[0]
-        session = Session(user=admin_user,role=Role.admin)
-        System.session_set.append(session)
- 
-        noc_user=User(name=Name(name="nocuser"),
-                      email=Email(email="abc@gmail.com"),
-                      roles=[],user_status="active")
-
-        System.do("add_user",user=noc_user,session=session)
-
-        session_noc = Session(user=noc_user,role=Role.noc)
-        System.session_set.append(session_noc)
-    
-        institute = System.do("create_institute",name="IIT",address="Delhi",
-                               session=session)
-        oc = System.do("create_oc",institute=institute,session=session,
-                        spokes=[], oc_target = None)
-       
-        oc_user=User(name=Name(name="ocuser"),
-                     email=Email(email="mary@gmail.com"),
-                     roles=[],user_status="active")
-        
-        
-        oc_role = filter(lambda x:x.get('name') == "OCC" and
-                         x.get('centre_oc').get("institute").get("name") ==
-                         institute.get("name"), System.role_set)
-        if oc_role:
-            oc_user.append_role(oc_role[0])
-        
-        System.do("add_user",user=oc_user,session=session_noc)
-
-        u=System.user_set[2]
-        self.assertEqual(u.get("name").get("name"),"ocuser")
-
 
 #+END_SRC
 
@@ -347,6 +291,7 @@ class TestAddUser(TestCase):
 ops_table = {'add_user' : AddUser}
 
 #+END_SRC   
+
 
 * Infra                                                         :boilerplate:
 
@@ -387,6 +332,9 @@ if __name__ == '__main__':
 <<imports_for_sources>>
 <<class_system>>
 <<arity_type_checks>>
+<<do_function>>
+<<class_adduser>>
+<<ops_table>>
 #+end_src
 
 
@@ -395,6 +343,7 @@ if __name__ == '__main__':
 <<imports_for_tests>>
 <<test_system_constructor>>
 <<test_arity_and_types>>
+<<test_adduser>>
 <<run_test_cases>>
 #+end_src
 

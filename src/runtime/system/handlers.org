@@ -1,4 +1,4 @@
-#+TITLE: Object Handlers for the System
+#+TITLE: Object Handler for the System
 #+AUTHOR: VLEAD
 #+DATE: [2016-07-07 Thu]
 #+SETUPFILE: ../../org-templates/level-2.org
@@ -7,94 +7,128 @@
 #+OPTIONS: ^:nil
 
 
-* Handlers
-  Handlers are a set of functions where each function performs a specific task.
-  With the use of these handlers, the core implementation of the =system= will
-  not alter but by plugging handlers that are specific to each environment, for
-  example, be it either objects or persistence, the =system= for that
-  particular environment is derived while not modifying the =system= class.
+* Object Handler
+  Object Handler encapsulates a set of functions where each function performs a
+  specific task.  With the use of these handlers, the core implementation of
+  the =system= will not alter but by plugging handlers that are specific to
+  each environment, for example, be it either objects or persistence, the
+  =system= for that particular environment is derived while not modifying the
+  =system= class.
 
-** Initialize System
-   These are set of functions that initialize the system state.  
+** Initialize Object Handler
+   Provides all the handlers that operate on objects.
+
+*** class_object_handler 
+#+NAME: class_object_handler
+#+BEGIN_SRC python
+class ObjectHandler():
+    role_set = []
+    user_set = []
+
+    def __init__(self):
+        self.role_set = self.initialize_role_set()
+        self.user_set = self.initialize_user_set()
+
+#+END_SRC
 
 *** initialize_role_set
 #+NAME: initialize_role_set
 #+begin_src python
+    def initialize_role_set(self):
+        Role.admin = Role(name=Config.admin_role)
+        Role.user = Role(name=Config.user_role)
+        role_set = [Role.admin, Role.user]
+        return role_set
 
-def initialize_role_set():
-    Role.admin = Role(name=Config.admin_role)
-    Role.user = Role(name=Config.user_role)
-    role_set = [Role.admin, Role.user]
-    return role_set
 #+end_src
 
-**** Tests
-#+NAME: test_initialize_role_set
-#+BEGIN_SRC python
-class TestInitializeSystem(TestCase):
-    TESTING = True
-
-   
-    def test_initialize_role_set(self):
-        print "test_initialize_role_set"
-        role_set = initialize_role_set()
-        self.assertEqual(len(role_set), 2)
-        self.assertEqual(role_set[0].get("name"), "admin")
-
-#+END_SRC
 
 *** initialize_user_set
 #+NAME: initialize_user_set
 #+begin_src python
 
-def initialize_user_set():
+    def initialize_user_set(self):
 
-    admin_user = User(name=Name(name=Config.admin_name),
-                      email=Email(email=Config.admin_email),
-                      role=Role.admin)
+        admin_user = User(name=Name(name=Config.admin_name),
+                          email=Email(email=Config.admin_email),
+                          role=Role.admin)
 
-    return [admin_user]
+        return [admin_user]
 
 #+end_src
 
-**** Tests
-#+NAME: test_initialize_user_set
-#+BEGIN_SRC python
 
-    def test_initialize_user_set(self):
-        print "test_initialize_user_set"
-        user_set = initialize_user_set()
-        self.assertEqual(len(user_set), 1)
-        self.assertEqual(user_set[0].get("name").get("name"), "admin")
-        self.assertEqual(user_set[0].get("role").get("name"), "admin")
+*** Tests
+#+NAME: test_initialize_object_handler
+#+BEGIN_SRC python
+class TestObjectHandler(TestCase):
+    TESTING = True
+    object_handler = None
+    
+    def setUp(self):
+        self.obj_handler = ObjectHandler()
+    
+    def tearDown(self):
+        self.obj_handler = None
+   
+    def test_initialize_object_handler(self):
+         print "test_initialize_object_handler"
+         self.assertEqual(len(self.obj_handler.role_set), 2)
+         self.assertEqual(self.obj_handler.role_set[0].get("name"), "admin")
+         self.assertEqual(len(self.obj_handler.user_set), 1)
+         self.assertEqual(self.obj_handler.user_set[0].get("role").get("name"),
+                          "admin")
+
 #+END_SRC
 
-*** populate_handlers
-#+NAME: populate_handlers
-#+begin_src python
 
-def populate_handlers():
+** Other functions
+   Other functions that help =System= perform the operations. 
 
-    return {'initialize_user_set': initialize_user_set,
-            'initialize_role_set': initialize_role_set 
-            }
-#+end_src
+*** Check if =user= already exists
+    This function checks if a user is already in the user-set of the =System=.
+#+NAME: user_exists
+#+BEGIN_SRC python
+    def user_exists(self, user):
+        if user in self.user_set:
+            return True
+        else:
+            return False
+
+#+END_SRC
 
 **** Tests
-#+NAME: test_populate_handlers
+#+NAME: test_user_exists
 #+BEGIN_SRC python
+    def test_user_exists(self):
+         print "test_user_exists"
+         user = self.obj_handler.user_set[0]
+         self.assertEqual(self.obj_handler.user_exists(user), True)
 
-    def test_populate_handlers(self):
-        print "test_populate_handlers"
-        handlers_dict = populate_handlers()
+#+END_SRC
 
-        user_set = handlers_dict['initialize_user_set']()
-        self.assertEqual(len(user_set), 1)
-        self.assertEqual(user_set[0].get("name").get("name"), "admin")
-        self.assertEqual(user_set[0].get("role").get("name"), "admin")
 
-        role_set = handlers_dict['initialize_role_set']()
-        self.assertEqual(role_set[0].get("name"), "admin")
+*** Add a user to the system
+    This function adds a user to the user-set maintained by the system.
+#+NAME: add_user
+#+BEGIN_SRC python
+    def add_user(self, user):
+        self.user_set.append(user)
+        return user
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_add_user
+#+BEGIN_SRC python
+    def test_add_user(self):
+         print "test_add_user"
+         user = User(name=Name(name="some user"),
+                          email=Email(email="tt@kk.com"),
+                          role=Role.user)
+
+         user = self.obj_handler.add_user(user)
+         self.assertEqual(self.obj_handler.user_exists(user), True)
 
 #+END_SRC
 
@@ -138,18 +172,20 @@ if __name__ == '__main__':
 ** sources
 #+BEGIN_SRC python :tangle handlers.py :eval no :noweb yes
 <<imports_for_sources>>
+<<class_object_handler>>
 <<initialize_role_set>>
 <<initialize_user_set>>
-<<populate_handlers>>
+<<user_exists>>
+<<add_user>>
 #+end_src
 
 
 ** tests
 #+BEGIN_SRC python :tangle test_handlers.py :eval no :noweb yes
 <<imports_for_tests>>
-<<test_initialize_role_set>>
-<<test_initialize_user_set>>
-<<test_populate_handlers>>
+<<test_initialize_object_handler>>
+<<test_user_exists>>
+<<test_add_user>>
 <<run_test_cases>>
 #+end_src
 
