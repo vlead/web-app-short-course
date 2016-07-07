@@ -1,0 +1,156 @@
+#+TITLE: Object Handlers for the System
+#+AUTHOR: VLEAD
+#+DATE: [2016-07-07 Thu]
+#+SETUPFILE: ../../org-templates/level-2.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
+
+
+* Handlers
+  Handlers are a set of functions where each function performs a specific task.
+  With the use of these handlers, the core implementation of the =system= will
+  not alter but by plugging handlers that are specific to each environment, for
+  example, be it either objects or persistence, the =system= for that
+  particular environment is derived while not modifying the =system= class.
+
+** Initialize System
+   These are set of functions that initialize the system state.  
+
+*** initialize_role_set
+#+NAME: initialize_role_set
+#+begin_src python
+
+def initialize_role_set():
+    Role.admin = Role(name=Config.admin_role)
+    Role.user = Role(name=Config.user_role)
+    role_set = [Role.admin, Role.user]
+    return role_set
+#+end_src
+
+**** Tests
+#+NAME: test_initialize_role_set
+#+BEGIN_SRC python
+class TestInitializeSystem(TestCase):
+    TESTING = True
+
+   
+    def test_initialize_role_set(self):
+        print "test_initialize_role_set"
+        role_set = initialize_role_set()
+        self.assertEqual(len(role_set), 2)
+        self.assertEqual(role_set[0].get("name"), "admin")
+
+#+END_SRC
+
+*** initialize_user_set
+#+NAME: initialize_user_set
+#+begin_src python
+
+def initialize_user_set():
+
+    admin_user = User(name=Name(name=Config.admin_name),
+                      email=Email(email=Config.admin_email),
+                      role=Role.admin)
+
+    return [admin_user]
+
+#+end_src
+
+**** Tests
+#+NAME: test_initialize_user_set
+#+BEGIN_SRC python
+
+    def test_initialize_user_set(self):
+        print "test_initialize_user_set"
+        user_set = initialize_user_set()
+        self.assertEqual(len(user_set), 1)
+        self.assertEqual(user_set[0].get("name").get("name"), "admin")
+        self.assertEqual(user_set[0].get("role").get("name"), "admin")
+#+END_SRC
+
+*** populate_handlers
+#+NAME: populate_handlers
+#+begin_src python
+
+def populate_handlers():
+
+    return {'initialize_user_set': initialize_user_set,
+            'initialize_role_set': initialize_role_set 
+            }
+#+end_src
+
+**** Tests
+#+NAME: test_populate_handlers
+#+BEGIN_SRC python
+
+    def test_populate_handlers(self):
+        print "test_populate_handlers"
+        handlers_dict = populate_handlers()
+
+        user_set = handlers_dict['initialize_user_set']()
+        self.assertEqual(len(user_set), 1)
+        self.assertEqual(user_set[0].get("name").get("name"), "admin")
+        self.assertEqual(user_set[0].get("role").get("name"), "admin")
+
+        role_set = handlers_dict['initialize_role_set']()
+        self.assertEqual(role_set[0].get("name"), "admin")
+
+#+END_SRC
+
+
+* Infra                                                         :boilerplate:
+
+** sources
+*** Imports 
+#+name: imports_for_sources
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+from runtime.objects.entities import *
+from runtime.config.config import Config
+from runtime.exceptions.custom_exceptions import *
+
+#+end_src
+
+
+** Tests
+*** Imports 
+#+name: imports_for_tests
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+import unittest
+from unittest import TestCase
+from handlers import *
+
+#+end_src
+
+*** Running tests
+#+NAME: run_test_cases
+#+BEGIN_SRC python
+if __name__ == '__main__':
+    unittest.main()
+
+#+END_SRC
+
+
+* Tangling                                                      :boilerplate:
+
+** sources
+#+BEGIN_SRC python :tangle handlers.py :eval no :noweb yes
+<<imports_for_sources>>
+<<initialize_role_set>>
+<<initialize_user_set>>
+<<populate_handlers>>
+#+end_src
+
+
+** tests
+#+BEGIN_SRC python :tangle test_handlers.py :eval no :noweb yes
+<<imports_for_tests>>
+<<test_initialize_role_set>>
+<<test_initialize_user_set>>
+<<test_populate_handlers>>
+<<run_test_cases>>
+#+end_src
+
+

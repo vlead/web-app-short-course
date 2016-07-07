@@ -1,6 +1,6 @@
 #+title:  Configuration Parameters
 #+AUTHOR: VLEAD
-#+SETUPFILE: ../../org-templates/level-1.org
+#+SETUPFILE: ../../org-templates/level-2.org
 
 * Introduction
 
@@ -11,4 +11,5 @@ class Config:
     admin_name = "admin"
     admin_email = "app-admin@vlabs.ac.in"
     admin_role = "admin"
+    user_role = "user"
 #+END_SRC

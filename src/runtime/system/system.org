@@ -72,6 +72,7 @@ The class corresponding to each operation has five fields:
        serious failure in the application (e.g., out of
        memory error). 
 
+
 * The =System= class
 
 ** Constructor
@@ -82,21 +83,23 @@ The class corresponding to each operation has five fields:
 #+NAME: class_system
 #+begin_src python
 class System ():
-    admin_user = User(name=Name(name=Config.admin_name), 
-                      email=Email(email=Config.admin_email), 
-                      role=Role(name=Config.admin_role))
-    user_set = [admin_user]
+    s_handlers = populate_handlers()
+    role_set = s_handlers['initialize_role_set']()
+    user_set = s_handlers['initialize_user_set']()
     session_set = []
 
-#    ops_table = {'add_user' : AddUser, 
-#                 'del_user' : DelUser}
 
     def __init__(self):
         raise Error('Can not instantiate')
 
     @staticmethod
     def is_session_admin(session):
-        return session.get("user").get("role").get("name") == "admin"
+        return session.get("role").get('name') == "admin"
+    
+    @staticmethod    
+    def is_session_user(session):
+        return session.get("role").get('name') == "user"
+
 #+end_src
 
 *** Test Constructor
@@ -105,150 +108,24 @@ class System ():
 class TestSystemConstructor(TestCase):
     TESTING = True
 
-    def create_app(self):
-        app = create_app(config)
-        return app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
+   
     def test_system_constructor(self):
         print "test_system_constructor"
-        self.assertEqual(System.user_set[0].get("email").get("email"), 
+        self.assertEqual(System.user_set[0].get("name").get("name"),
+                         Config.admin_name)
+        self.assertEqual(System.user_set[0].get("email").get("email"),
                          Config.admin_email)
+        self.assertEqual(System.user_set[0].get('role').get('name'),
+                         Config.admin_role)
 
-    def test_is_session_admin(self):
-        print "test_is_session_admin"
-        admin_user = User(name=Name(name=Config.admin_name), 
-                      email=Email(email=Config.admin_email), 
-                      role=Role(name=Config.admin_role))
-        session = Session(user=admin_user)
-        System.session_set.append(session)
-        self.assertEqual(System.is_session_admin(session), True)
-
-#+END_SRC
-
-
-** Arity and Type check methods 
-
-   The =do= method is the main work-horse of =Controller=.  
-#+NAME: arity_type_checks
-#+BEGIN_SRC python
-    @staticmethod
-    def arity_check(args, n):
-       if  (len(args) != n) :
-          raise ArityError("arity mismatch: size of args %s does not " + 
-                           "match operation arity %d" % (args, n))
-
-    @staticmethod
-    def type_check(***args, **arg_types):
-        for key, value in args:
-            if not arg_types[key](value):
-                raise TypeError("type mismatch: argument %s is not of " + 
-                                "type %s" % (value, arg_types[key]))
-               
-#+end_src
-
-*** Test Arity and Type Checks
-#+NAME: test_arity_and_types
-#+BEGIN_SRC python
-class TestSystemArityAndType(TestCase):
-    TESTING = True
-
-    def create_app(self):
-        app = create_app(config)
-        return app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
-    def test_arity(self):
-        print "test_arity"
-        with self.assertRaises(ArityError):
-            System.arity_check([1,2], 3)
-
-    def test_type_checks(self):
-        print "test_type_checks"
-        args = {"name": Name(name="Jimi Hendrix"),
-                "email": Email(email="jimi@gnu.org")
-                }
-
-        arg_types = {"name": is_name,
-                     "email": is_email
-                     }
-
-        with self.assertRaises(TypeError):
-            System.type_check(args, arg_types)
+    # def test_is_session_admin(self):
+    #     print "test_is_session_admin"
+    #     admin_user=System.user_set[0]
+    #     session = Session(user=admin_user,role=Role.admin)
+    #     System.session_set.append(session)
+    #     self.assertEqual(System.is_session_admin(session), True)
 
 #+END_SRC
-
-
-** =do= method 
-#+begin_src python
-    @staticmethod   
-    def do(op, **args):
-        cls = System.ops_table[op]
-        arg_types  = cls.arg_types
-        auth_check = cls.auth_check
-        state_check = cls.state_check
-
-        try:
-            System.arity_check(args.keys(), len(arg_types.keys())
-            System.type_check(args, arg_types)
-            auth_check(args[1])
-            state_check(args)
-        except (ArityError, TypeError, AuthError, StateError) as err:
-            print str(err)
-        else: 
-            cls.action(args)
-
-#+end_src
-
-
-* =AddUser=
-
-#+begin_src python
-class AddUser():
-    arg_types = [user=is_User, session=is_Session]
-    auth_check = System.is_session_admin(args["session"])
-
-    @staticmethod
-    def state_check(args):
-        u = args["name"]
-        s = args["session"]
-        if not (s in System.session_set):
-            raise StateError("user not in session %s" % s.user.name)
-        if (u in System.user_set):
-            raise StateError("user %s already in System" % u.name)
-
-            
-    @staticmethod
-    def action(**args):
-        u = args["user"]
-        s = args["session"]
-        System.user_set.append(u)
-        return u
-#+end_src
-
-** =del_user=
-** =show_users=
-
-** =get_user_by_email=
-** =make_user=
-** =get_email_of_user=
-** =get_name_of_user=
-** =get_role_of_user=
-** =login=
-** =del_session=
-** =show_sessions=
 
 
 * Infra                                                         :boilerplate:
@@ -258,8 +135,7 @@ class AddUser():
 #+name: imports_for_sources
 #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
-from runtime.objects.entities import *
-from runtime.config.config import Config
+from runtime.system.handlers import *
 from runtime.exceptions.custom_exceptions import *
 
 #+end_src
@@ -271,15 +147,8 @@ from runtime.exceptions.custom_exceptions import *
 #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
 import unittest
-from flask.ext.testing import TestCase
-from runtime.utils.class_persistence_template import *
-from runtime.rest.app import create_app
-
+from unittest import TestCase
 from system import *
-
-config = {
-    'SQLALCHEMY_DATABASE_URI': ''
-}
 
 #+end_src
 
@@ -298,7 +167,7 @@ if __name__ == '__main__':
 #+BEGIN_SRC python :tangle system.py :eval no :noweb yes
 <<imports_for_sources>>
 <<class_system>>
-<<arity_type_checks>>
+
 #+end_src
 
 
@@ -306,7 +175,6 @@ if __name__ == '__main__':
 #+BEGIN_SRC python :tangle test_system.py :eval no :noweb yes
 <<imports_for_tests>>
 <<test_system_constructor>>
-<<test_arity_and_types>>
 <<run_test_cases>>
 #+end_src
 

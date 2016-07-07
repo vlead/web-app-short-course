@@ -108,6 +108,7 @@ Role = ClassTemplate.mk_class("Role", name=is_alphabetic_str)
 is_role = is_inst(Role)
 check_role = check_pred(is_role)
 Role.is_admin = lambda role: role.name == 'admin'
+Role.is_user = lambda role: role.name == 'user'
 
 #+END_SRC
 
