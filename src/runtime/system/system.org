@@ -83,22 +83,28 @@ The class corresponding to each operation has five fields:
 #+NAME: class_system
 #+begin_src python
 class System ():
-    s_handlers = populate_handlers()
-    role_set = s_handlers['initialize_role_set']()
-    user_set = s_handlers['initialize_user_set']()
+    handlers = {}
+    role_set = []
+    user_set = []
     session_set = []
-
 
     def __init__(self):
         raise Error('Can not instantiate')
 
     @staticmethod
+    def initialize_system():
+        System.handlers = populate_handlers()
+        System.role_set = System.handlers['initialize_role_set']()
+        System.user_set = System.handlers['initialize_user_set']()
+        System.session_set = []
+
+    @staticmethod
     def is_session_admin(session):
-        return session.get("role").get('name') == "admin"
-    
-    @staticmethod    
+        return session.get("user").get('role').get('name') == "admin"
+
+    @staticmethod
     def is_session_user(session):
-        return session.get("role").get('name') == "user"
+        return session.get("user").get("role").get('name') == "user"
 
 #+end_src
 
@@ -108,6 +114,11 @@ class System ():
 class TestSystemConstructor(TestCase):
     TESTING = True
 
+    def setUp(self):
+        System.initialize_system()
+
+    def tearDown(self):
+        pass
    
     def test_system_constructor(self):
         print "test_system_constructor"
@@ -118,15 +129,224 @@ class TestSystemConstructor(TestCase):
         self.assertEqual(System.user_set[0].get('role').get('name'),
                          Config.admin_role)
 
-    # def test_is_session_admin(self):
-    #     print "test_is_session_admin"
-    #     admin_user=System.user_set[0]
-    #     session = Session(user=admin_user,role=Role.admin)
-    #     System.session_set.append(session)
-    #     self.assertEqual(System.is_session_admin(session), True)
+    def test_is_session_admin(self):
+        print "test_is_session_admin"
+        admin_user=System.user_set[0]
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+        self.assertEqual(System.is_session_admin(session), True)
 
 #+END_SRC
 
+
+** Arity and Type check methods 
+   Arity Check ensures that correct number of arguments are passed to a functions. 
+   Type Check ensures that the type of the arguments passed to a function are
+   same as expected. 
+   
+   Any operation, before being executed is subjected to =Arity= and =Type=
+   checks.  
+#+NAME: arity_type_checks
+#+BEGIN_SRC python
+   
+    @staticmethod
+    def arity_check(args, n):
+       if  (len(args) != n) :
+          raise ArityError("arity mismatch: size of args  does not " + 
+                           "match operation arity " )
+
+    @staticmethod
+    def type_check(args, arg_types):
+        for key, value in args.iteritems():
+            if not arg_types[key](value):
+                raise TypeError("type mismatch: argument  is not of " + 
+                                "type " )
+       
+   
+#+end_src
+
+*** Test Arity and Type Checks
+#+NAME: test_arity_and_types
+#+BEGIN_SRC python
+class TestSystemArityAndType(TestCase):
+    TESTING = True
+
+    def test_arity(self):
+        print "test_arity"
+        with self.assertRaises(ArityError):
+            System.arity_check([1,2], 3)
+
+    def test_type_checks(self):
+        print "test_type_checks"
+        args = {"name": Name(name="Jimi Hendrix"),
+                "email": Name(name="Jimi Hendrix")
+                }
+
+        arg_types = {"name": is_name,
+                     "email": is_email
+                     }
+
+        with self.assertRaises(TypeError):
+            System.type_check(args, arg_types)
+
+#+END_SRC
+
+
+** =do= method 
+   The =do= method is the main work-horse of =System= which is construed as the
+   =Controller=.  Every operation follows a template and realized as a class
+   that defines:
+   1. Number of Arguments
+   2. Type of Arguments
+   3. Who is allowed to perform the operation
+   4. Referential integrity checks and finally
+   5. the operation that changes state of the system. 
+
+
+#+NAME: do_function
+#+begin_src python
+    @staticmethod   
+    def do(op, **args):
+        cls = ops_table[op]
+        arg_types  = cls.arg_types
+        auth_check = cls.auth_check
+        state_check = cls.state_check
+        arity_and_type_checks_needed = cls.arity_and_type_checks_needed
+        try:
+            if arity_and_type_checks_needed:
+               System.arity_check(args.keys(), len(arg_types.keys()))
+               System.type_check(args, arg_types)
+            auth_check(args)
+            state_check(args)
+            return cls.action(args)
+        except (ArityError, TypeError, AuthError, StateError) as err:
+            raise err
+
+#+end_src
+
+
+* =AddUser=
+#+NAME: class_adduser
+#+begin_src python
+class AddUser():
+    arg_types = {"user": is_user, "session": is_session}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        session = args['session']
+        if not (System.is_session_admin(session)):
+            raise AuthError("Role not Authorized to perform this action")
+
+    @staticmethod
+    def state_check(args):
+        user = args["user"]
+        if (System.handlers['user_already_exists'](System.user_set, user)):
+            raise StateError("user %s already exists in System"
+                             % user.get("name").get("name"))
+
+    @staticmethod
+    def action(args):
+        user = args["user"]
+        System.handlers['add_user'](System.user_set, user)
+        return user
+#+end_src
+*** Test AddUser
+#+NAME: test_adduser
+#+BEGIN_SRC python
+class TestAddUser(TestCase):
+    TESTING = True
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        admin = filter( lambda x: x.get("email").get("email") ==
+                        "app-admin@vlabs.ac.in", System.user_set)
+        System.user_set = admin
+        System.session_set = []
+        System.institute_set = []
+        System.oc_set = []
+        System.nc_set = []
+    def test_add_user_by_admin(self):
+        print "test_add_user_by_admin"
+        admin_user=System.user_set[0]
+        session = Session(user=admin_user,role=Role.admin)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me"),email=Email(email="abc@gmail.com"),
+                  roles=[],user_status="active")
+
+        System.do("add_user",user=user,session=session)
+        
+        u=System.user_set[1]
+        self.assertEqual(u.get("name").get("name"),"me")
+
+    def test_add_user_noc_by_admin(self):
+        print "test_add_user_by_noc"
+        admin_user=System.user_set[0]
+        session = Session(user=admin_user,role=Role.admin)
+        System.session_set.append(session)
+ 
+        noc_user=User(name=Name(name="nocuser"),
+                      email=Email(email="abc@gmail.com"),
+                      roles=[],user_status="active")
+
+        System.do("add_user",user=noc_user,session=session)
+
+        session_noc = Session(user=noc_user,role=Role.noc)
+        System.session_set.append(session_noc)
+
+        u=System.user_set[1]
+        self.assertEqual(u.get("name").get("name"),"nocuser")
+
+    def test_add_user_by_noc(self):
+        print "test_add_user_by_noc"
+        admin_user=System.user_set[0]
+        session = Session(user=admin_user,role=Role.admin)
+        System.session_set.append(session)
+ 
+        noc_user=User(name=Name(name="nocuser"),
+                      email=Email(email="abc@gmail.com"),
+                      roles=[],user_status="active")
+
+        System.do("add_user",user=noc_user,session=session)
+
+        session_noc = Session(user=noc_user,role=Role.noc)
+        System.session_set.append(session_noc)
+    
+        institute = System.do("create_institute",name="IIT",address="Delhi",
+                               session=session)
+        oc = System.do("create_oc",institute=institute,session=session,
+                        spokes=[], oc_target = None)
+       
+        oc_user=User(name=Name(name="ocuser"),
+                     email=Email(email="mary@gmail.com"),
+                     roles=[],user_status="active")
+        
+        
+        oc_role = filter(lambda x:x.get('name') == "OCC" and
+                         x.get('centre_oc').get("institute").get("name") ==
+                         institute.get("name"), System.role_set)
+        if oc_role:
+            oc_user.append_role(oc_role[0])
+        
+        System.do("add_user",user=oc_user,session=session_noc)
+
+        u=System.user_set[2]
+        self.assertEqual(u.get("name").get("name"),"ocuser")
+
+
+#+END_SRC
+
+  
+* Operations Table
+   Each operation has a corresponding implementation defined as a class. 
+
+#+NAME: ops_table
+#+BEGIN_SRC python                                                                          
+ops_table = {'add_user' : AddUser}
+
+#+END_SRC   
 
 * Infra                                                         :boilerplate:
 
@@ -136,7 +356,6 @@ class TestSystemConstructor(TestCase):
 #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
 from runtime.system.handlers import *
-from runtime.exceptions.custom_exceptions import *
 
 #+end_src
 
@@ -167,7 +386,7 @@ if __name__ == '__main__':
 #+BEGIN_SRC python :tangle system.py :eval no :noweb yes
 <<imports_for_sources>>
 <<class_system>>
-
+<<arity_type_checks>>
 #+end_src
 
 
@@ -175,6 +394,7 @@ if __name__ == '__main__':
 #+BEGIN_SRC python :tangle test_system.py :eval no :noweb yes
 <<imports_for_tests>>
 <<test_system_constructor>>
+<<test_arity_and_types>>
 <<run_test_cases>>
 #+end_src
 
