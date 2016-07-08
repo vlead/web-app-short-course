@@ -265,6 +265,7 @@ class TestPersistenceUser(TestCase):
         usr.save()
         self.assertEqual(is_user(usr), True)
         n_usr = User.get_by_id(1)
+        print n_usr.to_client()
         self.assertEqual(n_usr.get("email").get('email'), "jimi@gnu.org")
 
     def test_update_user(self):
@@ -326,7 +327,7 @@ from runtime.utils.class_persistence_template import *
 #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
 import unittest
-from flask.ext.testing import TestCase
+from flask_testing import TestCase
 from sqlalchemy.exc import IntegrityError
 from entities import *
 from runtime.rest.app import create_app

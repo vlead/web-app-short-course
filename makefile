@@ -17,7 +17,7 @@ LINT_FILE=${PWD}/${CODE_DIR}/lint_output
 EXIT_FILE=${PWD}/exit.txt
 STATUS=0
 
-all:  build
+all:  build run-py-tests
 
 clean-literate:
 	rm -rf ${ELISP_DIR}
@@ -70,10 +70,7 @@ lint:  install-pep
 build-with-lint: build lint
 
 run-py-tests:
-	find . -name '*test*.py' -exec python '{}' \;
-
-run-tests:
-	(cd ${BUILD_DIR}/code; python -m tests.test_obj)
+	export PYTHONPATH=${PWD}/${CODE_DIR}; find ${PWD}/${CODE_DIR} -name '*test_*.py' -exec python '{}' \;
 
 clean:	clean-literate
 	rm -rf ${BUILD_DIR}

@@ -226,16 +226,15 @@ class ClassTemplate():
 
             # now check the invariant on tmp
             if not obj.inv(tmp):
-                raise TypeError("invariant for class %s violated for init args %s" %(cls.__name__, args))
+                raise TypeError("invariant for class %s violated for init args %s" % (cls.__name__, args))
 
             # now save the state
             obj.state = tmp
 
-            for handler in cls.custom_handlers:
-                handler(obj)
+            if 'save_handler' in (cls.custom_handlers):
+                cls.custom_handlers['save_handler'](obj)
 
         return fn
-
 
     @staticmethod
     def mk_eq(cls, pred):
@@ -252,6 +251,10 @@ class ClassTemplate():
                     to_client_var[key] = value.to_client()
                 else:
                     to_client_var[key] = value
+
+            if cls.custom_handlers['persistence']:
+                to_client_var["id"] = obj.id
+
             return to_client_var
 
         return fn
@@ -307,7 +310,8 @@ class ClassTemplate():
         # to_client
         cls.to_client = ClassTemplate.mk_to_client(cls)
 
-        cls.custom_handlers = []
+        cls.custom_handlers = {}
+        cls.custom_handlers['persistence'] = False
         return cls
 
 #+END_SRC

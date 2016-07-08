@@ -69,7 +69,7 @@ class ClassPersistenceTemplate():
         def fn(obj):
             obj.save()
 
-        cls.custom_handlers.append(fn)
+        cls.custom_handlers['save_handler'] = fn
 
     @staticmethod
     def mk_delete(cls):
@@ -107,6 +107,7 @@ class ClassPersistenceTemplate():
         cls.get_by_id = ClassPersistenceTemplate.mk_get_by_id(cls)
         cls.get_all = ClassPersistenceTemplate.mk_get_all(cls)
         ClassPersistenceTemplate.mk_save_handler(cls)
+        cls.custom_handlers['persistence'] = True
         return cls
 
 #+END_SRC

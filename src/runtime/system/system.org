@@ -253,6 +253,7 @@ class AddUser():
         user = System.handler.add_user(user)
         return user
 #+end_src
+
 *** Test AddUser
 #+NAME: test_adduser
 #+BEGIN_SRC python

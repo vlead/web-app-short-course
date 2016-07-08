@@ -166,6 +166,7 @@ class TestUser(TestCase):
         user = User(name=Name(name="Jimi Hendrix"),
                     email=Email(email="jimi@gnu.org"),
                     role=Role(name="admin"))
+        print user.to_client()
         self.assertEqual(is_user(user), True)
 
     def test_sets_on_user(self):
