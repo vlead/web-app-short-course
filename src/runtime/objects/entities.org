@@ -137,7 +137,7 @@ class TestRole(TestCase):
 
 * User
   A =User= entity has fields =name= of type =Name=, =email= of type =Email= and
-  role of type =Role=.
+  role of type =Role=. 
 
 #+NAME: class_User
 #+BEGIN_SRC python

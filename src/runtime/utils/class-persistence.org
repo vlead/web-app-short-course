@@ -17,14 +17,14 @@
   implemented as objects so that the information is not lost when the system is
   shut down.
 
-  This document captures a way that takes these [[../objects/entities.org][objects]] and provides an API for
-  persisting them.  The technology used for persistence is [[https://www.mysql.com/][mysql]] and since this
-  application is built using [[https://www.python.org/download/releases/2.7/][python]], [[http://www.sqlalchemy.org/][sqlalchemy]] - a python based [[https://en.wikipedia.org/wiki/Object-relational_mapping][ORM]] is used
-  for database access.
+  This document captures a way that takes [[../objects/entities.org][objects]] of which cannot persist and
+  provides an API for persisting them.  The technology used for persistence is
+  [[https://www.mysql.com/][mysql]] and since this application is built using [[https://www.python.org/download/releases/2.7/][python]], [[http://www.sqlalchemy.org/][sqlalchemy]] - a python
+  based [[https://en.wikipedia.org/wiki/Object-relational_mapping][ORM]] is used for database access.
 
   A entity with no persistence is provided persistence the following way.
   #+BEGIN_EXAMPLE
-  args = {"__tablename__": "names",
+  table_args = {"__tablename__": "names",
   "id": db.Column(db.Integer, primary_key=True),
   "name": db.Column(db.String(128), nullable=False)
   }
@@ -34,24 +34,54 @@
   Now, an API to perform CRUD (create, read, update and delete) operations is
   available for an object of type Name.
   
-
+  
 ** Implementation
 
-   ClassPersistentTemplate provides a method =mk_persistent= that takes a class
-   created by =ClassTemplates= and provides persistence to it. 
+*** mk_persistent
+    ClassPersistentTemplate provides a method =mk_persistent= that takes a
+    class created by =ClassTemplates= and provides persistence to it.
 
-   =mk_persistent= takes:
+    The non persistent class is made persistent by copying all its properties
+    to the new class while inheriting from =db.Model=.
 
-   - a class and 
+    =db.Model= provided by =sqlalchemy= is the glue that provides methods
+    (save, delete) to persistent an object. 
 
-   - a dictionary that contains name-value pairs defining a table in mysql 
-   
-   as arguments and returns a class.
+    =mk_persistent= takes:
+    - a class and 
+    - a dictionary that contains name-value pairs defining a table in mysql as
+      arguments and returns a class.
 
-#+NAME: class_ClassPersistentTemplate
-#+BEGIN_SRC python
+    #+NAME: mk_persistent
+    #+BEGIN_SRC python
+    @staticmethod
+    def mk_persistent(cls, **table_args):
+        check_dict(table_args)
+        for key, value in table_args.iteritems():
+            setattr(cls, key, value)
+        '''http://stackoverflow.com/questions/9539052/how-to-dynamically-change-base-class-of-instances-at-runtime
+'''
+        cls = type(cls.__name__, (db.Model,), dict(cls.__dict__))
 
-class ClassPersistenceTemplate():
+        cls.save = ClassPersistenceTemplate.mk_save(cls)
+        cls.delete = ClassPersistenceTemplate.mk_delete(cls)
+        cls.get_by_id = ClassPersistenceTemplate.mk_get_by_id(cls)
+        cls.get_all = ClassPersistenceTemplate.mk_get_all(cls)
+        ClassPersistenceTemplate.mk_save_handler(cls)
+        cls.custom_handlers['persistence'] = True
+        return cls
+
+    #+END_SRC
+
+
+
+*** Operations supporting persistence
+    Saving an object to a persistent store and retreiving object(s) from
+    persistent store are provided to the new persistent class by using the
+    functions provided by =db.Model=
+
+    #+NAME: class_functions
+    #+BEGIN_SRC python
 
     @staticmethod
     def mk_save(cls):
@@ -93,29 +123,13 @@ class ClassPersistenceTemplate():
             return cls.query.all()
         return staticmethod(fn)
 
-    @staticmethod
-    def mk_persistent(cls, **table_args):
-        check_dict(table_args)
-        for key, value in table_args.iteritems():
-            setattr(cls, key, value)
-        '''http://stackoverflow.com/questions/9539052/how-to-dynamically-change-base-class-of-instances-at-runtime
-'''
-        cls = type(cls.__name__, (db.Model,), dict(cls.__dict__))
 
-        cls.save = ClassPersistenceTemplate.mk_save(cls)
-        cls.delete = ClassPersistenceTemplate.mk_delete(cls)
-        cls.get_by_id = ClassPersistenceTemplate.mk_get_by_id(cls)
-        cls.get_all = ClassPersistenceTemplate.mk_get_all(cls)
-        ClassPersistenceTemplate.mk_save_handler(cls)
-        cls.custom_handlers['persistence'] = True
-        return cls
-
-#+END_SRC
+    #+END_SRC
 
 
 ** Tests
-#+NAME: persistence_tests
-#+BEGIN_SRC python
+   #+NAME: persistence_tests
+   #+BEGIN_SRC python
 class TestPersistence(TestCase):
     TESTING = True
 
@@ -149,27 +163,35 @@ class TestPersistence(TestCase):
         names = PName.get_all()
         self.assertEqual(names, [])
 
- #+END_SRC
+   #+END_SRC
 
 
 * Infra                                                    :boilerplate:
 
 ** Source Infra
 *** Imports for sources
-#+name: imports_for_sources
-#+BEGIN_SRC python
+    #+NAME: imports_for_sources
+    #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
 from type_utils import check_dict
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
-#+end_src
+    #+END_SRC
 
-
-** Test Infra
-*** Imports for tests 
-#+name: imports_for_tests
+*** Persistence Class
+#+NAME: class_ClassPersistentTemplate
 #+BEGIN_SRC python
+
+class ClassPersistenceTemplate():
+#+END_SRC
+
+
+
+* Test Infra
+*** Imports for tests 
+    #+name: imports_for_tests
+    #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
 import unittest
 from flask_testing import TestCase
@@ -184,29 +206,35 @@ config = {
     'SQLALCHEMY_DATABASE_URI': ''
 }
 
-#+end_src
+    #+end_src
 
 
 *** Running tests
-#+NAME: run_test_cases
-#+BEGIN_SRC python
+    #+NAME: run_test_cases
+    #+BEGIN_SRC python
 if __name__ == '__main__':
     unittest.main()
-#+END_SRC
+    #+END_SRC
 
 
 * Tangling                                                 :boilerplate:
 
 *** sources
-#+BEGIN_SRC python :tangle class_persistence_template.py :eval no :noweb yes
+    #+BEGIN_SRC python :tangle class_persistence_template.py :eval no :noweb yes
 <<imports_for_sources>>
 <<class_ClassPersistentTemplate>>
-#+end_src
-
+<<class_functions>>
+<<mk_persistent>>
+    #+end_src
 
 *** tests
-#+BEGIN_SRC python :tangle test_class_persistence_template.py :eval no :noweb yes
+    #+BEGIN_SRC python :tangle test_class_persistence_template.py :eval no :noweb yes
 <<imports_for_tests>>
 <<persistence_tests>>
 <<run_test_cases>>
-#+end_src
+    #+end_src
+
+
+
+
+

@@ -77,8 +77,14 @@ The class corresponding to each operation has five fields:
 
 ** Constructor
 
-   The constructor ensures that the system ensures the presence of at least one
-   user with role =admin=.
+   This is the generic =System= implementation.  The entities that make up the
+   sytem can be pure objects or objects that can be persisted.
+
+   The specific tasks on the composed objects is agnostic to the =system=.
+   This is achieved by defining an API that the system uses and is implemented
+   by composed entity set.
+
+   The system is initialized based on what the system should be composed of.
 
 #+NAME: class_system
 #+begin_src python
@@ -227,9 +233,23 @@ class TestSystemArityAndType(TestCase):
 #+end_src
 
 
-* =AddUser=
-#+NAME: class_adduser
-#+begin_src python
+* Operations
+  Operations provide the mechanism to change the state of the system.  While
+  the system state is changed, it is imperative to maintain the invariant of
+  the system.   Before the actual change in system is made, each operation goes
+  through a series of checks: 
+  1. Arity Check - ensures the right number of arguments are provided to
+     the operation.
+  2. Type Check - ensures the arguments are of right type
+  3. Auth Check - ensures only the authorized can perform the operation
+  4. State Check - ensures System invariant is maintained
+
+  Once these checks are satisfied, the system state is changed.
+
+** =AddUser=
+  
+ #+NAME: class_adduser
+ #+begin_src python
 class AddUser():
     arg_types = {"user": is_user, "session": is_session}
     arity_and_type_checks_needed = True
@@ -252,11 +272,11 @@ class AddUser():
         user = args["user"]
         user = System.handler.add_user(user)
         return user
-#+end_src
+ #+end_src
 
 *** Test AddUser
-#+NAME: test_adduser
-#+BEGIN_SRC python
+  #+NAME: test_adduser
+  #+BEGIN_SRC python
 class TestAddUser(TestCase):
     TESTING = True
 
@@ -281,17 +301,17 @@ class TestAddUser(TestCase):
         u=System.handler.user_set[1]
         self.assertEqual(u.get("name").get("name"),"me")
 
-#+END_SRC
+  #+END_SRC
 
   
-* Operations Table
-   Each operation has a corresponding implementation defined as a class. 
+** Operations Table
+    Each operation has a corresponding implementation defined as a class. 
 
-#+NAME: ops_table
-#+BEGIN_SRC python                                                                          
+ #+NAME: ops_table
+ #+BEGIN_SRC python                                                                          
 ops_table = {'add_user' : AddUser}
 
-#+END_SRC   
+ #+END_SRC   
 
 
 * Infra                                                         :boilerplate:

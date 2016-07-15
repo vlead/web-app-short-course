@@ -8,7 +8,9 @@
 #+LATEX: Literal LaTeX code for export
 
 * Application:  A web-based directory of users
-
+:PROPERTIES:
+:CUSTOM_ID: requirements
+:END: 
  The application is a simple directory of users and some related
  information (name and email).  The system has users.  There is a
  special user called =admin-user=.  Once a user is logged in, the
@@ -27,96 +29,128 @@ user =u= is logged in, he/she may modify the details of user
 =v= iff either =u = v= or =u = admin=.
 
 The rest of the sections have more detailed requirements. 
+* User
+:PROPERTIES:
+:CUSTOM_ID: req_user
+:END: 
+  User is an entity in the system.  There are several user(s) in the system
+  whose type is =User=.  The interaction of a user with the system is defined
+  by the requirements below.
 
-* Users
+** Composition
 :PROPERTIES:
-:CUSTOM_ID: user
+:CUSTOM_ID: req_user_composition
 :END: 
-** Type
+   The system has users.
+
+** User Identification
 :PROPERTIES:
-:CUSTOM_ID: user-type
+:CUSTOM_ID: req_user_identification
 :END: 
- The system has users.
-** Email-address
+   Each user has an email address (string that corresponds to a
+   valid email addr).  
+
+** Uniqueness of a User
 :PROPERTIES:
-:CUSTOM_ID: email-address
+:CUSTOM_ID: req_user_uniqueness
 :END: 
-   Each user has an email address (string that corresponds to a valid
-   email addr).
-** Email
+   Email identifies a user.  Two users with the same email
+   are the same users. 
+
+** Name Attribute
 :PROPERTIES:
-:CUSTOM_ID: email-identity
-:END: 
-   Email identifies a user.  Two users with the same email are the
-   same users.
-** Name
-:PROPERTIES:
-:CUSTOM_ID: user-name
+:CUSTOM_ID: req_user_name
 :END: 
    Each user has a Name (string).
 
-* Roles
+** Role of a User
 :PROPERTIES:
-:CUSTOM_ID: role
-:END:
-** Type 
-:PROPERTIES:
-:CUSTOM_ID: role-type
+:CUSTOM_ID: req_user_role
 :END: 
- There are two kinds of roles: =admin= and =user=. 
+   Each user has exactly one role, and by default when a user is created, the
+   role that is associated with the newly created user is =user=
 
-** User role identity
+
+* Role
 :PROPERTIES:
-:CUSTOM_ID: user-role 
+:CUSTOM_ID: req_role
 :END: 
-   Each user is mapped to exactly one role, either =admin= or =user=.
+  Different privileges for accessing the system is maintained by roles.  A role
+  whose type is =Role= defines a set of privileges i.e. what is accessible and
+  what is not accessible in the system.
 
-** Access privileges
+** Types of Roles
 :PROPERTIES:
-:CUSTOM_ID: access-privileges
+:CUSTOM_ID: req_role_types
 :END: 
-   Each role determines what data access privileges are available to
-   the user:
+   There are 2 kinds of roles: =admin= and =user=.  Each role determines what
+   data access privileges are available to the user.
 
-  - User :: A user with role =user= may  modify
-       data related only to that user.  He/She may view (but
-       not modify) other users' data. 
-
-  - Admin :: A user with role =admin= may view or modify the
-       data belonging to that user or any other user.  A
-       user logged in as =admin= may also create and delete
-       users.  A user is not allowed to delete his/her
-       account.
-
-* Sessions
+** Role Mapping to a User
 :PROPERTIES:
-:CUSTOM_ID: session
+:CUSTOM_ID: req_role_mapping_to_user
 :END: 
-** User login
-:PROPERTIES:
-:CUSTOM_ID: user-login
-:END: 
-   Users are required to login into the system.  
+   Each user is mapped to exactly one role and in a session, In any given
+   session, a user is mapped to his/her role.
 
-** Login session
+** Role Privileges
 :PROPERTIES:
-:CUSTOM_ID: login-session
-:END: 
-   Once the user is logged in into the system, the system creates a
-   /login/ session.
+:CUSTOM_ID: req_role_privileges
+:END:    
 
-** Operation permission
-:PROPERTIES:
-:CUSTOM_ID: op-perm
-:END: 
-   Operations are permitted only if the actor is logged in to the
-   system.
+   1. A user with role =admin= has the ability to:
 
-** Number of sessions
+      1. Create a new user, Read and Update information of all users, and
+         Delete all other users.
+
+   2. A user with role =user= has the ability to:
+
+      1. View certain information of other users in the system.
+
+      2. Update his/her information. 
+      
+
+** User with =admin= role
 :PROPERTIES:
-:CUSTOM_ID: one-session
+:CUSTOM_ID: req_role_admin
+:END:    
+   There is atleast one user with role =admin= in the system.
+
+
+* Session
+:PROPERTIES:
+:CUSTOM_ID: req_session
 :END: 
-   Users can have at most one session at a given time.
+  A session defines the set of actions that a user is allowed to perform. 
+
+** Login is Mandatory
+:PROPERTIES:
+:CUSTOM_ID: req_session_login
+:END: 
+   Users are required to login into the system.
+
+
+** A logged user and a session
+:PROPERTIES:
+:CUSTOM_ID: req_session_association
+:END: 
+   Each user once logged in is associated with a session.
+
+
+** Privileges
+:PROPERTIES:
+:CUSTOM_ID: req_session_privileges
+:END: 
+   Operations are permitted only if the user is logged into the system.
+
+
+** Constraints
+:PROPERTIES:
+:CUSTOM_ID: req_session_constraints
+:END: 
+   At any given time a user cannot have more than one session.
+
+
 * Interaction with the system and privileges
 
 |----------------------------------+-------+--------------------------+---|
@@ -134,6 +168,7 @@ The rest of the sections have more detailed requirements.
 |----------------------------------+-------+--------------------------+---|
 | View the details of a user       | =a=   | always allowed           |   |
 |----------------------------------+-------+--------------------------+---|
+
 
 * Questions/scenarios
 ** Deleting oneself?  

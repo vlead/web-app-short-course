@@ -6,7 +6,16 @@
 #+SETUPFILE: ../org-templates/level-1.org
 #+options: ^:nil
 #+LATEX: Literal LaTeX code for export
+
+The application or the system is abstracted as the data model.  The model
+captures: the entities that comprise the system; relations and constraints
+between these entities; and operations that entail a change in the state of the
+system.
+
 * Notation
+  The system is defined as the data model.  There is a certain notation that is
+  used defining the data model. 
+
 ** Sets, cardinality and relations
 
 If =A= is a set, then
@@ -70,6 +79,7 @@ Encodes the following items of information:
  user: Email > User?
  #+end_example
 
+
 * Abstract Entity Types
   The following are the abstract data types in our system. 
   Requirement satisfied: [[file:../requirements/index.org::#user-type][User]]
@@ -93,6 +103,7 @@ TYPE Role = {admin, user}
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Session
 #+END_SRC
+
 
 * Relations and cardinality constraints over entity types 
   For each relation, we define its inverse next to it. \\
@@ -211,6 +222,7 @@ and five relations
 [role, users]    :  user-set+    > role-set!   
 [role, session]  :  session-set  >  role-set!
 #+END_SRC
+
 
 * Operations 
 CRUD operations.  
