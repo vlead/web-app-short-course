@@ -44,7 +44,7 @@ zero, one or more elements of =B=.
 |--------------------------------+-----------+---+---|
    
 ** Example of Entity Relationship notation
-   This example gives a formal representation of the requirement [[file:../requirements/index.org::#req-User2][User]].
+   This example gives a formal representation of the requirement [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]].
 #+begin_example
  [email, user] : User? > Email!
 #+end_example
@@ -82,24 +82,49 @@ Encodes the following items of information:
 
 * Abstract Entity Types
   The following are the abstract data types in our system. 
-  Requirement satisfied: [[file:../requirements/index.org::#user-type][User]]
+** User
+:PROPERTIES:
+:CUSTOM_ID: entity_user
+:END: 
+  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]]
+
 #+BEGIN_SRC spec :tangle spec.txt
 ;;; Entity Types
 TYPE User
 #+END_SRC
-  Requirement satisfied: [[file:../requirements/index.org::#email-address][Email]]
-#+BEGIN_SRC
+
+** Email
+:PROPERTIES:
+:CUSTOM_ID: entity_email
+:END: 
+  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user_identification%20][Email]]
+#+BEGIN_SRC spec :tangle spec.txt
 TYPE Email
 #+END_SRC
-  Requirement satisfied: [[file:../requirements/index.org::#user-name][Name]]
+
+** Name
+:PROPERTIES:
+:CUSTOM_ID: entity_name
+:END: 
+  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user_name][Name]]
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Name
 #+END_SRC
-  Requirement satisfied: [[file:../requirements/index.org::#role-type][Role]]
+
+** Role
+:PROPERTIES:
+:CUSTOM_ID: entity_role
+:END: 
+  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_role][Role]]
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Role = {admin, user}
 #+END_SRC
-  Requirement satisfied: [[file:../requirements/index.org::#session][Session]]
+
+** Session
+:PROPERTIES:
+:CUSTOM_ID: entity_session
+:END: 
+  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_session][Session]]
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Session
 #+END_SRC
@@ -107,20 +132,20 @@ TYPE Session
 
 * Relations and cardinality constraints over entity types 
   For each relation, we define its inverse next to it. \\
-  Requirements satisfied: [[file:../requirements/index.org::#user-type][User]], [[file:../requirements/index.org::#email-address][Email]]
+  Requirements satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]], [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user_uniqueness][Email]]
 #+BEGIN_SRC spec :tangle spec.txt
 ;;; Relations with cardinality constraints
 [email, user]  :  User?    > Email!
 #+END_SRC
-  Requirements satisfied: [[file:../requirements/index.org::#user-type][User]], [[file:../requirements/index.org::#user-name][Name]]
+  Requirements satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]], [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user_name][Name]]
 #+BEGIN_SRC spec :tangle spec.txt
 [name, user]   :  User     > Name!
 #+END_SRC
-  Requirements satisfied: [[file:../requirements/index.org::#user-type][User]], [[file:../requirements/index.org::#user-role][Role]]
+  Requirements satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]], [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_role][Role]]
 #+BEGIN_SRC spec :tangle spec.txt
 [role, user]   :  User     > Role!
 #+END_SRC
-  Requirements satisfied: [[file:../requirements/index.org::#user-type][User]], [[file:../requirements/index.org::#one-session][Session]]
+  Requirements satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]], [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_session][Session]]
 #+BEGIN_SRC spec :tangle spec.txt
 [user, session]:  Session  > User!
 #+END_SRC
@@ -245,41 +270,41 @@ types of actors:  =system= and =session=.
 | Operation                            | Actor                  | Ref.           | Result            |
 |                                      | Credentials            | Integrity      |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| addUser(u:[[file:../requirements/index.org::#user][User]], s:[[file:../requirements/index.org::#session][Session]])           | s.user.role=admin      | u:~user-set    | Succ or           |
+| addUser(u:User, s:Session            | s.user.role=admin      | u:~user-set    | Succ or           |
 |                                      |                        | s:session-set  | Failure           |
 |--------------------------------------+------------------------+----------------+-------------------|
-| showUsers(s:[[file:../requirements/index.org::#session][Session]])                 |                        | s:session-set  |                   |
+| showUsers(s: Session                 |                        | s:session-set  |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| delUser(u:[[file:~/Reading%20material/web-app-short-course/src/requirements/index.org::#user][User]], s:[[file:../requirements/index.org::#session][Session]])           | s.user.role=admin AND  | u:user-set     | Succ or Fail      |
+| delUser(u: User, s: Session          | s.user.role=admin AND  | u:user-set     | Succ or Fail      |
 |                                      | u.role != admin        | s:session-set  |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| getUserByEmail(e:[[file:../requirements/index.org::#email-address][Email]], s:[[file:../requirements/index.org::#session][Session]])   |                        | s:session-set  | return user       |
+| getUserByEmail(e: Email, s: Session  |                        | s:session-set  | return user       |
 |--------------------------------------+------------------------+----------------+-------------------|
-| makeUser(e:[[file:../requirements/index.org::#Email][Email]], n:[[file:../requirements/index.org::#name][Name]], s:[[file:../requirements/index.org::#session][Session]]) | s.user.role = admin    | e:~email-set   |                   |
+| makeUser(e:Email, n:Name, s:Session  | s.user.role = admin    | e:~email-set   |                   |
 |                                      |                        | s:session-set  |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| getEmail(u: [[file:../requirements/index.org::#user][User]], s:[[file:../requirements/index.org::#session][Session]])         |                        | u:user-set     |                   |
+| getEmail(u:User,s: Session           |                        | u:user-set     |                   |
 |                                      |                        | s:session-set  |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| getName(u:[[file:../requirements/index.org::#user][User]],  s:[[file:../requirements/index.org::#session][Session]])          |                        | u:user-set     |                   |
+| getName(u: User, s:Session           |                        | u:user-set     |                   |
 |                                      |                        | s:session-set  |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| getRole(u:[[file:../requirements/index.org::#user][User]], s:[[file:../requirements/index.org::#session][Session]])           |                        | u:user-set     |                   |
+| getRole(u: user, s:Session           |                        | u:user-set     |                   |
 |                                      |                        | s:session-set  |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| setEmail(u:[[file:../requirements/index.org::#user][User]], e:[[file:../requirements/index.org::#email-address][Email]], s:[[file:../requirements/index.org::#session][Session]]) | s.user.role = admin OR | u:user-set     |                   |
+| setEmail(u:User, e:Email, s:Session) | s.user.role = admin OR | u:user-set     |                   |
 |                                      | s.user = u             | s:session-set  |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| setName(u:[[file:../requirements/index.org::#user][User]], n:[[file:../requirements/index.org::#user-name][Name]], s:[[file:../requirements/index.org::#session][Seassion]])  | s.user.role =admin OR  | u:user-set     |                   |
+| setName(u:User, n:Name, s:)          | s.user.role =admin OR  | u:user-set     |                   |
 |                                      | s.user = u             | s:session-set  |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| login(u:[[file:../requirements/index.org::#user][User]], s:System)              |                        | u:user-set     | creates a session |
+| login(u:User, s:System)              |                        | u:user-set     | creates a session |
 |                                      |                        |                | and adds it to    |
 |                                      |                        |                | =session-set=     |
 |--------------------------------------+------------------------+----------------+-------------------|
-| delSession(es:[[file:../requirements/index.org::#session][Session]], s:System)     |                        | es:session-set |                   |
+| delSession(s:, s:System)             |                        | es:session-set |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
-| showSessions(s:[[file:../requirements/index.org::#session][Session]])              | s.user.role=admin      |                |                   |
+| showSessions(s:)                     | s.user.role=admin      |                |                   |
 |--------------------------------------+------------------------+----------------+-------------------|
 
 

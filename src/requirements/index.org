@@ -29,13 +29,15 @@ user =u= is logged in, he/she may modify the details of user
 =v= iff either =u = v= or =u = admin=.
 
 The rest of the sections have more detailed requirements. 
-* User
+
+
+* [[../data-model/index.org::#entity_user][User]]
 :PROPERTIES:
 :CUSTOM_ID: req_user
 :END: 
   User is an entity in the system.  There are several user(s) in the system
   whose type is =User=.  The interaction of a user with the system is defined
-  by the requirements below.
+  by the requirements below. 
 
 ** Composition
 :PROPERTIES:
@@ -43,9 +45,9 @@ The rest of the sections have more detailed requirements.
 :END: 
    The system has users.
 
-** User Identification
+** [[../data-model/index.org::#entity_email][User Identification]]
 :PROPERTIES:
-:CUSTOM_ID: req_user_identification
+:CUSTOM_ID: req_user_identification 
 :END: 
    Each user has an email address (string that corresponds to a
    valid email addr).  
@@ -57,7 +59,7 @@ The rest of the sections have more detailed requirements.
    Email identifies a user.  Two users with the same email
    are the same users. 
 
-** Name Attribute
+** [[../data-model/index.org::#entity_name][Name Attribute]]
 :PROPERTIES:
 :CUSTOM_ID: req_user_name
 :END: 
@@ -71,7 +73,7 @@ The rest of the sections have more detailed requirements.
    role that is associated with the newly created user is =user=
 
 
-* Role
+* [[../data-model/index.org::#entity_role][Role]]
 :PROPERTIES:
 :CUSTOM_ID: req_role
 :END: 
@@ -117,7 +119,7 @@ The rest of the sections have more detailed requirements.
    There is atleast one user with role =admin= in the system.
 
 
-* Session
+* [[../data-model/index.org::#entity_session][Session]]
 :PROPERTIES:
 :CUSTOM_ID: req_session
 :END: 
