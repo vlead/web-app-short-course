@@ -155,7 +155,9 @@ TYPE Session
 
   #+CAPTION: Entity relationship diagram for the Mini Version User Directory Application
   #+LABEL:  Entity relationship diagram for the Mini Version User Directory Application
-  [[../diagrams/er-diagram.jpg]]
+  #+BEGIN_HTML
+  <img src="https://docs.google.com/drawings/d/1960E6vwRV9OqUOaUfyOU07btK4hQJLSyZwy1TOPeOF4/pub?w=960&h=720"
+  #+END_HTML
 
   To edit the image click [[https://docs.google.com/drawings/d/1960E6vwRV9OqUOaUfyOU07btK4hQJLSyZwy1TOPeOF4/edit?usp%3Dsharing][here]].
 
