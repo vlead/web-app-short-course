@@ -86,7 +86,7 @@ Encodes the following items of information:
 :PROPERTIES:
 :CUSTOM_ID: entity_user
 :END: 
-  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]]
+  Requirement satisfied: [[../requirements/index.org::#req_user][User]]
 
 #+BEGIN_SRC spec :tangle spec.txt
 ;;; Entity Types
@@ -97,7 +97,7 @@ TYPE User
 :PROPERTIES:
 :CUSTOM_ID: entity_email
 :END: 
-  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user_identification%20][Email]]
+  Requirement satisfied: [[../requirements/index.org::#req_user_identification][Email]]
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Email
 #+END_SRC
@@ -106,7 +106,7 @@ TYPE Email
 :PROPERTIES:
 :CUSTOM_ID: entity_name
 :END: 
-  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user_name][Name]]
+  Requirement satisfied: [[../requirements/index.org::#req_user_name][Name]]
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Name
 #+END_SRC
@@ -115,7 +115,7 @@ TYPE Name
 :PROPERTIES:
 :CUSTOM_ID: entity_role
 :END: 
-  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_role][Role]]
+  Requirement satisfied: [[../requirements/index.org::#req_role][Role]]
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Role = {admin, user}
 #+END_SRC
@@ -124,29 +124,25 @@ TYPE Role = {admin, user}
 :PROPERTIES:
 :CUSTOM_ID: entity_session
 :END: 
-  Requirement satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_session][Session]]
+  Requirement satisfied: [[../requirements/index.org::#req_session][Session]]
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Session
 #+END_SRC
 
 
 * Relations and cardinality constraints over entity types 
-  For each relation, we define its inverse next to it. \\
-  Requirements satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]], [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user_uniqueness][Email]]
+:PROPERTIES:
+:CUSTOM_ID: cardinal_constraints
+:END: 
+  For each relation, we define its inverse next to it.
+
+  Meets requirements [[../requirements/index.org::#req_user_uniqueness][uniqueness of a user]], [[../requirements/index.org::#req_user_role][role of a user]] and [[../requirements/index.org::#req_session_constraints][session constraints]]
+
 #+BEGIN_SRC spec :tangle spec.txt
 ;;; Relations with cardinality constraints
 [email, user]  :  User?    > Email!
-#+END_SRC
-  Requirements satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]], [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user_name][Name]]
-#+BEGIN_SRC spec :tangle spec.txt
 [name, user]   :  User     > Name!
-#+END_SRC
-  Requirements satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]], [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_role][Role]]
-#+BEGIN_SRC spec :tangle spec.txt
 [role, user]   :  User     > Role!
-#+END_SRC
-  Requirements satisfied: [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_user][User]], [[file:~/vlead-projects/bitbucket/web-app-short-course/src/requirements/index.org::#req_session][Session]]
-#+BEGIN_SRC spec :tangle spec.txt
 [user, session]:  Session  > User!
 #+END_SRC
 
@@ -174,14 +170,19 @@ is a relation =r: A? > K!=.
 
 
 * System state
-  The system's state is captured by a set of /state
-  variables/.  
-** Primary Entity sets
-   
-For the purpose of /the application/, we maintain two primary
-state variables.  
+  The system's state is captured by a set of /state variables/.
 
- #+BEGIN_SRC spec
+** Primary Entity sets
+:PROPERTIES:
+:CUSTOM_ID: user_session_sets
+:END:    
+   For the purpose of /the application/, we maintain two primary state
+   variables.
+
+   user-set meets the requirement [[../requirements/index.org::#req_user_composition][user composition]] and session-set meets the
+   requirement [[../requirements/index.org::#req_session_login][mandatory login]]
+   
+#+BEGIN_SRC spec :tangle spec.txt
 
 ;;; Primary state variables
  user-set    : set[User]    ; set of users in the system
@@ -189,8 +190,7 @@ state variables.
  #+END_SRC
 
 and five relations
-
- #+BEGIN_SRC spec
+ #+BEGIN_SRC spec :tangle spec.txt
 
 ;;; Relations
  email:      User > Email!
@@ -212,6 +212,7 @@ and five relations
 #+end_example
 
 ** Derived Entity sets
+   
  #+BEGIN_SRC spec :tangle spec.txt
 ;;; Derived Entity sets
  email-set   : set[Email]   = user-set.email        ; set of emails in the system
@@ -223,9 +224,12 @@ and five relations
 
 ** Referential Integrity Constraints over entity-sets
 
-*** =user-set=
-
+*** Admin User
+:PROPERTIES:
+:CUSTOM_ID: admin_user
+:END:    
     There is exactly one user (called =admin-user=) whose role is =admin=.
+    This rule meets requirement [[../requirements/index.org::#req_role_admin][user with admin role]].
 
     #+BEGIN_SRC spec :tangle spec.txt
 
@@ -240,13 +244,20 @@ and five relations
                                                              ; role admin.
     #+END_SRC
 
-    These specifications also capture referential integrity.
+
+*** Referential Integrity over primary and derived entity sets
+:PROPERTIES:
+:CUSTOM_ID: referential_constraints
+:END: 
+
+Meets requirements [[../requirements/index.org::#req_user_uniqueness][uniqueness of a user]], [[../requirements/index.org::#req_user_role][role of a user]] and [[../requirements/index.org::#req_session_constraints][session constraints]]
 #+BEGIN_SRC spec :tangle spec.txt
 
 ;;; Relation variables with Referential Integrity
 [email, user]    :  user-set!    > email-set!
 [name, users]    :  user-set+    > name-set!    
 [role, users]    :  user-set+    > role-set!   
+[user, session]  :  session-set? > user-set!
 [role, session]  :  session-set  >  role-set!
 #+END_SRC
 

@@ -31,7 +31,7 @@ user =u= is logged in, he/she may modify the details of user
 The rest of the sections have more detailed requirements. 
 
 
-* [[../data-model/index.org::#entity_user][User]]
+* User
 :PROPERTIES:
 :CUSTOM_ID: req_user
 :END: 
@@ -39,18 +39,23 @@ The rest of the sections have more detailed requirements.
   whose type is =User=.  The interaction of a user with the system is defined
   by the requirements below. 
 
+  Realized in data model as [[../data-model/index.org::#entity_user][User]]
+
 ** Composition
 :PROPERTIES:
 :CUSTOM_ID: req_user_composition
 :END: 
    The system has users.
-
-** [[../data-model/index.org::#entity_email][User Identification]]
+   Realized in data model as [[../data-model/index.org::#user_session_sets][user-set]]
+** User Identification
 :PROPERTIES:
-:CUSTOM_ID: req_user_identification 
+:CUSTOM_ID: req_user_identification
 :END: 
    Each user has an email address (string that corresponds to a
    valid email addr).  
+
+   Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entity_email][Email]]
+   entity.
 
 ** Uniqueness of a User
 :PROPERTIES:
@@ -59,11 +64,16 @@ The rest of the sections have more detailed requirements.
    Email identifies a user.  Two users with the same email
    are the same users. 
 
-** [[../data-model/index.org::#entity_name][Name Attribute]]
+   Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entity_email][Email]]
+   entity.
+
+** Name Attribute
 :PROPERTIES:
 :CUSTOM_ID: req_user_name
 :END: 
    Each user has a Name (string).
+
+      Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entity_name][Name]] entity.
 
 ** Role of a User
 :PROPERTIES:
@@ -71,9 +81,11 @@ The rest of the sections have more detailed requirements.
 :END: 
    Each user has exactly one role, and by default when a user is created, the
    role that is associated with the newly created user is =user=
+   
+   Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entit_role][Role]]
+   entity.
 
-
-* [[../data-model/index.org::#entity_role][Role]]
+* Role
 :PROPERTIES:
 :CUSTOM_ID: req_role
 :END: 
@@ -81,19 +93,25 @@ The rest of the sections have more detailed requirements.
   whose type is =Role= defines a set of privileges i.e. what is accessible and
   what is not accessible in the system.
 
-** Types of Roles
-:PROPERTIES:
-:CUSTOM_ID: req_role_types
-:END: 
-   There are 2 kinds of roles: =admin= and =user=.  Each role determines what
-   data access privileges are available to the user.
+  Realized in data model as [[../data-model/index.org::#entity_role][Role]]
 
 ** Role Mapping to a User
 :PROPERTIES:
 :CUSTOM_ID: req_role_mapping_to_user
 :END: 
-   Each user is mapped to exactly one role and in a session, In any given
+   Each user is mapped to exactly one role in a given session, In any given
    session, a user is mapped to his/her role.
+
+   Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinalility]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entity_role][Role]] and
+   [[../data-model/index.org::#entity_user][User]] entities.
+
+** Types of Roles
+:PROPERTIES:
+:CUSTOM_ID: req_role_types
+:END: 
+   There are 2 kinds of roles: =admin= and =user=.  Each role determines what
+   data access privileges are available to the user.   
+
 
 ** Role Privileges
 :PROPERTIES:
@@ -118,19 +136,22 @@ The rest of the sections have more detailed requirements.
 :END:    
    There is atleast one user with role =admin= in the system.
 
+   Realized in data model as an [[../data-model/index.org::#admin_user][admin user]]
 
-* [[../data-model/index.org::#entity_session][Session]]
+* Session
 :PROPERTIES:
 :CUSTOM_ID: req_session
 :END: 
-  A session defines the set of actions that a user is allowed to perform. 
+  A session defines the set of actions that a user is allowed to perform.
+  Realized in datamodel as [[../data-model/index.org::#entity_session][Session]]
 
 ** Login is Mandatory
 :PROPERTIES:
 :CUSTOM_ID: req_session_login
 :END: 
-   Users are required to login into the system.
-
+   Users are required to login to the system.
+   
+   Realized in data model as [[../data-model/index.org::#user_session_sets][session-set]]
 
 ** A logged user and a session
 :PROPERTIES:
@@ -138,19 +159,21 @@ The rest of the sections have more detailed requirements.
 :END: 
    Each user once logged in is associated with a session.
 
+   Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on
+   [[../data-model/index.org::#entity_session][Session]] entity.
+
+** Constraints
+:PROPERTIES:
+:CUSTOM_ID: req_session_constraints
+:END: 
+   At any given time a user cannot have more than one session.  Realized in
+   data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entity_session][Session]] entity.
 
 ** Privileges
 :PROPERTIES:
 :CUSTOM_ID: req_session_privileges
 :END: 
    Operations are permitted only if the user is logged into the system.
-
-
-** Constraints
-:PROPERTIES:
-:CUSTOM_ID: req_session_constraints
-:END: 
-   At any given time a user cannot have more than one session.
 
 
 * Interaction with the system and privileges
