@@ -7,10 +7,12 @@
 #+options: ^:nil
 #+LATEX: Literal LaTeX code for export
 
-The application or the system is abstracted as the data model.  The model
-captures: the entities that comprise the system; relations and constraints
-between these entities; and operations that entail a change in the state of the
-system.
+* Introduction
+  The application or the system is abstracted as the data model.  The model
+  captures: the entities that comprise the system; relations and constraints
+  between these entities; and operations that entail a change in the state of
+  the system.
+
 
 * Notation
   The system is defined as the data model.  There is a certain notation that is
@@ -131,9 +133,9 @@ TYPE Session
 
 
 * Relations and cardinality constraints over entity types 
-:PROPERTIES:
-:CUSTOM_ID: cardinal_constraints
-:END: 
+  :PROPERTIES:
+  :CUSTOM_ID: cardinal_constraints
+  :END: 
   For each relation, we define its inverse next to it.
 
   Meets requirements [[../requirements/index.org::#req_user_uniqueness][uniqueness of a user]], [[../requirements/index.org::#req_user_role][role of a user]] and [[../requirements/index.org::#req_session_constraints][session constraints]]
@@ -146,18 +148,19 @@ TYPE Session
 [user, session]:  Session  > User!
 #+END_SRC
 
-  The following diagram summarizes all the cardinality constraints
-  across all entities.
 
-  #+CAPTION: Entity relationship diagram for the Mini Version User Directory Application
-  #+LABEL:  Entity relationship diagram for the Mini Version User Directory Application
   #+BEGIN_HTML
+  <p>   The following diagram summarizes all the cardinality constraints
+  across all entities.
+  </p>
   <img src="https://docs.google.com/drawings/d/1960E6vwRV9OqUOaUfyOU07btK4hQJLSyZwy1TOPeOF4/pub?w=960&h=720"
+  <p align="center"> Entity Diagram </p>
   #+END_HTML
 
   To edit the image click [[https://docs.google.com/drawings/d/1960E6vwRV9OqUOaUfyOU07btK4hQJLSyZwy1TOPeOF4/edit?usp%3Dsharing][here]].
 
-** Keys
+
+* Keys
 
 An entity =K= is called a /key for/ an entity =A= if there
 is a relation =r: A? > K!=.
@@ -199,7 +202,7 @@ and five relations
  user:       Session > User!
  #+END_SRC
 
-*** Applying relations to sets
+** Applying relations to sets
 #+begin_example
 1.role = admin
 2.role = user

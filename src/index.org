@@ -1,4 +1,4 @@
-#+TITLE: Building a Web Application:  Ground up to the Cloud
+#+TITLE: Building a Web Application: Ground up to the Cloud
 #+AUTHOR: Venkatesh Choppella,  Thirumal Ravula and Sripathi Kammari @ VLEAD, IIIT Hyderabad
 #+DATE: [2016-05-11 Wed]
 #+SETUPFILE: ./org-templates/level-0.org
@@ -6,96 +6,236 @@
 #+EXCLUDE_TAGS: boilerplate
 #+OPTIONS: ^:nil
 
+* Introduction
+  The challenge is to build a web application from the ground up using formal
+  methods ensuring safety and flexibility in evolution.  The [[./index.org::#design][=Design=]] provides
+  the methodology on *how* to build the application while the [[./index.org::#application][=Data Model=]]
+  provides on *what* to build.
+
 * Version/Branch History
 
 - =mini= :: Version with only Users and Sessions as the main
      Entities.  No  Roles. 
 
-* Goal
 
-The Goal of this course is to walk you through an end-to-end
-requirements specification, design, development and
-deployment of a small web application.  In the process, you
-will learn to use various technologies and will be
-introduced to well-established processes and good software
-development practices that we use here at VLEAD.
+* Goal
+  The Goal of this course is to walk you through an end-to-end requirements
+  specification, design, development and deployment of a small web application.
+  In the process, you will learn to use various technologies and will be
+  introduced to well-established processes and good software development
+  practices that we use here at VLEAD.
+
 
 * Components of a web application
-A /web application/ consists of a collection of continuously
-running programs possibly running on different machines,
-connected, and geographically distant from each other.
-(Such programs are called services.)  On the user's
-machine's end is a program running inside the /web browser/
-which displays the output of the application as well as
-functions as an interface for the user to send information
-to the application.
+  A /web application/ consists of a collection of continuously running programs
+  possibly running on different machines, connected, and geographically distant
+  from each other. (Such programs are called services.)  On the user's
+  machine's end is a program running inside the /web browser/ which displays
+  the output of the application as well as functions as an interface for the
+  user to send information to the application.
 
-The server side of the application runs as a thread inside a
-/web server/.  The job of the web server is to listen for
-inputs, get the server side web application thread to
-compute an output and then serve that output back to the
-user's browser.
+  The server side of the application runs as a thread inside a /web server/.
+  The job of the web server is to listen for inputs, get the server side web
+  application thread to compute an output and then serve that output back to
+  the user's browser. 
  
-The web application usually has a third component, which is
-a /database/.  The database stores data needed by the
-application.  The database allows the data to survive even
-if the application stops.
+  The web application usually has a third component, which is   a /database/.
+  The database stores data needed by the application.  The database allows the
+  data to survive even if the application stops.
 
-The data items in the database are related to one another.
-The types of the data and the relations between them and the
-operations permitted on the data items are expressed using a
-/data model/.
+  The data items in the database are related to one another.  The types of the
+  data and the relations between them and the operations permitted on the data
+  items are expressed using a /data model/.
 
-The web application allows access to its underlying data via
-/URL addresses/ (sometime along with form fields).  The
-specification of the mapping of the urls to operations on
-the data is called a /REST API/. 
+  The web application allows access to its underlying data via /URL addresses/
+  (sometime along with form fields).  The specification of the mapping of the
+  urls to operations on the data is called a /REST API/. 
+
 
 * Software Development Life Cycle  (SDLC)
 
-A systematic development of the application requires that we
-break down the entire realization of the application into
-multiple, intertwined phases.  In this short course, our
-application life cycle will include the following phases:
+  A systematic development of the application requires that we break down the
+  entire realization of the application into multiple, intertwined phases.  In
+  this short course, our application life cycle will include the following
+  phases:
 
-|-----+-------------------------+-----------------------+---------------------------+---|
-| No. | Phase                   | Resultant artefact    | Format                    |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  1. | Requirements definition | Requirements document | English (text)            |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  2. | Data model              | Formal specification  | Specification language    |   |
-|     | (Design)                |                       | and diagrams              |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  3. | Object implementation   | Code                  | Python                    |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  4. | Object Relational Model | Code                  | Python, SQL-Alchemy       |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  5. | Rest API                | Spec + Code           | Python Flask Library      |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  6. | Front End               | Spec + Code           | JS, Angular.js            |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  7. | Deployment              | Code, Deployment spec | JSON, makefiles           |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  8. | Unit Testing            | Code                  | Flask/Python unit testing |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-|  9. | Documentation           | Literate Program      | Org-mode/HTML             |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-| 10. | Planning and tracking   | Issues on Githhub     | Text                      |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-| 11. | Versioning              | Git                   | GitHub Repositories       |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-| 12. | Release Management      | GitHub Tags and       |                           |   |
-|     |                         | branches              |                           |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
-| 13. | Continuous Integration  | GitHub hooks          |                           |   |
-|-----+-------------------------+-----------------------+---------------------------+---|
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  | No. | Phase                   | Resultant artefact    | Format                    |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  1. | Requirements definition | Requirements document | English (text)            |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  2. | Data model              | Formal specification  | Specification language    |   |
+  |     | (Design)                |                       | and diagrams              |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  3. | Object implementation   | Code                  | Python                    |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  4. | Object Relational Model | Code                  | Python, SQL-Alchemy       |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  5. | Rest API                | Spec + Code           | Python Flask Library      |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  6. | Front End               | Spec + Code           | JS, Angular.js            |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  7. | Deployment              | Code, Deployment spec | JSON, makefiles           |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  8. | Unit Testing            | Code                  | Flask/Python unit testing |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  |  9. | Documentation           | Literate Program      | Org-mode/HTML             |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  | 10. | Planning and tracking   | Issues on Githhub     | Text                      |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  | 11. | Versioning              | Git                   | GitHub Repositories       |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  | 12. | Release Management      | GitHub Tags and       |                           |   |
+  |     |                         | branches              |                           |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
+  | 13. | Continuous Integration  | GitHub hooks          |                           |   |
+  |-----+-------------------------+-----------------------+---------------------------+---|
 
+
+* Design of the application
+:PROPERTIES:
+:CUSTOM_ID: design
+:END: 
+
+  The application is perceived as a composition of entities and the ability to
+  perform CRUD operations on this entities. 
+
+  The principle that is followed while building this application is modularity.
+  It is thought that the biggest gain from modularity is safety and ease of
+  evolution in incorporating newer requirements.
+
+  Design Choices:
+
+** A monolithic web application
+   In a monolithic web application, 
+
+   - the web application that is responsible for providing the html pages on
+     the browser and
+   - the service that provides the data to fill these html pages
+
+   are tied together as a single application running from a single web server.
+
+   #+BEGIN_HTML
+   <img src="https://docs.google.com/drawings/d/1p4Jzhgb70CyyXSLCv45zRuTpF9uOu8y4PZTnB1zPuUY/pub?w=960&amp;h=400">
+   #+END_HTML
+
+   [[https://docs.google.com/drawings/d/1p4Jzhgb70CyyXSLCv45zRuTpF9uOu8y4PZTnB1zPuUY/edit][Edit the image]]
+   
+
+** A web application decoupled from the service
+   
+   The web application that is responsible for providing a seamless interactive
+   experience to a user is decoupled from the service that provides the data
+   for the application.  
+
+   The functionality and the recipients of the functionality of either the web
+   application or the service providing data are different and therefore it is
+   imperative to decouple them.  The decoupling should enable the evolution of
+   the both these services in their own trajectories.
+
+   In this approach, the web application could plug to multiple services that
+   provide data.  Also, a deviant of a web application to cater to browsers on
+   mobiles can evolve separately while still using the application programming
+   interface (API) of the same service providing data.
+
+   #+BEGIN_HTML
+   <img src="https://docs.google.com/drawings/d/1SdOIH2uikVCoMZVweUI_wt7gxks6nkQNnxaK8VQb2EU/pub?w=960&amp;h=720">
+   #+END_HTML
+
+   [[https://docs.google.com/drawings/d/1SdOIH2uikVCoMZVweUI_wt7gxks6nkQNnxaK8VQb2EU/edit][Edit the image]]
+
+
+** Dissecting a service providing data
+
+   Defining components and their up and down interfaces is essential in
+   building a RESTful service.  
+
+*** Diagram Representation
+
+    #+BEGIN_HTML
+    <img src="https://docs.google.com/drawings/d/1JfzCe7uEEk25KLSv77QFbxkjqcAWQvBCEtNJ-BfKi20/pub?w=960&amp;h=720">
+    #+END_HTML
+
+    [[https://docs.google.com/drawings/d/1JfzCe7uEEk25KLSv77QFbxkjqcAWQvBCEtNJ-BfKi20/edit][Edit the image]]
+
+
+*** Components and Interfaces
+    Each component has two interfaces - an upper and a lower.  An upper
+    interface of a component enables two way communication with the component
+    above it and similarly the lower interface enables two way communication
+    with the component below it.
+
+    As we traverse from bottom to the top in the stack (in the diagram from
+    left to right), we move from unsafe to safe method calls. 
+
+    - The API exposed by the =Entity= component allows for access and
+      manipulation of =entities= ( getters and setters) in the application
+      without any checks.  The programming interface accepts only objects and
+      spits out objects.
+
+    - =System= component lies on top of =Entity= component. =System= maintains
+      the state of the application.  It exposes the operations to change the
+      state of the application as a programming interface to the component
+      (=REST=) above it.  It is the controller that accepts strings as
+      parameters, converts them to objects and invokes the API of the =Entity=
+      component while providing all the checks to determine if an operation can
+      be performed.  This component provides safety for the unsafe component
+      that lies beneath it. 
+
+    - =Rest= component is the gateway of the application.  All requests to the
+      service from other applications end up here.  The functionality of this
+      component is to determine if the request has to be entertained, and if
+      entertained, pick the corresponding interface call to the =System=
+      component.  A table that maps RESTful API to the =System= API is
+      maintained in this component.  Restful API is the API that is published
+      to the external world.
+    
+
+** Building the =System= component with =guard= and =filter=
+   
+    The =System= component is further modularized where =guard= and =filter=
+    components are plugged on top of it.  The component =guard= is the safety
+    net while component =filter= is the data presenter. 
+
+*** Diagram Representation
+
+    #+BEGIN_HTML
+    <img src="https://docs.google.com/drawings/d/1MlZJu82jXhQ7LZNWCcCU8z2YBcRsXBBH_EVqRwaxxtg/pub?w=960&amp;h=720">
+    #+END_HTML
+
+    [[https://docs.google.com/drawings/d/1MlZJu82jXhQ7LZNWCcCU8z2YBcRsXBBH_EVqRwaxxtg/edit][Edit the image]]
+
+*** =guard= and =filter= components
+    
+    - The =guard= abstracts out all the safety checks that are required for
+      performing an operation that either changes or retrieves the state of the
+      =System=.  The type of checks a =guard= could perform are arity, type,
+      authorization and state checks.
+
+    - The =filter= acts on the data which is the result of the operation before
+      the data is presented to the =REST= component.  This ensures a privilege
+      based access to the elements of data. 
+
+
+** Security
+   The application ensures two levels of security is maintained.  
+
+   1. Who is authorized to access the RESTful API of the application?  This
+      level of determining authorized access to the application is implemented
+      at the =REST= component.
+
+   2. What operations are allowed for each user of the application?  This is
+      achieved by the =guard= component.  The operations are either
+      modification or retrieval of the state of the system. 
 
 
 * Application
-The user directory application is a simple application that
-maintains user data.   The development of the application is
-divided into the following phases:
+:PROPERTIES:
+:CUSTOM_ID: application
+:END: 
+  The user directory application is a simple application that maintains user
+  data.  The development of the application is divided into the following
+  phases:
 
  1. [[./requirements/index.org][Requirements]]
 
@@ -104,6 +244,7 @@ divided into the following phases:
  3. [[./runtime/index.org][Runtime]]
 
  4. [[./deployment/index.org][Deployment]]
+
 
 * Tangle                                       :boilerplate:
 #+BEGIN_SRC python :eval no :tangle __init__.py
