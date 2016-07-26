@@ -247,7 +247,12 @@ class ClassTemplate():
         def fn(obj):
             to_client_var = {}
             for key, value in obj.state.iteritems():
-                if hasattr(value, 'to_client'):
+                if is_list(value):
+                    to_client_var[key] = []
+                    for item in value:
+                        to_client_var[key].append(item.to_client())
+                        
+                elif hasattr(value, 'to_client'):
                     to_client_var[key] = value.to_client()
                 else:
                     to_client_var[key] = value
