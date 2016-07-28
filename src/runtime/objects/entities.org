@@ -236,10 +236,6 @@ class TestUser(TestCase):
 #+BEGIN_SRC python
 Session = ClassTemplate.mk_class("Session", user=check_user)
 
-User.__eq__ = lambda self, other: \
-                  isinstance(other, self.__class__) and \
-                  self.get("email") == other.get("email")
-
 Session.__eq__ = lambda self, other: \
                     isinstance(other, self.__class__) and \
                     self.get("user") == other.get("user")

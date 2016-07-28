@@ -245,10 +245,10 @@ class TestSystemArityAndType(TestCase):
 
 
 * Operations
-  Operations provide the mechanism to change the state of the system.  While
-  the system state is changed, it is imperative to maintain the invariant of
-  the system.   Before the actual change in system is made, each operation goes
-  through a series of checks: 
+  Operations provide the mechanism to either change or retrieve the state of
+  the system.  While the system state is changed, it is imperative to maintain
+  the invariant of the system.  Before the actual change in system is made,
+  each operation goes through a series of checks:
   1. Arity Check - ensures the right number of arguments are provided to
      the operation.
   2. Type Check - ensures the arguments are of right type
@@ -258,7 +258,7 @@ class TestSystemArityAndType(TestCase):
   Once these checks are satisfied, either the system state is modified or retrieved.
 
 ** =AddUser=
-  
+   
  #+NAME: class_adduser
  #+begin_src python
 class AddUser():
@@ -275,14 +275,13 @@ class AddUser():
     def state_check(args):
         user = args["user"]
         session = args["session"]
-        if System.session_exists(session):
-            if  System.delegate.user_exists(user):
-                raise StateError("user %s already exists in System"
-                             % user.get("name").get("name"))
-        else:
+
+        if not System.session_exists(session):
             raise StateError("session %s does not exist in System"
-                             % session.user.get("name").get("name"))
-            
+                                % session.to_client())
+        elif System.delegate.user_exists(user):
+            raise StateError("user %s already exists in System"
+                                % user.to_client())
 
     @staticmethod
     def action(args):
@@ -331,8 +330,8 @@ class TestAddUser(TestCase):
             System.do("add_user", user=user)
 
 
-    def test_add_user_raises_type_check(self):
-        print "test_add_user_raises_type_check"
+    def test_add_user_raises_type_check_error(self):
+        print "test_add_user_raises_type_check_error"
         admin_user=System.delegate.user_set[0]
         session = Session(user=admin_user)
         System.session_set.append(session)
@@ -343,6 +342,28 @@ class TestAddUser(TestCase):
 
         with self.assertRaises(TypeError):
             System.do("add_user", user=session, session=session)
+
+    def test_add_user_raises_state_error_with_no_session(self):
+        print "test_add_user_raises_state_error_with_no_session"
+        admin_user=System.delegate.user_set[0]
+        session = Session(user=admin_user)
+         
+        user=User(name=Name(name="me"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.role_set[1])
+
+        with self.assertRaises(StateError):
+            System.do("add_user", user=user, session=session)
+
+
+    def test_add_user_raises_state_error_with_existing_user(self):
+        print "test_add_user_raises_state_error_with_existing_user"
+        admin_user=System.delegate.user_set[0]
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+
+        with self.assertRaises(StateError):
+            System.do("add_user", user=admin_user, session=session)
 
   #+END_SRC
 
