@@ -28,6 +28,7 @@ is_int = is_inst(int)
 is_bool = is_inst(bool)
 is_str = is_inst(str)
 is_dict = is_inst(dict)
+is_list = is_inst(list)
 #+END_SRC
 
 *** Test Instance predicate

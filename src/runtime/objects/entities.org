@@ -39,6 +39,11 @@ requirements of the application.
 #+NAME: class_Name
 #+begin_src python
 Name = ClassTemplate.mk_class("Name", name=is_alphabetic_str)
+
+Name.__eq__ = lambda self, other: \
+                 isinstance(other, self.__class__) and \
+                 self.get("name") == other.get("name")
+
 is_name = is_inst(Name)
 check_name = check_pred(is_name)
 
@@ -55,6 +60,16 @@ class TestName(TestCase):
         self.assertEqual(is_name(Name(name="Jimi Hendrix")), True)
         self.assertEqual(Name(name="Jimi Hendrix").get("name"), "Jimi Hendrix")
         self.assertRaises(TypeError, Name, name="Jimi 123 Hendrix")
+
+    def test_name_equality(self):
+        print "test_name_equality"
+        self.assertEqual(Name(name="Jimi Hendrix") == 
+                         Name(name="Jimi Hendrix"), 
+                         True)
+
+        self.assertEqual(Name(name="Jimi Hendrix") == 
+                         Name(name="Bo Didley"), 
+                         False)
 
 #+END_SRC
 
@@ -90,11 +105,13 @@ class TestEmail(TestCase):
 
     def test_equality_of_email(self):
         print "test_equality_of_email"
-        em1 = Email(email="jimi@gnu.org")
-        self.assertEqual(em1 == em1, True)
+        self.assertEqual(Email(email="jimi@gnu.org") == 
+                         Email(email="jimi@gnu.org"), 
+                         True)
 
-        em2 = Email(email="didley@gnu.org")
-        self.assertEqual(em1 == em2, False)
+        self.assertEqual(Email(email="didley@gnu.org") == 
+                         Email(email="jimi@gnu.org"), 
+                         False)
 
 #+END_SRC
 
@@ -109,6 +126,11 @@ is_role = is_inst(Role)
 check_role = check_pred(is_role)
 Role.is_admin = lambda role: role.name == 'admin'
 Role.is_user = lambda role: role.name == 'user'
+
+Role.__eq__ = lambda self, other: \
+                  isinstance(other, self.__class__) and \
+                  self.get("name") == other.get("name")
+            
 
 #+END_SRC
 
@@ -132,6 +154,12 @@ class TestRole(TestCase):
         self.assertEqual(u_role.get("name"), "user")
         u_role.set(name="admin")
         self.assertEqual(u_role.get("name"), "admin")
+
+    def test_equality_on_role(self):
+        print "test_equality_on_role"
+        self.assertEqual(Role(name="user") == Role(name="user"), True)
+        self.assertEqual(Role(name="admin") == Role(name="user"), False)
+
 #+END_SRC
 
 
@@ -189,7 +217,13 @@ class TestUser(TestCase):
         user1 = User(name=Name(name="Jimi Hendrix"),
                     email=Email(email="jimi@gnu.org"),
                     role=Role(name="admin"))
+
+        user2 = User(name=Name(name="DiDley Bo"),
+                    email=Email(email="didley@gnu.org"),
+                    role=Role(name="admin"))
+
         self.assertEqual(user1 == user1, True)
+        self.assertEqual(user1 == user2, False)
 
 #+END_SRC
 
@@ -201,6 +235,15 @@ class TestUser(TestCase):
 #+NAME: class_Session
 #+BEGIN_SRC python
 Session = ClassTemplate.mk_class("Session", user=check_user)
+
+User.__eq__ = lambda self, other: \
+                  isinstance(other, self.__class__) and \
+                  self.get("email") == other.get("email")
+
+Session.__eq__ = lambda self, other: \
+                    isinstance(other, self.__class__) and \
+                    self.get("user") == other.get("user")
+
 
 is_session = is_inst(Session)
 check_session = check_pred(is_session)
@@ -239,6 +282,22 @@ check_session = check_pred(is_session)
         self.assertEqual(session.get("user").get("email").get("email"),
                          "didley@gnu.org")
 
+
+    def test_equality_on_session(self):
+        print "test_equality_on_session"
+        user1 = User(name=Name(name="Jimi Hendrix"),
+                    email=Email(email="jimi@gnu.org"),
+                    role=Role(name="admin"))
+
+        user2 = User(name=Name(name="Bo Didley"),
+                    email=Email(email="didley@gnu.org"),
+                    role=Role(name="user"))
+
+        session1 = Session(user=user1)
+        session2 = Session(user=user2)
+        self.assertEqual(session1 == session1, True)
+        self.assertEqual(session1 == session2, False)
+    
 #+END_SRC
 
 
@@ -262,8 +321,6 @@ from runtime.exceptions.custom_exceptions import *
 # -*- coding: utf-8 -*-
 import unittest
 from unittest import TestCase
-from runtime.utils.type_utils import *
-from runtime.utils.class_templates import *
 from entities import *
 #+end_src
 

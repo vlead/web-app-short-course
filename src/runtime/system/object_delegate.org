@@ -1,4 +1,4 @@
-#+TITLE: Object Handler for the System
+#+TITLE: Object Delegate for the System
 #+AUTHOR: VLEAD
 #+DATE: [2016-07-07 Thu]
 #+SETUPFILE: ../../org-templates/level-2.org
@@ -7,21 +7,21 @@
 #+OPTIONS: ^:nil
 
 
-* Object Handler
-  Object Handler encapsulates a set of functions where each function performs a
-  specific task.  With the use of these handlers, the core implementation of
-  the =system= will not alter but by plugging handlers that are specific to
+* Object Delegate
+  Object Delegate encapsulates a set of functions where each function performs a
+  specific task.  With the use of these delegates, the core implementation of
+  the =system= will not alter but by plugging delegates that are specific to
   each environment, for example, be it either objects or persistence, the
   =system= for that particular environment is derived while not modifying the
   =system= class.
 
-** Initialize Object Handler
-   Provides all the handlers that operate on objects.
+** Initialize Object Delegate
+   Provides all the delegates that operate on objects.
 
-*** class_object_handler 
-#+NAME: class_object_handler
+*** class_object_delegate 
+#+NAME: class_object_delegate
 #+BEGIN_SRC python
-class ObjectHandler():
+class ObjectDelegate():
     role_set = []
     user_set = []
 
@@ -59,24 +59,24 @@ class ObjectHandler():
 
 
 *** Tests
-#+NAME: test_initialize_object_handler
+#+NAME: test_initialize_object_delegate
 #+BEGIN_SRC python
-class TestObjectHandler(TestCase):
+class TestObjectDelegate(TestCase):
     TESTING = True
-    object_handler = None
+    object_delegate = None
     
     def setUp(self):
-        self.obj_handler = ObjectHandler()
+        self.obj_delegate = ObjectDelegate()
     
     def tearDown(self):
-        self.obj_handler = None
+        self.obj_delegate = None
    
-    def test_initialize_object_handler(self):
-         print "test_initialize_object_handler"
-         self.assertEqual(len(self.obj_handler.role_set), 2)
-         self.assertEqual(self.obj_handler.role_set[0].get("name"), "admin")
-         self.assertEqual(len(self.obj_handler.user_set), 1)
-         self.assertEqual(self.obj_handler.user_set[0].get("role").get("name"),
+    def test_initialize_object_delegate(self):
+         print "test_initialize_object_delegate"
+         self.assertEqual(len(self.obj_delegate.role_set), 2)
+         self.assertEqual(self.obj_delegate.role_set[0].get("name"), "admin")
+         self.assertEqual(len(self.obj_delegate.user_set), 1)
+         self.assertEqual(self.obj_delegate.user_set[0].get("role").get("name"),
                           "admin")
 
 #+END_SRC
@@ -102,8 +102,8 @@ class TestObjectHandler(TestCase):
 #+BEGIN_SRC python
     def test_user_exists(self):
          print "test_user_exists"
-         user = self.obj_handler.user_set[0]
-         self.assertEqual(self.obj_handler.user_exists(user), True)
+         user = self.obj_delegate.user_set[0]
+         self.assertEqual(self.obj_delegate.user_exists(user), True)
 
 #+END_SRC
 
@@ -127,8 +127,32 @@ class TestObjectHandler(TestCase):
                           email=Email(email="tt@kk.com"),
                           role=Role.user)
 
-         user = self.obj_handler.add_user(user)
-         self.assertEqual(self.obj_handler.user_exists(user), True)
+         user = self.obj_delegate.add_user(user)
+         self.assertEqual(self.obj_delegate.user_exists(user), True)
+
+#+END_SRC
+
+
+*** Return the users in the system
+    This function returns the list of users maintained by the system.
+#+NAME: get_users
+#+BEGIN_SRC python
+    def get_users(self):
+        return self.user_set
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_get_users
+#+BEGIN_SRC python
+    def test_get_users(self):
+         print "test_get_users"
+         user = User(name=Name(name="some user"),
+                          email=Email(email="tt@kk.com"),
+                          role=Role.user)
+
+         user = self.obj_delegate.add_user(user)
+         self.assertEqual(len(self.obj_delegate.get_users()), 2)
 
 #+END_SRC
 
@@ -154,7 +178,7 @@ from runtime.exceptions.custom_exceptions import *
 # -*- coding: utf-8 -*-
 import unittest
 from unittest import TestCase
-from handlers import *
+from object_delegate import *
 
 #+end_src
 
@@ -170,22 +194,24 @@ if __name__ == '__main__':
 * Tangling                                                      :boilerplate:
 
 ** sources
-#+BEGIN_SRC python :tangle handlers.py :eval no :noweb yes
+#+BEGIN_SRC python :tangle object_delegate.py :eval no :noweb yes
 <<imports_for_sources>>
-<<class_object_handler>>
+<<class_object_delegate>>
 <<initialize_role_set>>
 <<initialize_user_set>>
 <<user_exists>>
 <<add_user>>
+<<get_users>>
 #+end_src
 
 
 ** tests
-#+BEGIN_SRC python :tangle test_handlers.py :eval no :noweb yes
+#+BEGIN_SRC python :tangle test_object_delegate.py :eval no :noweb yes
 <<imports_for_tests>>
-<<test_initialize_object_handler>>
+<<test_initialize_object_delegate>>
 <<test_user_exists>>
 <<test_add_user>>
+<<test_get_users>>
 <<run_test_cases>>
 #+end_src
 

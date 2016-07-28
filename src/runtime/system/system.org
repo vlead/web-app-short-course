@@ -89,14 +89,13 @@ The class corresponding to each operation has five fields:
 #+NAME: class_system
 #+begin_src python
 class System ():
-    session_set = []
-
+    
     def __init__(self):
         raise Error('Can not instantiate')
 
     @staticmethod
     def initialize_system(cls):
-        System.handler = cls()
+        System.delegate = cls()
         System.session_set = []
 
     @staticmethod
@@ -107,6 +106,11 @@ class System ():
     def is_session_user(session):
         return session.get("user").get("role").get('name') == "user"
 
+
+    @staticmethod
+    def session_exists(session):
+        return session in System.session_set
+
 #+end_src
 
 *** Test Constructor
@@ -116,27 +120,34 @@ class TestSystemConstructor(TestCase):
     TESTING = True
 
     def setUp(self):
-        System.initialize_system(ObjectHandler)
+        System.initialize_system(ObjectDelegate)
 
     def tearDown(self):
-        System.handler = None
+        System.delegate = None
         System.session_set = []
    
     def test_system_constructor(self):
         print "test_system_constructor"
-        self.assertEqual(System.handler.user_set[0].get("name").get("name"),
+        self.assertEqual(System.delegate.user_set[0].get("name").get("name"),
                          Config.admin_name)
-        self.assertEqual(System.handler.user_set[0].get("email").get("email"),
+        self.assertEqual(System.delegate.user_set[0].get("email").get("email"),
                          Config.admin_email)
-        self.assertEqual(System.handler.user_set[0].get('role').get('name'),
+        self.assertEqual(System.delegate.user_set[0].get('role').get('name'),
                          Config.admin_role)
 
     def test_is_session_admin(self):
         print "test_is_session_admin"
-        admin_user=System.handler.user_set[0]
+        admin_user=System.delegate.user_set[0]
         session = Session(user=admin_user)
         System.session_set.append(session)
         self.assertEqual(System.is_session_admin(session), True)
+
+    def test_session_exists(self):
+        print "test_session_exists"
+        admin_user=System.delegate.user_set[0]
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+        self.assertEqual(System.session_exists(session), True)
 
 #+END_SRC
 
@@ -161,7 +172,7 @@ class TestSystemConstructor(TestCase):
     def type_check(args, arg_types):
         for key, value in args.iteritems():
             if not arg_types[key](value):
-                raise TypeError("type mismatch: argument  is not of " + 
+                raise TypeError("type mismatch: argument %s is not of " + 
                                 "type " )
        
    
@@ -174,10 +185,10 @@ class TestSystemArityAndType(TestCase):
     TESTING = True
 
     def setUp(self):
-        System.initialize_system(ObjectHandler)
+        System.initialize_system(ObjectDelegate)
 
     def tearDown(self):
-        System.handler = None
+        System.delegate = None
 
     def test_arity(self):
         print "test_arity"
@@ -244,7 +255,7 @@ class TestSystemArityAndType(TestCase):
   3. Auth Check - ensures only the authorized can perform the operation
   4. State Check - ensures System invariant is maintained
 
-  Once these checks are satisfied, the system state is changed.
+  Once these checks are satisfied, either the system state is modified or retrieved.
 
 ** =AddUser=
   
@@ -263,14 +274,20 @@ class AddUser():
     @staticmethod
     def state_check(args):
         user = args["user"]
-        if System.handler.user_exists(user):
-            raise StateError("user %s already exists in System"
+        session = args["session"]
+        if System.session_exists(session):
+            if  System.delegate.user_exists(user):
+                raise StateError("user %s already exists in System"
                              % user.get("name").get("name"))
+        else:
+            raise StateError("session %s does not exist in System"
+                             % session.user.get("name").get("name"))
+            
 
     @staticmethod
     def action(args):
         user = args["user"]
-        user = System.handler.add_user(user)
+        user = System.delegate.add_user(user)
         return user
  #+end_src
 
@@ -281,25 +298,120 @@ class TestAddUser(TestCase):
     TESTING = True
 
     def setUp(self):
-        System.initialize_system(ObjectHandler)
+        System.initialize_system(ObjectDelegate)
 
     def tearDown(self):
-        System.handler = None
+        System.delegate = None
 
-    def test_add_user_by_admin(self):
+    def test_add_user_passes(self):
         print "test_add_user_by_admin"
-        admin_user=System.handler.user_set[0]
+        admin_user=System.delegate.user_set[0]
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.role_set[1])
+
+        self.assertEqual(System.do("add_user", user=user, session=session),
+                         System.delegate.user_set[1])
+
+
+    def test_add_user_raises_arity_error(self):
+        print "test_add_user_raises_arity_error"
+        admin_user=System.delegate.user_set[0]
         session = Session(user=admin_user)
         System.session_set.append(session)
  
         user=User(name=Name(name="me"),
                   email=Email(email="abc@gmail.com"),
-                  role=System.handler.role_set[1])
+                  role=System.delegate.role_set[1])
 
-        System.do("add_user", user=user, session=session)
-        
-        u=System.handler.user_set[1]
-        self.assertEqual(u.get("name").get("name"),"me")
+        with self.assertRaises(ArityError):
+            System.do("add_user", user=user)
+
+
+    def test_add_user_raises_type_check(self):
+        print "test_add_user_raises_type_check"
+        admin_user=System.delegate.user_set[0]
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.role_set[1])
+
+        with self.assertRaises(TypeError):
+            System.do("add_user", user=session, session=session)
+
+  #+END_SRC
+
+
+** =ShowUsers=
+  
+ #+NAME: class_showusers
+ #+begin_src python
+class ShowUsers():
+    arg_types = {"session": is_session}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        session = args['session']
+        if not ((System.is_session_admin(session)) or 
+                (System.is_session_user(session))):
+            raise AuthError("Role not Authorized to perform this action")
+
+    @staticmethod
+    def state_check(args):
+        pass
+
+    @staticmethod
+    def action(args):
+        users = System.delegate.get_users()
+        return users
+ #+end_src
+
+*** Test ShowUsers
+  #+NAME: test_showusers
+  #+BEGIN_SRC python
+class TestShowUsers(TestCase):
+    TESTING = True
+
+    def setUp(self):
+        System.initialize_system(ObjectDelegate)
+
+    def tearDown(self):
+        System.delegate = None
+
+    def test_show_users_by_admin(self):
+        print "test_show_users__by_admin"
+        admin_user=System.delegate.user_set[0]
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.role_set[1])
+
+        System.delegate.user_set.append(user)
+        self.assertEquals(len(System.do("show_users", session=session)), 2)
+
+
+    def test_show_users_by_user(self):
+        print "test_show_users__by_user"
+ 
+        user=User(name=Name(name="me"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.role_set[1])
+
+        System.delegate.user_set.append(user)
+
+        session = Session(user=user)
+        System.session_set.append(session)
+
+        self.assertEquals(len(System.do("show_users", session=session)), 2)
+
 
   #+END_SRC
 
@@ -309,7 +421,9 @@ class TestAddUser(TestCase):
 
  #+NAME: ops_table
  #+BEGIN_SRC python                                                                          
-ops_table = {'add_user' : AddUser}
+ops_table = {'add_user': AddUser,
+             'show_users': ShowUsers
+            }
 
  #+END_SRC   
 
@@ -321,8 +435,8 @@ ops_table = {'add_user' : AddUser}
 #+name: imports_for_sources
 #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
-from runtime.system.handlers import *
-
+from runtime.objects.entities import *
+from runtime.exceptions.custom_exceptions import *
 #+end_src
 
 
@@ -334,6 +448,7 @@ from runtime.system.handlers import *
 import unittest
 from unittest import TestCase
 from system import *
+from object_delegate import * 
 
 #+end_src
 
@@ -355,6 +470,7 @@ if __name__ == '__main__':
 <<arity_type_checks>>
 <<do_function>>
 <<class_adduser>>
+<<class_showusers>>
 <<ops_table>>
 #+end_src
 
@@ -365,6 +481,7 @@ if __name__ == '__main__':
 <<test_system_constructor>>
 <<test_arity_and_types>>
 <<test_adduser>>
+<<test_showusers>>
 <<run_test_cases>>
 #+end_src
 
