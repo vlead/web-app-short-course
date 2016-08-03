@@ -90,10 +90,7 @@ class TestObjectDelegate(TestCase):
 #+NAME: user_exists
 #+BEGIN_SRC python
     def user_exists(self, user):
-        if user in self.user_set:
-            return True
-        else:
-            return False
+        return user in self.user_set
 
 #+END_SRC
 
@@ -133,6 +130,33 @@ class TestObjectDelegate(TestCase):
 #+END_SRC
 
 
+*** Delete a user to the system
+    This function deletes a user from the user-set maintained by the system.
+#+NAME: del_user
+#+BEGIN_SRC python
+    def del_user(self, user):
+        self.user_set.remove(user)
+        return user
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_del_user
+#+BEGIN_SRC python
+    def test_del_user(self):
+         print "test_del_user"
+         user = User(name=Name(name="some user"),
+                          email=Email(email="tt@kk.com"),
+                          role=Role.user)
+
+         self.obj_delegate.user_set.append(user)
+         self.assertEqual(self.obj_delegate.user_exists(user), True)
+         self.obj_delegate.del_user(user)
+         self.assertEqual(self.obj_delegate.user_exists(user), False)
+
+#+END_SRC
+
+
 *** Return the users in the system
     This function returns the list of users maintained by the system.
 #+NAME: get_users
@@ -153,6 +177,111 @@ class TestObjectDelegate(TestCase):
 
          user = self.obj_delegate.add_user(user)
          self.assertEqual(len(self.obj_delegate.get_users()), 2)
+
+#+END_SRC
+
+
+*** Check if user has admin role
+    This function returns true if role of a user is admin
+#+NAME: is_admin
+#+BEGIN_SRC python
+    def is_admin(self, user):
+        return user.get("role").get("name") == "admin"
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_is_admin
+#+BEGIN_SRC python
+    def test_is_admin(self):
+         print "test_is_admin"
+         user = User(name=Name(name="some user"),
+                          email=Email(email="tt@kk.com"),
+                          role=Role.user)
+
+         self.assertEqual(self.obj_delegate.is_admin(user), False)
+
+         user = User(name=Name(name="some user"),
+                          email=Email(email="tt@kk.com"),
+                          role=Role.admin)
+
+         self.assertEqual(self.obj_delegate.is_admin(user), True)
+
+
+#+END_SRC
+
+
+*** Get a Role
+    This function returns either admin or user role from the role set
+#+NAME: get_role
+#+BEGIN_SRC python
+    def get_role(self, role):
+        if role == "admin":
+            return self.role_set[0]
+        else:
+            return self.role_set[1]
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_get_role
+#+BEGIN_SRC python
+    def test_get_role(self):
+         print "test_get_role"
+         self.assertEqual(self.obj_delegate.get_role("admin").get("name"),
+                              "admin")
+         self.assertEqual(self.obj_delegate.get_role("user").get("name"),
+                              "user")
+
+
+#+END_SRC
+
+
+*** Get user with admin role
+    This function returns the user the admin role from the user set
+#+NAME: get_admin_user
+#+BEGIN_SRC python
+    def get_admin_user(self):
+        return self.user_set[0]
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_get_admin_user
+#+BEGIN_SRC python
+    def test_get_admin_user(self):
+         print "test_get_admin_user"
+         self.assertEqual(self.obj_delegate.get_admin_user(),
+                              self.obj_delegate.user_set[0])
+
+#+END_SRC
+
+
+*** Get user by email
+    This function returns the user by email from the user set
+#+NAME: get_user_by_email
+#+BEGIN_SRC python
+    def get_user_by_email(self, email):
+        user_list = filter(lambda user: user.get("email").get("email") == email,
+                             self.user_set)
+        if user_list:
+            return user_list[0]
+        else:
+            None
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_get_user_by_email
+#+BEGIN_SRC python
+    def test_get_user_by_email(self):
+        print "test_get_user_by_email"
+        user = self.obj_delegate.get_user_by_email(Config.admin_email)
+        self.assertEqual(user.get("email").get("email"), 
+                             Config.admin_email)
+
+        user = self.obj_delegate.get_user_by_email("tt@kk.com")
+        self.assertEqual(user, None)
 
 #+END_SRC
 
@@ -199,9 +328,14 @@ if __name__ == '__main__':
 <<class_object_delegate>>
 <<initialize_role_set>>
 <<initialize_user_set>>
+<<get_admin_user>>
+<<get_role>>
 <<user_exists>>
+<<is_admin>>
 <<add_user>>
+<<del_user>>
 <<get_users>>
+<<get_user_by_email>>
 #+end_src
 
 
@@ -209,9 +343,14 @@ if __name__ == '__main__':
 #+BEGIN_SRC python :tangle test_object_delegate.py :eval no :noweb yes
 <<imports_for_tests>>
 <<test_initialize_object_delegate>>
+<<test_get_admin_user>>
 <<test_user_exists>>
+<<test_get_role>>
+<<test_is_admin>>
 <<test_add_user>>
+<<test_del_user>>
 <<test_get_users>>
+<<test_get_user_by_email>>
 <<run_test_cases>>
 #+end_src
 

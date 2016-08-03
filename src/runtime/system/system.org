@@ -269,7 +269,9 @@ class AddUser():
     def auth_check(args):
         session = args['session']
         if not (System.is_session_admin(session)):
-            raise AuthError("Role not Authorized to perform this action")
+            raise AuthError("User with role %s" 
+                                " not Authorized to perform this action"
+                                % session.to_client())
 
     @staticmethod
     def state_check(args):
@@ -282,6 +284,8 @@ class AddUser():
         elif System.delegate.user_exists(user):
             raise StateError("user %s already exists in System"
                                 % user.to_client())
+        elif System.delegate.is_admin(user):
+            raise StateError("A user with role admin cannot be added")
 
     @staticmethod
     def action(args):
@@ -304,27 +308,28 @@ class TestAddUser(TestCase):
 
     def test_add_user_passes(self):
         print "test_add_user_by_admin"
-        admin_user=System.delegate.user_set[0]
+        admin_user=System.delegate.get_admin_user()
         session = Session(user=admin_user)
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
                   email=Email(email="abc@gmail.com"),
-                  role=System.delegate.role_set[1])
+                  role=System.delegate.get_role("user"))
 
         self.assertEqual(System.do("add_user", user=user, session=session),
-                         System.delegate.user_set[1])
+                         System.delegate.get_user_by_email("abc@gmail.com"))
 
 
     def test_add_user_raises_arity_error(self):
         print "test_add_user_raises_arity_error"
-        admin_user=System.delegate.user_set[0]
+
+        admin_user=System.delegate.get_admin_user()
         session = Session(user=admin_user)
         System.session_set.append(session)
  
-        user=User(name=Name(name="me"),
+        user=User(name=Name(name="me mine myself"),
                   email=Email(email="abc@gmail.com"),
-                  role=System.delegate.role_set[1])
+                  role=System.delegate.get_role("user"))
 
         with self.assertRaises(ArityError):
             System.do("add_user", user=user)
@@ -332,25 +337,44 @@ class TestAddUser(TestCase):
 
     def test_add_user_raises_type_check_error(self):
         print "test_add_user_raises_type_check_error"
-        admin_user=System.delegate.user_set[0]
+        admin_user=System.delegate.get_admin_user()
         session = Session(user=admin_user)
         System.session_set.append(session)
  
-        user=User(name=Name(name="me"),
+        user=User(name=Name(name="me mine myself"),
                   email=Email(email="abc@gmail.com"),
-                  role=System.delegate.role_set[1])
+                  role=System.delegate.get_role("user"))
 
         with self.assertRaises(TypeError):
             System.do("add_user", user=session, session=session)
 
+
+    def test_add_user_raises_auth_error(self):
+        print "test_add_user_raises_auth_error"
+
+        user=User(name=Name(name="New Fake Admin"),
+                  email=Email(email="new_admin@gmail.com"),
+                  role=System.delegate.get_role("user"))
+
+        session = Session(user=user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.get_role("user"))
+
+        with self.assertRaises(AuthError):
+            System.do("add_user", user=user, session=session)
+
     def test_add_user_raises_state_error_with_no_session(self):
         print "test_add_user_raises_state_error_with_no_session"
-        admin_user=System.delegate.user_set[0]
+
+        admin_user=System.delegate.get_admin_user()
         session = Session(user=admin_user)
-         
-        user=User(name=Name(name="me"),
+ 
+        user=User(name=Name(name="me mine myself"),
                   email=Email(email="abc@gmail.com"),
-                  role=System.delegate.role_set[1])
+                  role=System.delegate.get_role("user"))
 
         with self.assertRaises(StateError):
             System.do("add_user", user=user, session=session)
@@ -358,12 +382,26 @@ class TestAddUser(TestCase):
 
     def test_add_user_raises_state_error_with_existing_user(self):
         print "test_add_user_raises_state_error_with_existing_user"
-        admin_user=System.delegate.user_set[0]
+        admin_user=System.delegate.get_admin_user()
         session = Session(user=admin_user)
         System.session_set.append(session)
-
+ 
         with self.assertRaises(StateError):
             System.do("add_user", user=admin_user, session=session)
+
+    def test_add_user_raises_state_error_with_adding_admin_user(self):
+        print "test_add_user_raises_state_error_with_adding_admin_user"
+
+        admin_user=System.delegate.get_admin_user()
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.get_role("admin"))
+
+        with self.assertRaises(StateError):
+            System.do("add_user", user=user, session=session)
 
   #+END_SRC
 
@@ -385,12 +423,16 @@ class ShowUsers():
 
     @staticmethod
     def state_check(args):
-        pass
+        session = args["session"]
+
+        if not System.session_exists(session):
+            raise StateError("session %s does not exist in System"
+                                % session.to_client())
 
     @staticmethod
     def action(args):
-        users = System.delegate.get_users()
-        return users
+        return System.delegate.get_users()
+
  #+end_src
 
 *** Test ShowUsers
@@ -405,34 +447,205 @@ class TestShowUsers(TestCase):
     def tearDown(self):
         System.delegate = None
 
-    def test_show_users_by_admin(self):
-        print "test_show_users__by_admin"
-        admin_user=System.delegate.user_set[0]
+    def test_show_users_for_user_with_admin_role(self):
+        print "test_show_users_for_user_with_admin_role"
+        admin_user=System.delegate.get_admin_user()
         session = Session(user=admin_user)
         System.session_set.append(session)
  
-        user=User(name=Name(name="me"),
+        user=User(name=Name(name="me mine myself"),
                   email=Email(email="abc@gmail.com"),
-                  role=System.delegate.role_set[1])
+                  role=System.delegate.get_role("user"))
 
-        System.delegate.user_set.append(user)
+
+        System.delegate.add_user(user)
         self.assertEquals(len(System.do("show_users", session=session)), 2)
 
 
-    def test_show_users_by_user(self):
-        print "test_show_users__by_user"
- 
-        user=User(name=Name(name="me"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.role_set[1])
+    def test_show_users_for_a_uset_with_user_role(self):
+        print "test_show_users_for_a_user_with_user_role"
 
-        System.delegate.user_set.append(user)
+        user=User(name=Name(name="me mine myself"),
+                      email=Email(email="abc@gmail.com"),
+                      role=System.delegate.get_role("user"))
+ 
+        System.delegate.add_user(user)
 
         session = Session(user=user)
         System.session_set.append(session)
 
         self.assertEquals(len(System.do("show_users", session=session)), 2)
 
+
+    def test_show_users_raises_state_error_with_no_session(self):
+        print "test_show_users_raises_state_error_with_no_session"
+
+        admin_user=System.delegate.get_admin_user()
+        session = Session(user=admin_user)  # session not added to session set
+         
+        with self.assertRaises(StateError):
+            System.do("show_users", session=session)
+
+  #+END_SRC
+
+
+** =DelUser=
+   
+ #+NAME: class_deluser
+ #+begin_src python
+class DelUser():
+    arg_types = {"user": is_user, "session": is_session}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        session = args['session']
+        if not (System.is_session_admin(session)):
+            raise AuthError("Role not Authorized to perform this action")
+
+    @staticmethod
+    def state_check(args):
+        user = args["user"]
+        session = args["session"]
+
+        if not System.session_exists(session):
+            raise StateError("session %s does not exist in System"
+                                % session.to_client())
+
+        elif not System.delegate.user_exists(user):
+            raise StateError("user %s does not exist in System"
+                                % user.to_client())
+
+        elif System.delegate.is_admin(user):
+            raise StateError("A user with role admin cannot be deleted")
+
+    @staticmethod
+    def action(args):
+        user = args["user"]
+        user = System.delegate.del_user(user)
+        return user
+ #+end_src
+
+*** Test DelUser
+  #+NAME: test_deluser
+  #+BEGIN_SRC python
+class TestDelUser(TestCase):
+    TESTING = True
+
+    def setUp(self):
+        System.initialize_system(ObjectDelegate)
+
+    def tearDown(self):
+        System.delegate = None
+
+    def test_del_user_passes(self):
+        print "test_del_user_by_admin"
+        admin_user=System.delegate.get_admin_user()
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.get_role("user"))
+
+
+        System.delegate.add_user(user)  ##added user to the system
+
+        self.assertEqual(System.do("del_user", user=user, session=session),
+                         user)
+
+    def test_del_user_raises_arity_error(self):
+        print "test_del_user_raises_arity_error"
+
+        admin_user=System.delegate.get_admin_user()
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.get_role("user"))
+
+        System.delegate.add_user(user)  ##added user to the system
+
+        with self.assertRaises(ArityError):
+            System.do("del_user", user=user)
+
+
+    def test_del_user_raises_type_check_error(self):
+        print "test_del_user_raises_type_check_error"
+        
+        admin_user=System.delegate.get_admin_user()
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.get_role("user"))
+
+        System.delegate.add_user(user)  ##added user to the system
+
+        with self.assertRaises(TypeError):
+            System.do("del_user", user=session, session=session)
+
+    def test_deld_user_raises_state_error_with_no_session(self):
+        print "test_del_user_raises_state_error_with_no_session"
+        
+        admin_user=System.delegate.get_admin_user()
+        session = Session(user=admin_user)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.get_role("user"))
+
+        System.delegate.add_user(user)  ##added user to the system
+
+        with self.assertRaises(StateError):
+            System.do("del_user", user=user, session=session)
+
+
+    def test_del_user_raises_state_error_with_no_existing_user(self):
+        print "test_del_user_raises_state_error_with_no_existing_user"
+        
+        admin_user=System.delegate.get_admin_user()
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.get_role("user"))
+
+        ## user not added to the system
+        with self.assertRaises(StateError):
+            System.do("del_user", user=user, session=session)
+
+    def test_del_user_raises_state_error_with_deleting_admin_user(self):
+        print "test_del_user_raises_state_error_with_deleting_admin_user"
+        
+        admin_user=System.delegate.get_admin_user()
+        session = Session(user=admin_user)
+        System.session_set.append(session)
+ 
+        with self.assertRaises(StateError):
+            System.do("del_user", user=admin_user, session=session)
+
+    def test_del_user_raises_auth_error(self):
+        print "test_del_user_raises_auth_error"
+
+        user=User(name=Name(name="New Fake Admin"),
+                  email=Email(email="new_admin@gmail.com"),
+                  role=System.delegate.get_role("user"))
+
+        System.delegate.add_user(user)
+        session = Session(user=user)
+        System.session_set.append(session)
+ 
+        user=User(name=Name(name="me mine myself"),
+                  email=Email(email="abc@gmail.com"),
+                  role=System.delegate.get_role("user"))
+        System.delegate.add_user(user)
+
+        with self.assertRaises(AuthError):
+            System.do("del_user", user=user, session=session)
 
   #+END_SRC
 
@@ -443,7 +656,8 @@ class TestShowUsers(TestCase):
  #+NAME: ops_table
  #+BEGIN_SRC python                                                                          
 ops_table = {'add_user': AddUser,
-             'show_users': ShowUsers
+             'show_users': ShowUsers,
+             'del_user': DelUser
             }
 
  #+END_SRC   
@@ -491,6 +705,7 @@ if __name__ == '__main__':
 <<arity_type_checks>>
 <<do_function>>
 <<class_adduser>>
+<<class_deluser>>
 <<class_showusers>>
 <<ops_table>>
 #+end_src
@@ -502,6 +717,7 @@ if __name__ == '__main__':
 <<test_system_constructor>>
 <<test_arity_and_types>>
 <<test_adduser>>
+<<test_deluser>>
 <<test_showusers>>
 <<run_test_cases>>
 #+end_src
