@@ -67,6 +67,7 @@
         cls.delete = ClassPersistenceTemplate.mk_delete(cls)
         cls.get_by_id = ClassPersistenceTemplate.mk_get_by_id(cls)
         cls.get_all = ClassPersistenceTemplate.mk_get_all(cls)
+        cls.apply_filters = ClassPersistenceTemplate.mk_apply_filters(cls)
         ClassPersistenceTemplate.mk_save_handler(cls)
         cls.custom_handlers['persistence'] = True
         return cls
@@ -113,14 +114,39 @@
     def mk_get_by_id(cls):
         def fn(id):
             db.session.autoflush = False
-            return cls.query.get(id)
+            obj = cls.query.get(id)
+            obj.state = {}
+            for key in cls.sorted_state_vars:
+                obj.state[key] = getattr(obj, key)
+            return obj
+
         return staticmethod(fn)
 
     @staticmethod
     def mk_get_all(cls):
         def fn():
             db.session.autoflush = False
-            return cls.query.all()
+            lst = cls.query.all()
+            for obj in lst:
+                obj.state = {}
+                for key in cls.sorted_state_vars:
+                    obj.state[key] = getattr(obj, key)
+            return lst
+
+        return staticmethod(fn)
+
+
+    @staticmethod
+    def mk_apply_filters(cls):
+        def fn(**kwargs):
+            db.session.autoflush = False
+            lst = cls.query.filter_by(**kwargs)
+            for obj in lst:
+                obj.state = {}
+                for key in cls.sorted_state_vars:
+                    obj.state[key] = getattr(obj, key)
+            return lst
+
         return staticmethod(fn)
 
 

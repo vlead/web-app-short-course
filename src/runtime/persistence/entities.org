@@ -290,6 +290,27 @@ class TestPersistenceUser(TestCase):
 
         self.assertEqual(n_usr.get("name").get("name"), "Bo Didley")
 
+    def test_query_user(self):
+        print "test query user"
+        na1 = Name(name="Jimi Hendrix")
+        na1.save()
+        na2 = Name(name="Bo Didley")
+        na2.save()
+        em1 = Email(email="jimi@gnu.org")
+        em1.save()
+        em2 = Email(email="didley@gnu.org")
+        em2.save()
+        ro1 = Role(name="user")
+        ro1.save()
+        ro2 = Role(name="admin")
+        ro2.save()
+        usr = User(name=na1, email=em1, role=ro1)
+        usr.save()
+
+        n_usr = User.apply_filters(email=em1, name=na1)
+        self.assertEqual(n_usr[0].get("name").get("name"), "Jimi Hendrix")
+
+
     def test_delete_user(self):
         print "test delete user"
         na = Name(name="Jimi Hendrix")
