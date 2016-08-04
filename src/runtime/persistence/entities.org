@@ -329,7 +329,7 @@ from runtime.utils.class_persistence_template import *
 import unittest
 from flask_testing import TestCase
 from sqlalchemy.exc import IntegrityError
-from entities import *
+from runtime.persistence.entities import *
 from runtime.rest.app import create_app
 
 

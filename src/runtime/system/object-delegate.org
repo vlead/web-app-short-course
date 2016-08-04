@@ -233,9 +233,7 @@ class TestObjectDelegate(TestCase):
          self.assertEqual(self.obj_delegate.get_role("user").get("name"),
                               "user")
 
-
 #+END_SRC
-
 
 *** Get user with admin role
     This function returns the user the admin role from the user set
@@ -257,12 +255,12 @@ class TestObjectDelegate(TestCase):
 #+END_SRC
 
 
-*** Get user by email
+*** Get user by Email
     This function returns the user by email from the user set
 #+NAME: get_user_by_email
 #+BEGIN_SRC python
     def get_user_by_email(self, email):
-        user_list = filter(lambda user: user.get("email").get("email") == email,
+        user_list = filter(lambda user: user.get("email") == email,
                              self.user_set)
         if user_list:
             return user_list[0]
@@ -276,12 +274,67 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_user_by_email(self):
         print "test_get_user_by_email"
-        user = self.obj_delegate.get_user_by_email(Config.admin_email)
-        self.assertEqual(user.get("email").get("email"), 
-                             Config.admin_email)
+        email = Email(email=Config.admin_email)
+        user = self.obj_delegate.get_user_by_email(email)
+        self.assertEqual(user.get("email"), email)
 
-        user = self.obj_delegate.get_user_by_email("tt@kk.com")
+        user = self.obj_delegate.get_user_by_email(Email(email="tt@kk.com"))
         self.assertEqual(user, None)
+
+#+END_SRC
+
+
+*** Set Email of a User
+    This function sets Email of a user in the user set. No exception is thrown
+    here, the upper layer which is calling this function should ensure =user=
+    exists whose email is changed. 
+#+NAME: set_email
+#+BEGIN_SRC python
+    def set_email(self, user, email):
+        usr = self.get_user_by_email(user.get("email"))
+        usr.set(email=email)
+        return user
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_set_email
+#+BEGIN_SRC python
+    def test_set_email(self):
+        print "test_set_email"
+        email = Email(email=Config.admin_email)
+        user = self.obj_delegate.get_user_by_email(email)
+        email = Email(email="abc@gnu.org")
+        user = self.obj_delegate.set_email(user, email)
+
+        self.assertEqual(user.get("email"), email)
+
+#+END_SRC
+
+
+*** Set Name of a User
+    This function sets Name of a user in the user set. No exception is thrown
+    here, the upper layer which is calling this function should ensure =user=
+    exists whose name is changed. 
+#+NAME: set_name
+#+BEGIN_SRC python
+    def set_name(self, user, name):
+        usr = self.get_user_by_email(user.get("email"))
+        usr.set(name=name)
+        return user
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_set_name
+#+BEGIN_SRC python
+    def test_set_name(self):
+        print "test_set_name"
+        email = Email(email=Config.admin_email)
+        user = self.obj_delegate.get_user_by_email(email)
+        name = Name(name="Jimi Hendrix")
+        user = self.obj_delegate.set_name(user, name)
+        self.assertEqual(user.get("name"), name)
 
 #+END_SRC
 
@@ -307,7 +360,7 @@ from runtime.exceptions.custom_exceptions import *
 # -*- coding: utf-8 -*-
 import unittest
 from unittest import TestCase
-from object_delegate import *
+from runtime.system.object_delegate import *
 
 #+end_src
 
@@ -336,6 +389,8 @@ if __name__ == '__main__':
 <<del_user>>
 <<get_users>>
 <<get_user_by_email>>
+<<set_email>>
+<<set_name>>
 #+end_src
 
 
@@ -351,6 +406,8 @@ if __name__ == '__main__':
 <<test_del_user>>
 <<test_get_users>>
 <<test_get_user_by_email>>
+<<test_set_email>>
+<<test_set_name>>
 <<run_test_cases>>
 #+end_src
 
