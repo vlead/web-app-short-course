@@ -65,6 +65,7 @@
 
         cls.save = ClassPersistenceTemplate.mk_save(cls)
         cls.delete = ClassPersistenceTemplate.mk_delete(cls)
+        cls.set_state = ClassPersistenceTemplate.mk_set_state(cls)
         cls.get_by_id = ClassPersistenceTemplate.mk_get_by_id(cls)
         cls.get_all = ClassPersistenceTemplate.mk_get_all(cls)
         cls.apply_filters = ClassPersistenceTemplate.mk_apply_filters(cls)
@@ -83,9 +84,8 @@
 
     #+NAME: class_functions
     #+BEGIN_SRC python
-
     @staticmethod
-    def mk_save(cls):
+    def mk_save(cls) :
         def fn(obj):
             for key, value in obj.state.iteritems():
                 setattr(obj, key, value)
@@ -111,13 +111,23 @@
         return fn
 
     @staticmethod
+    def mk_set_state(cls):
+        def fn(obj):
+            obj.state = {}
+            for key in cls.sorted_state_vars:
+                value = getattr(obj, key)
+                obj.state[key] = value
+                if hasattr(value.__class__, 'set_state'):
+                    value.__class__.set_state(value)
+
+        return staticmethod(fn)
+
+    @staticmethod
     def mk_get_by_id(cls):
         def fn(id):
             db.session.autoflush = False
             obj = cls.query.get(id)
-            obj.state = {}
-            for key in cls.sorted_state_vars:
-                obj.state[key] = getattr(obj, key)
+            cls.set_state(obj)
             return obj
 
         return staticmethod(fn)
@@ -128,9 +138,7 @@
             db.session.autoflush = False
             lst = cls.query.all()
             for obj in lst:
-                obj.state = {}
-                for key in cls.sorted_state_vars:
-                    obj.state[key] = getattr(obj, key)
+                cls.set_state(obj)
             return lst
 
         return staticmethod(fn)
@@ -142,9 +150,7 @@
             db.session.autoflush = False
             lst = cls.query.filter_by(**kwargs)
             for obj in lst:
-                obj.state = {}
-                for key in cls.sorted_state_vars:
-                    obj.state[key] = getattr(obj, key)
+                cls.set_state(obj)
             return lst
 
         return staticmethod(fn)

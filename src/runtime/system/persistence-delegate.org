@@ -81,7 +81,7 @@ class TestPersistenceDelegate(TestCase):
    Other functions that help =System= perform the operations. 
 
 *** Check if =user= already exists
-    This function checks if a user is already in the user-set of the =System=.
+    This function checks if a user is already in the database of the =System=.
 #+NAME: user_exists
 #+BEGIN_SRC python
     def user_exists(self, user):
@@ -101,12 +101,12 @@ class TestPersistenceDelegate(TestCase):
 
 
 *** Add a user to the system
-    This function adds a user to the user-set maintained by the system.
+    This function adds a user to the database of the system.
 #+NAME: add_user
 #+BEGIN_SRC python
     def add_user(self, user):
-        self.user_set.append(user)
-        return user
+        user.save()
+        return User.apply_filters(email=user.get("email"))[0]
 
 #+END_SRC
 
@@ -115,22 +115,25 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_add_user(self):
          print "test_add_user"
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
-                          role=Role.user)
+         name=Name(name="some user")
+         name.save()
+         email=Email(email="tt@kk.com")
+         email.save()
+         user = User(name=name, email=email, 
+                         role=self.delegate.get_role_set()[1])
 
-         user = self.obj_delegate.add_user(user)
-         self.assertEqual(self.obj_delegate.user_exists(user), True)
+         user = self.delegate.add_user(user)
+         self.assertEqual(self.delegate.user_exists(user), True)
 
 #+END_SRC
 
 
-*** Delete a user to the system
-    This function deletes a user from the user-set maintained by the system.
+*** Delete a user from the system
+    This function deletes a user from the database maintained by the system.
 #+NAME: del_user
 #+BEGIN_SRC python
     def del_user(self, user):
-        self.user_set.remove(user)
+        user.delete()
         return user
 
 #+END_SRC
@@ -140,24 +143,28 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_del_user(self):
          print "test_del_user"
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
-                          role=Role.user)
 
-         self.obj_delegate.user_set.append(user)
-         self.assertEqual(self.obj_delegate.user_exists(user), True)
-         self.obj_delegate.del_user(user)
-         self.assertEqual(self.obj_delegate.user_exists(user), False)
+         name=Name(name="some user")
+         name.save()
+         email=Email(email="tt@kk.com")
+         email.save()
+         user = User(name=name, email=email, 
+                         role=self.delegate.get_role_set()[1])
+
+         user = self.delegate.add_user(user)
+         self.assertEqual(self.delegate.user_exists(user), True)
+         self.delegate.del_user(user)
+         self.assertEqual(self.delegate.user_exists(user), False)
 
 #+END_SRC
 
 
 *** Return the users in the system
-    This function returns the list of users maintained by the system.
+    This function returns the list of users in the database maintained by the system.
 #+NAME: get_users
 #+BEGIN_SRC python
     def get_users(self):
-        return self.user_set
+        return self.get_user_set()
 
 #+END_SRC
 
@@ -166,12 +173,16 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_users(self):
          print "test_get_users"
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
-                          role=Role.user)
 
-         user = self.obj_delegate.add_user(user)
-         self.assertEqual(len(self.obj_delegate.get_users()), 2)
+         name=Name(name="some user")
+         name.save()
+         email=Email(email="tt@kk.com")
+         email.save()
+         user = User(name=name, email=email, 
+                         role=self.delegate.get_role_set()[1])
+
+         user = self.delegate.add_user(user)
+         self.assertEqual(len(self.delegate.get_users()), 2)
 
 #+END_SRC
 
@@ -190,18 +201,28 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_is_admin(self):
          print "test_is_admin"
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
-                          role=Role.user)
 
-         self.assertEqual(self.obj_delegate.is_admin(user), False)
+         name=Name(name="some user")
+         name.save()
+         email=Email(email="tt@kk.com")
+         email.save()
+         user = User(name=name, email=email, 
+                         role=self.delegate.get_role_set()[1])
 
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
-                          role=Role.admin)
+         user = self.delegate.add_user(user)
 
-         self.assertEqual(self.obj_delegate.is_admin(user), True)
+         self.assertEqual(self.delegate.is_admin(user), False)
 
+         name=Name(name="some another user")
+         name.save()
+         email=Email(email="someanother@gnu.org")
+         email.save()
+         user = User(name=name, email=email, 
+                         role=self.delegate.get_role_set()[0])
+
+         user = self.delegate.add_user(user)
+
+         self.assertEqual(self.delegate.is_admin(user), True)
 
 #+END_SRC
 
@@ -405,6 +426,10 @@ if __name__ == '__main__':
 <<get_role_set>>
 <<get_user_set>>
 <<user_exists>>
+<<add_user>>
+<<del_user>>
+<<get_users>>
+<<is_admin>>
 #+end_src
 
 
@@ -414,7 +439,9 @@ if __name__ == '__main__':
 <<populate_db>>
 <<test_initialize_persistence_delegate>>
 <<test_user_exists>>
+<<test_add_user>>
+<<test_del_user>>
+<<test_get_users>>
+<<test_is_admin>>
 <<run_test_cases>>
 #+end_src
-
-
