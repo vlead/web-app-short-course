@@ -224,9 +224,9 @@ class TestPersistenceRole(TestCase):
 #+BEGIN_SRC python
 args = {"__tablename__": "users",
         "id": db.Column(db.Integer, primary_key=True),
-        "name_id": db.Column(db.Integer, db.ForeignKey('names.id')),
-        "email_id": db.Column(db.Integer, db.ForeignKey('emails.id')),
-        "role_id": db.Column(db.Integer, db.ForeignKey('roles.id'))
+        "name_id": db.Column(db.Integer, db.ForeignKey('names.id'), nullable=False),
+        "email_id": db.Column(db.Integer, db.ForeignKey('emails.id'), unique=True, nullable=False),
+        "role_id": db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
         }
 
 User = ClassPersistenceTemplate.mk_persistent(User, **args)

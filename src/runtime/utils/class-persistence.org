@@ -148,16 +148,14 @@
     def mk_apply_filters(cls):
         def fn(**kwargs):
             db.session.autoflush = False
-            lst = cls.query.filter_by(**kwargs)
+            lst = cls.query.filter_by(**kwargs).all()
             for obj in lst:
                 cls.set_state(obj)
             return lst
 
         return staticmethod(fn)
 
-
     #+END_SRC
-
 
 ** Tests
    #+NAME: persistence_tests
