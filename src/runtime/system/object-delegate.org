@@ -215,8 +215,9 @@ class TestObjectDelegate(TestCase):
     This function returns either admin or user role from the role set
 #+NAME: get_role
 #+BEGIN_SRC python
-    def get_role(self, role):
-        if role == "admin":
+    def get_role(self, **kwargs):
+        
+        if kwargs['name'] == "admin":
             return self.role_set[0]
         else:
             return self.role_set[1]
@@ -228,9 +229,9 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_role(self):
          print "test_get_role"
-         self.assertEqual(self.obj_delegate.get_role("admin").get("name"),
+         self.assertEqual(self.obj_delegate.get_role(name="admin").get("name"),
                               "admin")
-         self.assertEqual(self.obj_delegate.get_role("user").get("name"),
+         self.assertEqual(self.obj_delegate.get_role(name="user").get("name"),
                               "user")
 
 #+END_SRC

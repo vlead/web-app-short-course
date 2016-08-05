@@ -90,6 +90,7 @@
             for key, value in obj.state.iteritems():
                 setattr(obj, key, value)
 
+            db.session.autoflush = False
             db.session.add(obj)
             db.session.commit()
 
@@ -105,6 +106,7 @@
     @staticmethod
     def mk_delete(cls):
         def fn(obj):
+            db.session.autoflush = False
             db.session.delete(obj)
             db.session.commit()
 

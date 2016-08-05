@@ -70,9 +70,11 @@ class TestPersistenceDelegate(TestCase):
          role_set = self.delegate.get_role_set()
          user_set = self.delegate.get_user_set()
          self.assertEqual(len(role_set), 2)
-         self.assertEqual(role_set[0].get_by_id(1).get("name"), "admin")
+         self.assertEqual(role_set[0].get_by_id(1).get("name"), 
+                              Config.admin_role)
          self.assertEqual(len(user_set), 1)
-         self.assertEqual(user_set[0].get("role").get("name"), "admin")
+         self.assertEqual(user_set[0].get("role").get("name"), 
+                              Config.admin_role)
 
 #+END_SRC
 
@@ -85,7 +87,10 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: user_exists
 #+BEGIN_SRC python
     def user_exists(self, user):
-        return user in User.apply_filters(email=user.get("email"))
+        if self.email_exists(user.get("email")):
+            return user == self.get_user(email=user.get("email"))
+        else:
+            return False
 
 #+END_SRC
 
@@ -100,13 +105,62 @@ class TestPersistenceDelegate(TestCase):
 #+END_SRC
 
 
+*** Check if =name= already exists
+    This function checks if a name is already in the database of the =System=.
+#+NAME: name_exists
+#+BEGIN_SRC python
+    def name_exists(self, name):
+        return name == self.get_name(name=name.get("name"))
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_name_exists
+#+BEGIN_SRC python
+    def test_name_exists(self):
+         print "test_name_exists"
+         name = self.delegate.get_name(name=Config.admin_name)
+         self.assertEqual(self.delegate.name_exists(name), True)
+         name = Name(name="Temp user")
+         self.assertEqual(self.delegate.name_exists(name), False)
+
+#+END_SRC
+
+
+*** Check if =email= already exists
+    This function checks if email is already in the database of the =System=.
+#+NAME: email_exists
+#+BEGIN_SRC python
+    def email_exists(self, email):
+        return email == self.get_email(email=email.get("email"))
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_email_exists
+#+BEGIN_SRC python
+    def test_email_exists(self):
+         print "test_email_exists"
+         email = self.delegate.get_email(email=Config.admin_email)
+         self.assertEqual(self.delegate.email_exists(email), True)
+         email = Email(email="abc@gnu.org")
+         self.assertEqual(self.delegate.email_exists(email), False)
+
+#+END_SRC
+
+
 *** Add a user to the system
     This function adds a user to the database of the system.
 #+NAME: add_user
 #+BEGIN_SRC python
     def add_user(self, user):
+        name = user.get("name")
+        email = user.get("email")
+        if not self.name_exists(name):
+            name.save()
+        email.save()
         user.save()
-        return User.apply_filters(email=user.get("email"))[0]
+        return self.get_user(email=email)
 
 #+END_SRC
 
@@ -116,9 +170,7 @@ class TestPersistenceDelegate(TestCase):
     def test_add_user(self):
          print "test_add_user"
          name=Name(name="some user")
-         name.save()
          email=Email(email="tt@kk.com")
-         email.save()
          user = User(name=name, email=email, 
                          role=self.delegate.get_role_set()[1])
 
@@ -133,7 +185,13 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: del_user
 #+BEGIN_SRC python
     def del_user(self, user):
+        name = user.get("name")
+        email = user.get("email")
         user.delete()
+        email.delete()
+        if self.get_user(name=name) is None:
+            name.delete()
+        
         return user
 
 #+END_SRC
@@ -145,9 +203,7 @@ class TestPersistenceDelegate(TestCase):
          print "test_del_user"
 
          name=Name(name="some user")
-         name.save()
          email=Email(email="tt@kk.com")
-         email.save()
          user = User(name=name, email=email, 
                          role=self.delegate.get_role_set()[1])
 
@@ -192,7 +248,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: is_admin
 #+BEGIN_SRC python
     def is_admin(self, user):
-        return user.get("role").get("name") == "admin"
+        return user.get("role").get("name") == Config.admin_role
 
 #+END_SRC
 
@@ -227,12 +283,68 @@ class TestPersistenceDelegate(TestCase):
 #+END_SRC
 
 
-*** Get a Role
+*** Get Name 
+    This function returns a Name object from the database based on the name
+    string provided.
+
+#+NAME: get_name
+#+BEGIN_SRC python
+    def get_name(self, **kwargs):
+        name_lst = Name.apply_filters(**kwargs)
+        if name_lst:
+            return name_lst[0]
+        else:
+            return None
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_get_name
+#+BEGIN_SRC python
+    def test_get_name(self):
+         print "test_get_name"
+         name_obj = self.delegate.get_name(name=Config.admin_name)
+         self.assertEqual(name_obj.get("name"),  Config.admin_name)
+
+#+END_SRC
+
+
+*** Get Email
+    This function returns an Email object from the database based on the email
+    string provided.
+
+#+NAME: get_email
+#+BEGIN_SRC python
+    def get_email(self, **kwargs):
+        email_lst = Email.apply_filters(**kwargs)
+        if email_lst:
+            return email_lst[0]
+        else:
+            return None
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_get_email
+#+BEGIN_SRC python
+    def test_get_email(self):
+         print "test_get_email"
+         email_obj = self.delegate.get_email(email=Config.admin_email)
+         self.assertEqual(email_obj.get("email"), Config.admin_email)
+
+#+END_SRC
+
+
+*** Get Role
     This function returns either admin or user role from the roles in database
 #+NAME: get_role
 #+BEGIN_SRC python
-    def get_role(self, role):
-        return Role.apply_filters(name=role)[0]
+    def get_role(self, **kwargs):
+        role_lst = Role.apply_filters(**kwargs)
+        if role_lst:
+            return role_lst[0]
+        else:
+            None
 
 #+END_SRC
 
@@ -241,10 +353,35 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_role(self):
          print "test_get_role"
-         self.assertEqual(self.delegate.get_role("admin").get("name"),
-                              "admin")
-         self.assertEqual(self.delegate.get_role("user").get("name"),
-                              "user")
+         role_obj = self.delegate.get_role(name=Config.admin_role)
+         self.assertEqual(role_obj.get("name"), Config.admin_role)
+
+#+END_SRC
+
+
+*** Get User
+    This function returns a user if present in the database.  If the user is
+    not present, =None= type is returned.
+#+NAME: get_user
+#+BEGIN_SRC python
+    def get_user(self, **kwargs):
+        usr_lst = User.apply_filters(**kwargs)
+        if usr_lst:
+            return usr_lst[0]
+        else:
+            return None
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_get_user
+#+BEGIN_SRC python
+    def test_get_user(self):
+         print "test_get_user"
+         email_obj = self.delegate.get_email(email=Config.admin_email)
+         user_obj = self.delegate.get_user(email=email_obj)
+         self.assertEqual(user_obj.get("email").get("email"), 
+                              Config.admin_email)
 
 #+END_SRC
 
@@ -254,7 +391,8 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_admin_user
 #+BEGIN_SRC python
     def get_admin_user(self):
-        return User.apply_filters(role=self.get_role("admin"))[0]
+        role_obj = self.get_role(name=Config.admin_role)
+        return self.get_user(role=role_obj)
 
 #+END_SRC
 
@@ -274,11 +412,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_user_by_email
 #+BEGIN_SRC python
     def get_user_by_email(self, email):
-        user_list = User.apply_filters(email=email)
-        if user_list:
-            return user_list[0]
-        else:
-            None
+        return self.get_user(email=email)
 
 #+END_SRC
 
@@ -438,13 +572,20 @@ if __name__ == '__main__':
 <<get_role_set>>
 <<get_user_set>>
 <<user_exists>>
+<<name_exists>>
+<<email_exists>>
 <<add_user>>
 <<del_user>>
 <<get_users>>
 <<is_admin>>
+<<get_name>>
+<<get_email>>
 <<get_role>>
+<<get_user>>
 <<get_admin_user>>
 <<get_user_by_email>>
+<<add_user>>
+<<del_user>>
 <<set_email>>
 <<set_name>>
 #+end_src
@@ -456,13 +597,18 @@ if __name__ == '__main__':
 <<populate_db>>
 <<test_initialize_persistence_delegate>>
 <<test_user_exists>>
-<<test_add_user>>
-<<test_del_user>>
+<<test_name_exists>>
+<<test_email_exists>>
 <<test_get_users>>
 <<test_is_admin>>
+<<test_get_name>>
+<<test_get_email>>
 <<test_get_role>>
+<<test_get_user>>
 <<test_get_admin_user>>
 <<test_get_user_by_email>>
+<<test_add_user>>
+<<test_del_user>>
 <<test_set_email>>
 <<test_set_name>>
 <<run_test_cases>>
