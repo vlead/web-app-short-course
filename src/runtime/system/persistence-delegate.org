@@ -119,7 +119,7 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_name_exists(self):
          print "test_name_exists"
-         name = self.delegate.get_name(name=Config.admin_name)
+         name = Name(name=Config.admin_name)
          self.assertEqual(self.delegate.name_exists(name), True)
          name = Name(name="Temp user")
          self.assertEqual(self.delegate.name_exists(name), False)
@@ -141,7 +141,7 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_email_exists(self):
          print "test_email_exists"
-         email = self.delegate.get_email(email=Config.admin_email)
+         email = Email(email=Config.admin_email)
          self.assertEqual(self.delegate.email_exists(email), True)
          email = Email(email="abc@gnu.org")
          self.assertEqual(self.delegate.email_exists(email), False)
@@ -283,6 +283,23 @@ class TestPersistenceDelegate(TestCase):
 #+END_SRC
 
 
+*** Get an object
+    A generic function to find an object of type =cls= matching a given a criteria
+
+#+NAME: get_object
+#+BEGIN_SRC python
+    def get_object(self, cls, **kwargs):
+        ret_val = None
+        try:
+            ret_val = cls.apply_filters(**kwargs)[0]
+        except NotFoundError as e:
+            ret_val = None
+        
+        return ret_val
+
+#+END_SRC
+
+
 *** Get Name 
     This function returns a Name object from the database based on the name
     string provided.
@@ -290,11 +307,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_name
 #+BEGIN_SRC python
     def get_name(self, **kwargs):
-        name_lst = Name.apply_filters(**kwargs)
-        if name_lst:
-            return name_lst[0]
-        else:
-            return None
+        return self.get_object(Name, **kwargs)
 
 #+END_SRC
 
@@ -316,12 +329,8 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_email
 #+BEGIN_SRC python
     def get_email(self, **kwargs):
-        email_lst = Email.apply_filters(**kwargs)
-        if email_lst:
-            return email_lst[0]
-        else:
-            return None
-
+        return self.get_object(Email, **kwargs)
+    
 #+END_SRC
 
 **** Tests
@@ -340,11 +349,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_role
 #+BEGIN_SRC python
     def get_role(self, **kwargs):
-        role_lst = Role.apply_filters(**kwargs)
-        if role_lst:
-            return role_lst[0]
-        else:
-            None
+        return self.get_object(Role, **kwargs)
 
 #+END_SRC
 
@@ -365,15 +370,8 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_user
 #+BEGIN_SRC python
     def get_user(self, **kwargs):
-        usr_lst = None
-        if ('email' in kwargs and self.email_exists(kwargs['email']) or
-            'name' in kwargs and self.name_exists(kwargs['name']) or
-            'role' in kwargs):
-            usr_lst = User.apply_filters(**kwargs)
-        if usr_lst:
-            return usr_lst[0]
-        else:
-            return None
+        return self.get_object(User, **kwargs)
+
 #+END_SRC
 
 **** Tests
@@ -381,8 +379,8 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_user(self):
          print "test_get_user"
-         email_obj = self.delegate.get_email(email=Config.admin_email)
-         user_obj = self.delegate.get_user(email=email_obj)
+         email = Email(email=Config.admin_email)
+         user_obj = self.delegate.get_user(email=email)
          self.assertEqual(user_obj.get("email").get("email"), 
                               Config.admin_email)
 
@@ -394,7 +392,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_admin_user
 #+BEGIN_SRC python
     def get_admin_user(self):
-        role_obj = self.get_role(name=Config.admin_role)
+        role_obj = Role(name=Config.admin_role)
         return self.get_user(role=role_obj)
 
 #+END_SRC
@@ -424,7 +422,7 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_user_by_email(self):
         print "test_get_user_by_email"
-        email = self.delegate.get_email(email=Config.admin_email)
+        email = Email(email=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
         self.assertEqual(user.get("email"), email)
 
@@ -459,7 +457,7 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_set_email(self):
         print "test_set_email"
-        email = self.delegate.get_email(email=Config.admin_email)
+        email = Email(email=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
         email = Email(email="abc@gnu.org")
         user = self.delegate.set_email(user, email)
@@ -492,7 +490,7 @@ class TestPersistenceDelegate(TestCase):
     def test_set_name(self):
         print "test_set_name"
 
-        email = Email.apply_filters(email=Config.admin_email)[0]
+        email = Email(email=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
         name = Name(name="Jimi Hendrix")
         user = self.delegate.set_name(user, name)
@@ -569,6 +567,7 @@ if __name__ == '__main__':
 #+BEGIN_SRC python :tangle persistence_delegate.py :eval no :noweb yes
 <<imports_for_sources>>
 <<class_persistence_delegate>>
+<<get_object>>
 <<get_role_set>>
 <<get_user_set>>
 <<user_exists>>

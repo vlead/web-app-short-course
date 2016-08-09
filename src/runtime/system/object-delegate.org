@@ -236,6 +236,7 @@ class TestObjectDelegate(TestCase):
 
 #+END_SRC
 
+
 *** Get user with admin role
     This function returns the user the admin role from the user set
 #+NAME: get_admin_user

@@ -89,6 +89,21 @@ class StateError(Exception):
 #+END_SRC
 
 
+*** NotFound Error
+#+name: class_NotFoundError
+#+BEGIN_SRC python
+class NotFoundError(Exception):
+    str = None
+
+    def __init__(self, str):
+        self.str = str
+
+    def __str__(self):
+        return repr(self.str)
+
+#+END_SRC
+
+
 *** Error
 #+name: class_Error
 #+BEGIN_SRC python
@@ -112,6 +127,7 @@ class Error(Exception):
 <<class_ArityError>>
 <<class_AuthError>>
 <<class_StateError>>
+<<class_NotFoundError>>
 <<class_Error>>
 #+END_SRC
 

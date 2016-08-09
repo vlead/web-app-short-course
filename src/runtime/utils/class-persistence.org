@@ -148,6 +148,7 @@
 
         return staticmethod(fn)
 
+
     @staticmethod
     def mk_apply_filters(cls):
         def fn(**kwargs):
@@ -158,17 +159,16 @@
                        args_dict = {}
                        args_dict[unique_key] = value.get(unique_key)
 
-                   val_obj_lst = value.__class__.apply_filters(**args_dict)
-
-                   if not val_obj_lst:
-                       raise NotFoundError("The object is not found")
-                   else:
-                       kwargs[key] = val_obj_lst[0]
+                   kwargs[key] = value.__class__.apply_filters(**args_dict)[0]
 
             lst = cls.query.filter_by(**kwargs).all()
-            for obj in lst:
-                cls.set_state(obj)
-            return lst
+
+            if not lst:
+                raise NotFoundError("The object is not found")
+            else:
+                for obj in lst:
+                    cls.set_state(obj)
+                return lst
 
         return staticmethod(fn)
 
@@ -224,6 +224,7 @@ class TestPersistence(TestCase):
     #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
 from type_utils import *
+from runtime.exceptions.custom_exceptions import *
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 

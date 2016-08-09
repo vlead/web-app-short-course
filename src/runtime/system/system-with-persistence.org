@@ -45,8 +45,8 @@ class TestAddUser(TestCase):
                   role=System.delegate.get_role(name="user"))
 
         ret_user = System.do("add_user", user=user, session=session)
-        retrieved_user = System.delegate.get_user_by_email(
-            System.delegate.get_email(email="abc@gnu.org"))
+        email = Email(email="abc@gnu.org")
+        retrieved_user = System.delegate.get_user_by_email(email)
         self.assertEqual(ret_user, retrieved_user)
                          
 
@@ -122,7 +122,7 @@ class TestAddUser(TestCase):
 
     def test_add_user_raises_state_error_adding_user_with_admin_role(self):
         print "test_add_user_raises_state_error_adding_user_with_admin_role"
-
+        
         admin_user=System.delegate.get_admin_user()
         session = Session(user=admin_user)
         System.session_set.append(session)
@@ -167,9 +167,9 @@ class TestSetEmail(TestCase):
         
         ret_user = System.do("set_email", user=admin_user, 
                                  email=email, session=session)
-        
-        retrieved_user = System.delegate.get_user_by_email(
-            System.delegate.get_email(email="abc@gnu.org"))
+  
+        email = Email(email="abc@gnu.org")
+        retrieved_user = System.delegate.get_user_by_email(email)
         
         self.assertEqual(ret_user, retrieved_user)
         
@@ -191,8 +191,7 @@ class TestSetEmail(TestCase):
         ret_user = System.do("set_email", user=user, 
                                  email=email, session=session)
         
-        retrieved_user = System.delegate.get_user_by_email(
-            System.delegate.get_email(email="xyz@gnu.org"))
+        retrieved_user = System.delegate.get_user_by_email(email)
         
         self.assertEqual(ret_user, retrieved_user)
   
@@ -476,10 +475,8 @@ class TestShowUsers(TestCase):
                   email=Email(email="abc@gnu.org"),
                   role=System.delegate.get_role(name="user"))
 
-
         System.delegate.add_user(user)
         self.assertEquals(len(System.do("show_users", session=session)), 2)
-
 
     def test_show_users_for_a_user_with_user_role(self):
         print "test_show_users_for_a_user_with_user_role"
