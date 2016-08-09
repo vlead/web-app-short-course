@@ -23,7 +23,7 @@ args = {"__tablename__": "names",
         "users": db.relationship('User', backref='name')
         }
 
-Name = ClassPersistenceTemplate.mk_persistent(Name, **args)
+Name = ClassPersistenceTemplate.mk_persistent(Name, ['name'], **args)
 is_name = is_inst(Name)
 check_name = check_pred(is_name)
 #+end_src
@@ -85,7 +85,7 @@ args = {"__tablename__": "emails",
                                 backref=db.backref('email', uselist=False))
         }
 
-Email = ClassPersistenceTemplate.mk_persistent(Email, **args)
+Email = ClassPersistenceTemplate.mk_persistent(Email, ['email'], **args)
 
 is_email = is_inst(Email)
 check_email = check_pred(is_email)
@@ -156,7 +156,7 @@ args = {"__tablename__": "roles",
         "users": db.relationship('User', backref='role')
         }
 
-Role = ClassPersistenceTemplate.mk_persistent(Role, **args)
+Role = ClassPersistenceTemplate.mk_persistent(Role, ['name'], **args)
 
 is_role = is_inst(Role)
 check_role = check_pred(is_role)
@@ -229,7 +229,7 @@ args = {"__tablename__": "users",
         "role_id": db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
         }
 
-User = ClassPersistenceTemplate.mk_persistent(User, **args)
+User = ClassPersistenceTemplate.mk_persistent(User, ['email'], **args)
 
 is_user = is_inst(User)
 check_user = check_pred(is_user)
@@ -267,6 +267,9 @@ class TestPersistenceUser(TestCase):
         n_usr = User.get_by_id(1)
         print n_usr.to_client()
         self.assertEqual(n_usr.get("email").get('email'), "jimi@gnu.org")
+        filtered_usr = User.apply_filters(email=Email(email="jimi@gnu.org"),
+                                          name=Name(name="Jimi Hendrix"))[0]
+        self.assertEqual(filtered_usr.get("email").get("email"), "jimi@gnu.org")
 
     def test_update_user(self):
         print "test update user"

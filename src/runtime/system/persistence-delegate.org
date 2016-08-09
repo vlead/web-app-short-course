@@ -365,12 +365,15 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_user
 #+BEGIN_SRC python
     def get_user(self, **kwargs):
-        usr_lst = User.apply_filters(**kwargs)
+        usr_lst = None
+        if ('email' in kwargs and self.email_exists(kwargs['email']) or
+            'name' in kwargs and self.name_exists(kwargs['name']) or
+            'role' in kwargs):
+            usr_lst = User.apply_filters(**kwargs)
         if usr_lst:
             return usr_lst[0]
         else:
             return None
-
 #+END_SRC
 
 **** Tests
@@ -421,7 +424,7 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_user_by_email(self):
         print "test_get_user_by_email"
-        email = Email.apply_filters(email=Config.admin_email)[0]
+        email = self.delegate.get_email(email=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
         self.assertEqual(user.get("email"), email)
 
@@ -442,12 +445,11 @@ class TestPersistenceDelegate(TestCase):
     def set_email(self, user, email):
         usr = self.get_user_by_email(user.get("email"))
 
-        email_list =  Email.apply_filters(email=email.get("email"))
-        if not email_list:
+        if self.get_email(email=email.get("email")) is None:
             email.save()
-            email_list =  Email.apply_filters(email=email.get("email"))
-
-        usr.set(email=email_list[0])
+            email = self.get_email(email=email.get("email"))
+            
+        usr.set(email=email)
         return self.get_user_by_email(usr.get("email"))
 
 #+END_SRC
@@ -457,7 +459,7 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_set_email(self):
         print "test_set_email"
-        email = Email.apply_filters(email=Config.admin_email)[0]
+        email = self.delegate.get_email(email=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
         email = Email(email="abc@gnu.org")
         user = self.delegate.set_email(user, email)
@@ -475,14 +477,12 @@ class TestPersistenceDelegate(TestCase):
     def set_name(self, user, name):
         usr = self.get_user_by_email(user.get("email"))
 
-        name_list =  Name.apply_filters(name=name.get("name"))
-        if not name_list:
+        if self.get_name(name=name.get("name")) is None:
             name.save()
-            name_list =  Name.apply_filters(name=name.get("name"))
+            name = self.get_name(name=name.get("name"))
 
-        usr.set(name=name_list[0])
-        return self.get_user_by_email(usr.get("email"))
-
+        usr.set(name=name)
+        return self.get_user(name=usr.get("name"))
 
 #+END_SRC
 

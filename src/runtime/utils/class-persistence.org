@@ -55,7 +55,10 @@
     #+NAME: mk_persistent
     #+BEGIN_SRC python
     @staticmethod
-    def mk_persistent(cls, **table_args):
+    def mk_persistent(cls, uk_list, **table_args):
+        check_list(uk_list)
+        setattr(cls, 'unique_key_list', uk_list)
+
         check_dict(table_args)
         for key, value in table_args.iteritems():
             setattr(cls, key, value)
@@ -82,8 +85,8 @@
     persistent store are provided to the new persistent class by using the
     functions provided by =db.Model=
 
-    #+NAME: class_functions
-    #+BEGIN_SRC python
+#+NAME: class_functions
+#+BEGIN_SRC python
     @staticmethod
     def mk_save(cls) :
         def fn(obj):
@@ -145,11 +148,23 @@
 
         return staticmethod(fn)
 
-
     @staticmethod
     def mk_apply_filters(cls):
         def fn(**kwargs):
             db.session.autoflush = False
+            for key, value in kwargs.iteritems():
+                if not is_str(value):
+                   for unique_key in value.__class__.unique_key_list:
+                       args_dict = {}
+                       args_dict[unique_key] = value.get(unique_key)
+
+                   val_obj_lst = value.__class__.apply_filters(**args_dict)
+
+                   if not val_obj_lst:
+                       raise NotFoundError("The object is not found")
+                   else:
+                       kwargs[key] = val_obj_lst[0]
+
             lst = cls.query.filter_by(**kwargs).all()
             for obj in lst:
                 cls.set_state(obj)
@@ -157,7 +172,8 @@
 
         return staticmethod(fn)
 
-    #+END_SRC
+#+END_SRC
+
 
 ** Tests
    #+NAME: persistence_tests
@@ -182,7 +198,7 @@ class TestPersistence(TestCase):
                 "id": db.Column(db.Integer, primary_key=True),
                 "name": db.Column(db.String(128), nullable=False)
                 }
-        PName = ClassPersistenceTemplate.mk_persistent(Name, **args)
+        PName = ClassPersistenceTemplate.mk_persistent(Name, ['name'], **args)
         self.setUp()
         p_name = PName(name="Jimi Hendrix")
         p_name.save()
@@ -191,6 +207,8 @@ class TestPersistence(TestCase):
         p_name.set(name="Bo Didley")
         names = PName.get_all()
         self.assertEqual(names[0].get("name"), "Bo Didley")
+        self.assertEqual(PName.apply_filters(name="Bo Didley")[0].get("name"),
+                             "Bo Didley")
         names[0].delete()
         names = PName.get_all()
         self.assertEqual(names, [])
@@ -205,7 +223,7 @@ class TestPersistence(TestCase):
     #+NAME: imports_for_sources
     #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
-from type_utils import check_dict
+from type_utils import *
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 

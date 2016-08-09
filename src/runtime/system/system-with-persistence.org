@@ -18,6 +18,7 @@
  #+BEGIN_SRC python
 class TestAddUser(TestCase):
     TESTING = True
+    print "testing system with persistence"
     
     def create_app(self):
         app = create_app(config)
@@ -40,12 +41,12 @@ class TestAddUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
+                  email=Email(email="abc@gnu.org"),
                   role=System.delegate.get_role(name="user"))
 
         ret_user = System.do("add_user", user=user, session=session)
         retrieved_user = System.delegate.get_user_by_email(
-            System.delegate.get_email(email="abc@gmail.com"))
+            System.delegate.get_email(email="abc@gnu.org"))
         self.assertEqual(ret_user, retrieved_user)
                          
 
@@ -58,7 +59,7 @@ class TestAddUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
+                  email=Email(email="abc@gnu.org"),
                   role=System.delegate.get_role(name="user"))
 
         with self.assertRaises(ArityError):
@@ -72,7 +73,7 @@ class TestAddUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
+                  email=Email(email="abc@gnu.org"),
                   role=System.delegate.get_role(name="user"))
 
         with self.assertRaises(TypeError):
@@ -90,7 +91,7 @@ class TestAddUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
+                  email=Email(email="abc@gnu.org"),
                   role=System.delegate.get_role(name="user"))
 
         with self.assertRaises(AuthError):
@@ -103,7 +104,7 @@ class TestAddUser(TestCase):
         session = Session(user=admin_user)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
+                  email=Email(email="abc@gnu.org"),
                   role=System.delegate.get_role(name="user"))
 
         with self.assertRaises(StateError):
@@ -127,7 +128,7 @@ class TestAddUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
+                  email=Email(email="abc@gnu.org"),
                   role=System.delegate.get_role(name="admin"))
 
         with self.assertRaises(StateError):
@@ -141,11 +142,19 @@ class TestAddUser(TestCase):
  #+BEGIN_SRC python
 class TestSetEmail(TestCase):
     TESTING = True
+    
+    def create_app(self):
+        app = create_app(config)
+        return app
 
     def setUp(self):
-        System.initialize_system(ObjectDelegate)
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        populate_db()
 
     def tearDown(self):
+        db.session.remove()
+        db.drop_all()
         System.delegate = None
 
     def test_set_email_passes_by_admin(self):
@@ -155,30 +164,38 @@ class TestSetEmail(TestCase):
         System.session_set.append(session)
 
         email = Email(email="abc@gnu.org")
- 
-        self.assertEqual(System.do("set_email", user=admin_user, 
-                                    email=email, session=session),
-                            System.delegate.get_user_by_email(email))
-
+        
+        ret_user = System.do("set_email", user=admin_user, 
+                                 email=email, session=session)
+        
+        retrieved_user = System.delegate.get_user_by_email(
+            System.delegate.get_email(email="abc@gnu.org"))
+        
+        self.assertEqual(ret_user, retrieved_user)
+        
 
     def test_set_email_passes_by_user(self):
         print "test_set_email_passes_by_user"
 
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
         session = Session(user=user)
         System.session_set.append(session)
 
-        email = Email(email="abc@gnu.org")
- 
-        self.assertEqual(System.do("set_email", user=user, 
-                                    email=email, session=session),
-                            System.delegate.get_user_by_email(email))
+        email = Email(email="xyz@gnu.org")
 
+        ret_user = System.do("set_email", user=user, 
+                                 email=email, session=session)
+        
+        retrieved_user = System.delegate.get_user_by_email(
+            System.delegate.get_email(email="xyz@gnu.org"))
+        
+        self.assertEqual(ret_user, retrieved_user)
+  
 
     def test_set_email_raises_arity_error(self):
         print "test_set_email_raises_arity_error"
@@ -188,8 +205,8 @@ class TestSetEmail(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
@@ -204,11 +221,11 @@ class TestSetEmail(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
-        email=Email(email="abc@gmail.com")
+        email=Email(email="xyz@gnu.org")
 
         with self.assertRaises(TypeError):
             System.do("set_email", user=user, email=user, session=session)
@@ -219,7 +236,7 @@ class TestSetEmail(TestCase):
 
         f_user=User(name=Name(name="New Fake Admin"),
                   email=Email(email="new_admin@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(f_user)  ##added user to the system
 
@@ -227,8 +244,8 @@ class TestSetEmail(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
@@ -243,8 +260,8 @@ class TestSetEmail(TestCase):
         session = Session(user=admin_user)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
         email = Email(email="ttk@gnu.org")
@@ -259,8 +276,8 @@ class TestSetEmail(TestCase):
         System.session_set.append(session)
 
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         ##The above user is not added to the system
 
@@ -276,13 +293,13 @@ class TestSetEmail(TestCase):
         session = Session(user=admin_user)
         System.session_set.append(session)
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
         System.delegate.add_user(user)  ##added user to the system
         email = Email(email="ttk@gnu.org")
         e_user=User(name=Name(name="Existing User"),
                   email=email,
-                  role=System.delegate.get_role("user"))
+                  role=System.delegate.get_role(name="user"))
         System.delegate.add_user(e_user)  ##added user to the system
 
         with self.assertRaises(StateError):
@@ -295,12 +312,21 @@ class TestSetEmail(TestCase):
  #+NAME: test_setname
  #+BEGIN_SRC python
 class TestSetName(TestCase):
+
     TESTING = True
+    
+    def create_app(self):
+        app = create_app(config)
+        return app
 
     def setUp(self):
-        System.initialize_system(ObjectDelegate)
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        populate_db()
 
     def tearDown(self):
+        db.session.remove()
+        db.drop_all()
         System.delegate = None
 
     def test_set_name_passes_by_admin(self):
@@ -321,8 +347,8 @@ class TestSetName(TestCase):
         print "test_set_name_passes_by_user"
 
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
         System.delegate.add_user(user)  ##added user to the system
         session = Session(user=user)
         System.session_set.append(session)
@@ -338,8 +364,8 @@ class TestSetName(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
@@ -354,8 +380,8 @@ class TestSetName(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
@@ -369,7 +395,7 @@ class TestSetName(TestCase):
 
         f_user=User(name=Name(name="New Fake Admin"),
                   email=Email(email="new_admin@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(f_user)  ##added user to the system
 
@@ -377,8 +403,8 @@ class TestSetName(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
@@ -393,8 +419,8 @@ class TestSetName(TestCase):
         session = Session(user=admin_user)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
         name = Name(name="Jimi Hendrix")
@@ -408,8 +434,8 @@ class TestSetName(TestCase):
         System.session_set.append(session)
 
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         ##The above user is not added to the system
 
@@ -426,10 +452,18 @@ class TestSetName(TestCase):
 class TestShowUsers(TestCase):
     TESTING = True
 
+    def create_app(self):
+        app = create_app(config)
+        return app
+
     def setUp(self):
-        System.initialize_system(ObjectDelegate)
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        populate_db()
 
     def tearDown(self):
+        db.session.remove()
+        db.drop_all()
         System.delegate = None
 
     def test_show_users_for_user_with_admin_role(self):
@@ -439,20 +473,20 @@ class TestShowUsers(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
 
         System.delegate.add_user(user)
         self.assertEquals(len(System.do("show_users", session=session)), 2)
 
 
-    def test_show_users_for_a_uset_with_user_role(self):
+    def test_show_users_for_a_user_with_user_role(self):
         print "test_show_users_for_a_user_with_user_role"
 
         user=User(name=Name(name="me mine myself"),
-                      email=Email(email="abc@gmail.com"),
-                      role=System.delegate.get_role("user"))
+                      email=Email(email="abc@gnu.org"),
+                      role=System.delegate.get_role(name="user"))
  
         System.delegate.add_user(user)
 
@@ -480,10 +514,18 @@ class TestShowUsers(TestCase):
 class TestDelUser(TestCase):
     TESTING = True
 
+    def create_app(self):
+        app = create_app(config)
+        return app
+
     def setUp(self):
-        System.initialize_system(ObjectDelegate)
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        populate_db()
 
     def tearDown(self):
+        db.session.remove()
+        db.drop_all()
         System.delegate = None
 
     def test_del_user_passes(self):
@@ -493,8 +535,8 @@ class TestDelUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
 
         System.delegate.add_user(user)  ##added user to the system
@@ -510,8 +552,8 @@ class TestDelUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
@@ -527,8 +569,8 @@ class TestDelUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
@@ -542,8 +584,8 @@ class TestDelUser(TestCase):
         session = Session(user=admin_user)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
@@ -559,8 +601,8 @@ class TestDelUser(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         ## user not added to the system
         with self.assertRaises(StateError):
@@ -581,15 +623,15 @@ class TestDelUser(TestCase):
 
         user=User(name=Name(name="New Fake Admin"),
                   email=Email(email="new_admin@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)
         session = Session(user=user)
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
         System.delegate.add_user(user)
 
         with self.assertRaises(AuthError):
@@ -598,16 +640,24 @@ class TestDelUser(TestCase):
  #+END_SRC
 
 
-** Test GetUserByEmail
+** Test GetUserByEmail 
  #+NAME: test_get_user_by_email
  #+BEGIN_SRC python
 class TestGetUserByEmail(TestCase):
     TESTING = True
 
+    def create_app(self):
+        app = create_app(config)
+        return app
+
     def setUp(self):
-        System.initialize_system(ObjectDelegate)
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        populate_db()
 
     def tearDown(self):
+        db.session.remove()
+        db.drop_all()
         System.delegate = None
 
     def test_get_user_by_email_passes(self):
@@ -617,16 +667,20 @@ class TestGetUserByEmail(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
 
         System.delegate.add_user(user)  ##added user to the system
 
-        email = Email(email="abc@gmail.com")
-        self.assertEqual(System.do("get_user_by_email",
+        email = Email(email="abc@gnu.org")
+        ret_user = System.do("get_user_by_email",
                                     email=email,
-                                    session=session), user)
+                                    session=session)
+        retrieved_user = System.delegate.get_user_by_email(
+            System.delegate.get_email(email="abc@gnu.org"))
+
+        self.assertEqual(ret_user, retrieved_user)
 
     def test_get_user_by_email_raises_arity_error(self):
         print "test_get_user_by_email_raises_arity_error"
@@ -636,12 +690,12 @@ class TestGetUserByEmail(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
-        email = Email(email="abc@gmail.com")
+        email = Email(email="abc@gnu.org")
         with self.assertRaises(ArityError):
             System.do("get_user_by_email", email=email)
 
@@ -654,12 +708,12 @@ class TestGetUserByEmail(TestCase):
         System.session_set.append(session)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
-        email = Email(email="abc@gmail.com")
+        email = Email(email="abc@gnu.org")
         with self.assertRaises(TypeError):
             System.do("get_user_by_email", email=session, session=session)
 
@@ -671,12 +725,12 @@ class TestGetUserByEmail(TestCase):
         session = Session(user=admin_user)
  
         user=User(name=Name(name="me mine myself"),
-                  email=Email(email="abc@gmail.com"),
-                  role=System.delegate.get_role("user"))
+                  email=Email(email="abc@gnu.org"),
+                  role=System.delegate.get_role(name="user"))
 
         System.delegate.add_user(user)  ##added user to the system
 
-        email = Email(email="abc@gmail.com")
+        email = Email(email="abc@gnu.org")
         with self.assertRaises(StateError):
             System.do("get_user_by_email", email=email,
                        session=session)
@@ -740,6 +794,11 @@ if __name__ == '__main__':
 <<imports_for_tests>>
 <<populate_db>>
 <<test_adduser>>
+<<test_setemail>>
+<<test_setname>>
+<<test_showusers>>
+<<test_deluser>>
+<<test_get_user_by_email>>
 <<run_test_cases>>
 #+end_src
 
