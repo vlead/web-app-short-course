@@ -34,7 +34,6 @@
   Now, an API to perform CRUD (create, read, update and delete) operations is
   available for an object of type Name.
   
-  
 ** Implementation
 
 *** mk_persistent
@@ -79,13 +78,15 @@
     #+END_SRC
 
 
-
 *** Operations supporting persistence
     Saving an object to a persistent store and retreiving object(s) from
     persistent store are provided to the new persistent class by using the
     functions provided by =db.Model=
 
-#+NAME: class_functions
+**** Save Object
+     This function provides the class with the functionality to save the object
+     to the database.
+#+NAME: save_method
 #+BEGIN_SRC python
     @staticmethod
     def mk_save(cls) :
@@ -99,13 +100,28 @@
 
         return fn
 
+#+END_SRC
+
+**** Save Handler
+     An object with the ability to persist behaves differently than an object
+     without persistence when any of the attributes of the object are modified.
+     To achieve this, on any modification of an attribute of a persistence
+     object, save_handler is invoked, which writes to the database.
+#+NAME: save_handler
+#+BEGIN_SRC python
     @staticmethod
     def mk_save_handler(cls):
         def fn(obj):
             obj.save()
 
         cls.custom_handlers['save_handler'] = fn
+#+END_SRC
 
+**** Delete Object
+     The function provides the class with the functionality to delete an object
+     from the database.
+#+NAME: delete_method
+#+BEGIN_SRC python
     @staticmethod
     def mk_delete(cls):
         def fn(obj):
@@ -115,6 +131,18 @@
 
         return fn
 
+#+END_SRC
+
+**** Set State
+     When an object is retrieved from the database, sqlalchemy constructs the
+     object in a different way which does not allow the use of the retrieved
+     object in a consistent way - using the same API exposed by the object
+     without persistence.  All the attributes of an object are part of a
+     =state= variable.  This function =set_state= populates the =state=
+     variable.  This method is invoked after every retrieval from the database.
+
+#+NAME: set_state_method
+#+BEGIN_SRC python
     @staticmethod
     def mk_set_state(cls):
         def fn(obj):
@@ -127,6 +155,13 @@
 
         return staticmethod(fn)
 
+#+END_SRC
+
+**** Get By ID
+     The function provides the class with the functionality to retrieve an
+     object from the database based on the primary key.
+#+NAME: get_by_id_method
+#+BEGIN_SRC python
     @staticmethod
     def mk_get_by_id(cls):
         def fn(id):
@@ -137,6 +172,13 @@
 
         return staticmethod(fn)
 
+#+END_SRC
+
+**** Get All
+     The function provides the class with the functionality to retrieve all the
+     objects of a particular type from the database.
+#+NAME: get_all_method
+#+BEGIN_SRC python
     @staticmethod
     def mk_get_all(cls):
         def fn():
@@ -148,7 +190,23 @@
 
         return staticmethod(fn)
 
+#+END_SRC
 
+**** Apply Filters
+     The function provides the class with an ability to fetch an object from
+     the database with a selection criteria.  In sqlalchmey, when an object of
+     type one is part of the search criteria to search an object of type two,
+     it is necessary that object of type one has id which is not null. This
+     means the object of type one has to be retrieved from the database before
+     it can be passed as a parameter to the search criteria.
+
+     Every object has a unique key which is either an object type or a
+     primitive type.  This function recursively retrieves the objects from
+     persistence store to build the arguments before finally applying the
+     filters. 
+
+#+NAME: apply_filters
+#+BEGIN_SRC python
     @staticmethod
     def mk_apply_filters(cls):
         def fn(**kwargs):
@@ -274,7 +332,13 @@ if __name__ == '__main__':
     #+BEGIN_SRC python :tangle class_persistence_template.py :eval no :noweb yes
 <<imports_for_sources>>
 <<class_ClassPersistentTemplate>>
-<<class_functions>>
+<<save_method>>
+<<save_handler>>
+<<delete_method>>
+<<set_state_method>>
+<<get_by_id_method>>
+<<get_all_method>>
+<<apply_filters>>
 <<mk_persistent>>
     #+end_src
 
