@@ -12,6 +12,7 @@
   the methodology on *how* to build the application while the [[./index.org::#application][=Data Model=]]
   provides on *what* to build.
 
+
 * Version/Branch History
 
 - =mini= :: Version with only Users and Sessions as the main

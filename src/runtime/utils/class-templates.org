@@ -175,9 +175,9 @@ class ClassTemplate():
         # args is a dictionary
         def fn(obj, **args): 
             check_dict(args)
-
             # match arg keys with state_vars list
-            check_pred(lambda a: sorted(a.keys()) == cls.sorted_state_vars)(args)
+            check_pred(lambda a: sorted(a.keys()) == \
+                           sorted(cls.sorted_state_vars))(args)
 
             obj.state = {}
             
@@ -244,16 +244,24 @@ class ClassTemplate():
 
     @staticmethod
     def mk_to_client(cls):
-        def fn(obj):
+        def fn(obj, level=1):
             to_client_var = {}
             for key, value in obj.state.iteritems():
                 if is_list(value):
+#                   value.__class__.__name__ is 'InstrumentedList'):
                     to_client_var[key] = []
                     for item in value:
-                        to_client_var[key].append(item.to_client())
+                        if level <= 2:
+                            if hasattr(item, 'to_client'):
+                                to_client_var[key].append(\
+                                    item.to_client(level=level+1))
+                            else:
+                                to_client_var[key].append(value)
+                        else:
+                            to_client_var[key].append("Not Printing")
                         
                 elif hasattr(value, 'to_client'):
-                    to_client_var[key] = value.to_client()
+                    to_client_var[key] = value.to_client(level=level+1)
                 else:
                     to_client_var[key] = value
 
@@ -265,6 +273,25 @@ class ClassTemplate():
         return fn
 
     @staticmethod
+    def mk_add_attributes(cls):
+        def fn(**formals):
+            
+            check_dict(formals)
+
+            # append the keys of the formals
+            cls.sorted_state_vars += formals.keys()
+
+            # create a dictionary of type preds  for the  state variables
+            # {'min': is_int, 'max': is_int}
+            cls.state_var_type_preds.update(formals.copy())
+
+            # {'min': check_int, 'max': check_int}
+            cls.state_var_type_checks = \
+            {k: check_pred(v) for k, v in cls.state_var_type_preds.items()}
+
+        return staticmethod(fn)
+
+    @staticmethod
     def mk_class(_name, **formals):
         # name is the name of the class to be created
         # formals is a dictionary of name, type_pred pairs
@@ -274,7 +301,8 @@ class ClassTemplate():
         #  'inv': lambda self, args: args['min'] <= args['max']}
         
         # check if formals is a dictionary
-        check_dict(formals)
+        if formals:
+            check_dict(formals)
 
         # create a class with name
         cls = meta(_name)
@@ -289,16 +317,20 @@ class ClassTemplate():
 
         # create sorted list of state variables
         # ['max', 'min']
+        cls.sorted_state_vars = []
         cls.sorted_state_vars = sorted(formals.keys())
 
         # create a dictionary of type preds  for the  state variables
-        # ['min': is_int, 'max': is_int]
+        # {'min': is_int, 'max': is_int}
+        cls.state_var_type_preds = {}
+        cls.state_var_type_checks = {}
         cls.state_var_type_preds=formals.copy()
 
-        # ['min': check_int, 'max': check_int]
+        # {'min': check_int, 'max': check_int}
         cls.state_var_type_checks = \
         {k: check_pred(v) for k, v in cls.state_var_type_preds.items()}
 
+        cls.add_attributes = ClassTemplate.mk_add_attributes(cls)
         # __init__
         cls.__init__ = ClassTemplate.mk_init(cls)
 
@@ -307,7 +339,7 @@ class ClassTemplate():
 
         # eq
         # to be done
-
+#       cls.__eq__ = ClassTemplate.mk_eq(cls)
 
         # set
         cls.set = ClassTemplate.mk_setter(cls)

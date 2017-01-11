@@ -145,13 +145,29 @@
 #+BEGIN_SRC python
     @staticmethod
     def mk_set_state(cls):
-        def fn(obj):
+        def fn(obj, level):
             obj.state = {}
             for key in cls.sorted_state_vars:
                 value = getattr(obj, key)
-                obj.state[key] = value
-                if hasattr(value.__class__, 'set_state'):
-                    value.__class__.set_state(value)
+                
+                if value.__class__.__name__ is 'InstrumentedList' or \
+                  value.__class__.__name__ is'list':
+                    val_list = []
+                    for val in value:
+                        if hasattr(val.__class__, 'set_state') and \
+                          level <= 2:
+                            val.__class__.set_state(val, level+1)
+                            
+                        val_list.append(val)
+
+                    obj.state[key] = val_list
+               
+                else:
+                    if hasattr(value.__class__, 'set_state') and \
+                      level <= 2:
+                        value.__class__.set_state(value, level+1)
+                       
+                    obj.state[key] = value
 
         return staticmethod(fn)
 
@@ -167,7 +183,8 @@
         def fn(id):
             db.session.autoflush = False
             obj = cls.query.get(id)
-            cls.set_state(obj)
+            if obj is not None:
+                cls.set_state(obj, 1)
             return obj
 
         return staticmethod(fn)
@@ -185,7 +202,7 @@
             db.session.autoflush = False
             lst = cls.query.all()
             for obj in lst:
-                cls.set_state(obj)
+                cls.set_state(obj, 1)
             return lst
 
         return staticmethod(fn)
@@ -212,7 +229,9 @@
         def fn(**kwargs):
             db.session.autoflush = False
             for key, value in kwargs.iteritems():
-                if not (is_str(value) or is_unicode(value)):
+                if not (is_str(value) or is_unicode(value) or
+                            is_none(value) or is_int(value) or
+                            is_date(value)):
                    for unique_key in value.__class__.unique_key_list:
                        args_dict = {}
                        args_dict[unique_key] = value.get(unique_key)
@@ -225,7 +244,7 @@
                 raise NotFoundError("The object is not found")
             else:
                 for obj in lst:
-                    cls.set_state(obj)
+                    cls.set_state(obj, 1)
                 return lst
 
         return staticmethod(fn)
@@ -281,7 +300,7 @@ class TestPersistence(TestCase):
     #+NAME: imports_for_sources
     #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
-from type_utils import *
+from runtime.utils.type_utils import *
 from runtime.exceptions.custom_exceptions import *
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
@@ -309,7 +328,7 @@ from type_utils import *
 from class_templates import *
 from class_persistence_template import *
 from runtime.rest.app import create_app
-from runtime.objects.entities import Name
+from runtime.objects.entities import Answer as Name
 
 config = {
     'SQLALCHEMY_DATABASE_URI': ''
@@ -332,6 +351,7 @@ if __name__ == '__main__':
     #+BEGIN_SRC python :tangle class_persistence_template.py :eval no :noweb yes
 <<imports_for_sources>>
 <<class_ClassPersistentTemplate>>
+<<mk_persistent>>
 <<save_method>>
 <<save_handler>>
 <<delete_method>>
@@ -339,7 +359,6 @@ if __name__ == '__main__':
 <<get_by_id_method>>
 <<get_all_method>>
 <<apply_filters>>
-<<mk_persistent>>
     #+end_src
 
 *** tests

@@ -85,6 +85,7 @@ The rest of the sections have more detailed requirements.
    Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entit_role][Role]]
    entity.
 
+
 * Role
 :PROPERTIES:
 :CUSTOM_ID: req_role
@@ -104,6 +105,7 @@ The rest of the sections have more detailed requirements.
 
    Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinalility]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entity_role][Role]] and
    [[../data-model/index.org::#entity_user][User]] entities.
+
 
 ** Types of Roles
 :PROPERTIES:
@@ -137,6 +139,7 @@ The rest of the sections have more detailed requirements.
    There is atleast one user with role =admin= in the system.
 
    Realized in data model as an [[../data-model/index.org::#admin_user][admin user]]
+
 
 * Session
 :PROPERTIES:

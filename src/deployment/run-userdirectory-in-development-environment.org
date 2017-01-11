@@ -7,24 +7,24 @@
 #+options: ^:nil
 
 * Creation of database
-  - Login to mysql
-    #+BEGIN_EXAMPLE
-    mysql -u <username> -p<password>
-    #+END_EXAMPLE
-  - Show all databases
-    #+BEGIN_EXAMPLE
-    show databases;
-    #+END_EXAMPLE
-  - If <userdirectory> database is not present, create it
-    #+BEGIN_EXAMPLE
-    create database outreach
-    #+END_EXAMPLE
+  1. Login to mysql
+     #+BEGIN_EXAMPLE
+     mysql -u <username> -p<password>
+     #+END_EXAMPLE
+  2. Show all databases
+     #+BEGIN_EXAMPLE
+     show databases;
+     #+END_EXAMPLE
+  3. If <userdirectory> database is not present, create it
+     #+BEGIN_EXAMPLE
+     create database userdirectory
+     #+END_EXAMPLE
   
-    Exit our of the mysql console
+     Exit our of the mysql console
 
 * Creation of Virtual Environment
 
-  + Create Virtual Environemnt in the =outreach= directory
+  + Create Virtual Environemnt in the =user-directory= directory
   #+BEGIN_EXAMPLE
   virtualenv venv
   #+END_EXAMPLE
@@ -36,7 +36,7 @@
 
 * Setting up dependencies
 
-  Install all the dependencies for running the =outreach= applciation.
+  Install all the dependencies for running the =user-directory= applciation.
   The =setup.py= script is in the =build/code= directory
   #+BEGIN_EXAMPLE
   cd <path to build/code directory>
@@ -46,7 +46,8 @@
 
 * Set SQLALCHEMY_DATABASE_URI
   The variable =SQLALCHEMY_DATABASE_URI= has to be set to proper value in
-  =build/code/src/config.py= so that the application can use the database.
+  =build/code/src/config.py= so that the application can use the database.  In
+  the example below, =root= is the user and =mysql= is the password.
   #+BEGIN_EXAMPLE
   SQLALCHEMY_DATABASE_URI = 'mysql+oursql://root:mysql@localhost/userdirectory'
   #+END_EXAMPLE

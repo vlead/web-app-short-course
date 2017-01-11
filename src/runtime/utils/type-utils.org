@@ -29,7 +29,10 @@ is_bool = is_inst(bool)
 is_str = is_inst(str)
 is_dict = is_inst(dict)
 is_list = is_inst(list)
+is_string = is_inst(str)
 is_unicode = is_inst(unicode)
+is_str_or_none = lambda str: is_str(str) or str == None
+
 #+END_SRC
 
 *** Test Instance predicate
@@ -48,10 +51,11 @@ class TestIsInstance(TestCase):
         self.assertEqual(is_bool(10), False)
         self.assertEqual(is_str('hello world'), True)
         self.assertEqual(is_str(False), False)
+        self.assertEqual(is_str_or_none(None), True)
         self.assertEqual(is_dict({'email': 'xyz@g.com'}), True)
         self.assertEqual(is_dict("{'email': 'xyz@g.com'}"), False)
-#+END_SRC
 
+#+END_SRC
 
 ** Alphabetic string predicate
 
@@ -67,8 +71,8 @@ def is_alphabetic_str(value):
         return True
     else:
         return False
-#+END_SRC
 
+#+END_SRC
 
 ** Email string predicate
     Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
@@ -85,13 +89,45 @@ def is_email_str(value):
         return True
     else:
         return False
+
 #+END_SRC
 
+** Date predicate
+
+#+name: def_is_date
+#+BEGIN_SRC  python
+def is_date(value):
+    return isinstance(value, datetime.date)
+
+#+END_SRC
+
+** None predicate
+
+#+name: def_is_none
+#+BEGIN_SRC  python
+def is_none(value):
+    return value == None
+
+#+END_SRC
+
+** Helper Function
+#+name: def_jsonify_list
+#+BEGIN_SRC  python
+# return a list of dicts as json with correct mime types
+# flask does not provide a jsonify for lists; hence this method
+def jsonify_list(data):
+    if type(data) is not list:
+        raise Exception('jsonify_list function accepts only a list')
+
+    return make_response(json.dumps(data), 200,
+                         {'content-type': 'application/json'})
+
+#+END_SRC
 
 
 * Checks
   All checks check on a predicate for a type.  
-
+  
 ** =check_pred=
 
 A /check/ is a partial function that takes an argument and
@@ -116,6 +152,10 @@ def check_pred(p):
 
 check_alphabetic_str = check_pred(is_alphabetic_str)
 check_email_str = check_pred(is_email_str)
+check_string = check_pred(is_string)
+check_date = check_pred(is_date)
+check_int = check_pred(is_int)
+
 #+END_SRC
 
 *** Tests for =check_pred=
@@ -162,6 +202,7 @@ class TestCheckAlphabeticStr(TestCase):
         print "test_more_alphabetic_strings"
         # this looks wierd!  Should it be a name?
         self.assertEqual(check_alphabetic_str(".  ."), ".  .")
+
 #+END_SRC
 
 *** Tests for check_email_str
@@ -178,6 +219,50 @@ class TestCheckEmailStr(TestCase):
 
 #+END_SRC
 
+*** Tests for check_string
+#+Name: class_TestCheckString
+#+BEGIN_SRC python
+
+class TestCheckString(TestCase):
+    TESTING = True
+    """Tests for strings"""
+    def test_check_string(self):
+        print "test_check_string"
+        self.assertEqual(check_string("Hello"), "Hello")
+        self.assertEqual(check_string("M. N. Ray"), "M. N. Ray")
+        self.assertRaises(TypeError, check_alphabetic_str, 123)
+
+#+END_SRC
+
+*** Tests for check_date
+#+Name: class_TestCheckDate
+#+BEGIN_SRC python
+
+class TestCheckDate(TestCase):
+    TESTING = True
+    """Tests for date"""
+    def test_check_date(self):
+        print "test_check_date"
+        self.assertEqual(check_date(datetime.datetime.strptime("30-06-2016", "%d-%m-%Y").date()), datetime.datetime.strptime("30-06-2016", "%d-%m-%Y").date())
+        self.assertEqual(check_date(datetime.datetime.strptime("29-06-2016", "%d-%m-%Y").date()), datetime.datetime.strptime("29-06-2016", "%d-%m-%Y").date())
+        self.assertRaises(TypeError, check_date, 123)
+
+#+END_SRC
+
+*** Tests for check_int
+#+Name: class_TestCheckInt
+#+BEGIN_SRC python
+
+class TestCheckInt(TestCase):
+    TESTING = True
+    """Tests for integer"""
+    def test_check_integer(self):
+        print "test_check_integer"
+        self.assertEqual(check_int(123), 123)
+        self.assertRaises(TypeError, check_int, "abc")
+
+#+END_SRC
+
 ** =check_inst= 
 
    =check_inst= takes a class and returns a function that checks if its
@@ -190,9 +275,9 @@ def check_inst(cls):
 
 check_function =  check_inst(types.FunctionType)
 check_dict = check_inst(dict)
+check_list = check_inst(list)
 check_str = check_inst(str)
 check_int = check_inst(int)
-check_list = check_inst(list)
 check_pos_int = check_pred(lambda arg: check_int(arg) and arg > 0)
 check_non_neg_int = check_pred(lambda arg: check_int(arg) and arg >= 0)
 
@@ -241,6 +326,7 @@ def check_inv(inv, *name):
             else:
                 raise TypeError("invariant for class %s fails on args %s" % (name[0], args))
     return fn
+
 #+END_SRC
 
 
@@ -250,6 +336,10 @@ def check_inv(inv, *name):
 #+BEGIN_SRC python
 import re
 import types
+import datetime
+import json
+
+from flask import make_response
 
 #+END_SRC
 
@@ -262,9 +352,9 @@ import types
 # -*- coding: utf-8 -*-
 import unittest
 from unittest import TestCase
-from datetime import datetime
 from type_utils import *
 import types
+
 #+end_src
 
 ** Running tests
@@ -283,7 +373,12 @@ if __name__ == '__main__':
 <<imports_for_sources>>
 <<def_is_inst>>
 <<def_is_alphabetic_str>>
+<<def_is_string>>
 <<def_is_email_str>>
+<<def_is_date>>
+<<def_is_none>>
+<<def_jsonify_list>>
+<<def_is_int>>
 <<def_check_pred>>
 <<def_check_inst>>
 <<def_check_inv>>
@@ -297,6 +392,9 @@ if __name__ == '__main__':
 <<class_TestIsInstance>>
 <<class_TestCheckPred>>
 <<class_TestCheckAlphabeticStr>>
+<<class_TestCheckString>>
+<<class_TestCheckDate>>
+<<class_TestCheckInt>>
 <<more-alphabetic_str-checks>>
 <<class_TestCheckEmailStr>>
 <<class_TestCheckInstance>>
