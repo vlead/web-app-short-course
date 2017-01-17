@@ -701,14 +701,14 @@ if __name__ == '__main__':
 
 #+BEGIN_SRC python :tangle test_system_with_objects.py :eval no :noweb yes
 <<imports_for_tests>>
-<<test_system_constructor>>
-<<test_arity_and_types>>
-<<test_adduser>>
-<<test_deluser>>
-<<test_showusers>>
-<<test_get_user_by_email>>
-<<test_setemail>>
-<<test_setname>>
+# <<test_system_constructor>>
+# <<test_arity_and_types>>
+# <<test_adduser>>
+# <<test_deluser>>
+# <<test_showusers>>
+# <<test_get_user_by_email>>
+# <<test_setemail>>
+# <<test_setname>>
 <<run_test_cases>>
 #+end_src
 

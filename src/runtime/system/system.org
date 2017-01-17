@@ -74,7 +74,7 @@ The class corresponding to each operation has five fields:
 
 
 * The =System= class
-
+  There is only one =System= in the application.
 ** Constructor
 
    This is the generic =System= implementation.  The entities that make up the
@@ -87,7 +87,7 @@ The class corresponding to each operation has five fields:
    The system is initialized based on what the system should be composed of.
 
 #+NAME: class_system
-#+begin_src python
+#+BEGIN_SRC python
 class System ():
     
     def __init__(self):
@@ -98,67 +98,136 @@ class System ():
         System.delegate = cls()
         System.session_set = []
 
-    @staticmethod
-    def is_session_admin(session):
-        return session.get("user").get('role').get('name') == "admin"
+#+END_SRC
 
-    @staticmethod
-    def is_session_user(session):
-        return session.get("user").get("role").get('name') == "user"
 
+** Session for authorization
+   The authorization checks that the =system= performs require a set of
+   operations to determine validity of a session or to find the type of user
+   within a session.  
+
+   Though a =user= can be associated with multiple =roles=, in a session a
+   =user= is associated with a single =role=.
+
+   These operations are implemented as part of the =system=.  At a later date,
+   if a need for a different session management arises, the new session manager
+   will provide this same /API/.
+
+
+#+NAME: session_for_authorization
+#+BEGIN_SRC python
+    @staticmethod
+    def is_session_valid(session):
+        return (session.get("key") == KEY and
+                    System.session_exists(session))
 
     @staticmethod
     def session_exists(session):
         return session in System.session_set
 
-#+end_src
+    @staticmethod
+    def session_exists_without_key(new_session):
+        ret_val = False
+        bool_map = map(lambda session: new_session.get("user") == session.get("user") \
+                           and new_session.get("role") == session.get("role"), \
+                           System.session_set)
+
+        if bool_map:
+            ret_val = reduce(lambda a, b: a or b, bool_map)
+
+        return ret_val
+
+    @staticmethod
+    def is_session_admin(session):
+        return session.get("role").get("name") == Config.admin_role
+
+    @staticmethod
+    def is_session_user(session):
+        return session.get("role").get("name") == Config.user_role
+
+#+END_SRC
 
 *** Test Constructor
-#+NAME: test_system_constructor
+    For every test case, the runtime environment is created at the start and is
+    torn after the test is run.  Such an environment here is made of persistent
+    entities.
+#+NAME: test_constructor
 #+BEGIN_SRC python
 class TestSystemConstructor(TestCase):
     TESTING = True
 
+    def create_app(self):
+        app = create_app(config)
+        return app
+
     def setUp(self):
-        System.initialize_system(ObjectDelegate)
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        Config.populate_db()
 
     def tearDown(self):
         System.delegate = None
         System.session_set = []
-   
+
+    def test_delegate(self):
+        print "test_delegate"
+        self.assertEqual(isinstance(System.delegate, PersistenceDelegate), 
+                             True)
+
     def test_system_constructor(self):
         print "test_system_constructor"
         self.assertEqual(System.delegate.get_admin_user().get("name").get("name"),
                          Config.admin_name)
         self.assertEqual(System.delegate.get_admin_user().get("email").get("email"),
                          Config.admin_email)
-        self.assertEqual(System.delegate.get_admin_user().get('role').get('name'),
+        self.assertEqual(System.delegate.get_admin_user().get('roles')[0].get('name'),
                          Config.admin_role)
 
     def test_is_session_admin(self):
         print "test_is_session_admin"
-        admin_user=System.delegate.get_admin_user()
-        session = Session(user=admin_user)
+        admin_user = System.delegate.get_admin_user()
+        admin_role = System.delegate.get_admin_role()
+        session = Session(user=admin_user, role=admin_role, key="abcde")
         System.session_set.append(session)
         self.assertEqual(System.is_session_admin(session), True)
 
+    def test_is_session_user(self):
+        print "test_is_session_user"
+        admin_user = System.delegate.get_admin_user()
+        user_role = Role(name=Config.user_role)
+        session = Session(user=admin_user, role=user_role, key="abcde")
+        System.session_set.append(session)
+        self.assertEqual(System.is_session_user(session), True)
+
     def test_session_exists(self):
         print "test_session_exists"
-        admin_user=System.delegate.get_admin_user()
-        session = Session(user=admin_user)
+        admin_user = System.delegate.get_admin_user()
+        admin_role = System.delegate.get_admin_role()
+        session = Session(user=admin_user, role=admin_role, key="abcde")
         System.session_set.append(session)
         self.assertEqual(System.session_exists(session), True)
+
+
+    def test_session_exists_without_key(self):
+        print "test_session_exists_without_key"
+        admin_user = System.delegate.get_admin_user()
+        admin_role = System.delegate.get_admin_role()
+        session1 = Session(user=admin_user, role=admin_role, key="abcde")
+        session2 = Session(user=admin_user, role=admin_role, key="12345")
+        System.session_set.append(session1)
+        self.assertEqual(System.session_exists_without_key(session1), True)
 
 #+END_SRC
 
 
 ** Arity and Type check methods 
-   Arity Check ensures that correct number of arguments are passed to a functions. 
-   Type Check ensures that the type of the arguments passed to a function are
-   same as expected. 
+   Arity Check ensures that correct number of arguments are passed to a
+   functions.  Type Check ensures that the type of the arguments passed to a
+   function are same as expected.
    
    Any operation, before being executed is subjected to =Arity= and =Type=
-   checks.  
+   checks.
+
 #+NAME: arity_type_checks
 #+BEGIN_SRC python
    
@@ -172,24 +241,14 @@ class TestSystemConstructor(TestCase):
     def type_check(args, arg_types):
         for key, value in args.iteritems():
             if not arg_types[key](value):
-                raise TypeError("type mismatch: argument %s is not of " + 
-                                "type " )
-       
-   
+                raise TypeError("type mismatch: argument %s is not of "
+                                "type %s" % (value, key))
+
 #+end_src
 
 *** Test Arity and Type Checks
-#+NAME: test_arity_and_types
-#+BEGIN_SRC python
-class TestSystemArityAndType(TestCase):
-    TESTING = True
-
-    def setUp(self):
-        System.initialize_system(ObjectDelegate)
-
-    def tearDown(self):
-        System.delegate = None
-
+  #+NAME: test_arity_and_types
+  #+BEGIN_SRC python
     def test_arity(self):
         print "test_arity"
         with self.assertRaises(ArityError):
@@ -197,21 +256,21 @@ class TestSystemArityAndType(TestCase):
 
     def test_type_checks(self):
         print "test_type_checks"
-        args = {"name": Name(name="Jimi Hendrix"),
-                "email": Name(name="Jimi Hendrix")
+        args = {"question": Question(name="why", question_type="radio"),
+                "answer": Question(name="where", question_type="radio")
                 }
 
-        arg_types = {"name": is_name,
-                     "email": is_email
+        arg_types = {"question": is_question,
+                     "answer": is_answer
                      }
 
         with self.assertRaises(TypeError):
             System.type_check(args, arg_types)
 
-#+END_SRC
+  #+END_SRC
 
 
-** =do= method 
+* =do= method 
    The =do= method is the main work-horse of =System= which is construed as the
    =Controller=.  Every operation follows a template and realized as a class
    that defines:
@@ -238,7 +297,7 @@ class TestSystemArityAndType(TestCase):
             auth_check(args)
             state_check(args)
             return cls.action(args)
-        except (ArityError, TypeError, AuthError, StateError) as err:
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
 
 #+end_src
@@ -497,9 +556,74 @@ class GetUserByEmail():
         return user
  #+end_src
 
+** =LoginFirstStep=
+   A user is associated with multiple roles but each login session is
+   associated with a specific role.  The first step in the login use case is to
+   check if the user exists in the user set.  The second step is to allow the
+   user to associate a role to that particular session.
+
+ #+NAME: class_login_first_step
+ #+BEGIN_SRC python
+class LoginFirstStep():
+    from runtime.objects.entities import is_user
+    arg_types = {"user": is_user}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        pass
+
+    @staticmethod
+    def state_check(args):
+        user = args["user"]
+        if not System.delegate.user_exists(user):
+            raise StateError("user %s does not exist in System"
+                                % user.to_client())
+        
+    @staticmethod
+    def action(args):
+        user = args["user"]
+        user_from_system = System.delegate.get_user(email=user.get("email"))
+        roles = user_from_system.get("roles")
+        return roles
+
+ #+end_src
+
+** =LoginSecondStep=
+   The second step ensures every session in the session set is uniquely
+   identified by a user and a role.  This means, a user can have multiple
+   sessions but each session of a user is uniquely identified by a role.  A
+   user cannot have multiple sessions with a same role.
+
+#+NAME: class_login_second_step
+#+BEGIN_SRC python
+class LoginSecondStep():
+    from runtime.objects.entities import is_session
+    arg_types = {"session": is_session}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        pass
+
+    @staticmethod
+    def state_check(args):
+        session = args["session"]
+
+        if System.session_exists_without_key(session):
+            raise StateError("session %s already exists in System"
+                                 % session.to_client())
+        
+    @staticmethod
+    def action(args):
+        session = args["session"]
+        System.session_set.append(session)
+        return session
+
+ #+end_src
+
 ** Operations Table
     Each operation has a corresponding implementation defined as a class. 
-
  #+NAME: ops_table
  #+BEGIN_SRC python                                                                          
 ops_table = {'add_user': AddUser,
@@ -507,7 +631,9 @@ ops_table = {'add_user': AddUser,
              'del_user': DelUser,
              'get_user_by_email': GetUserByEmail,
              'set_email': SetEmail,
-             'set_name': SetName
+             'set_name': SetName,
+             'login_first_step': LoginFirstStep,
+             'login_second_step': LoginSecondStep
             }
 
  #+END_SRC   
@@ -515,19 +641,51 @@ ops_table = {'add_user': AddUser,
 
 * Infra                                                         :boilerplate:
 
-** Imports 
-#+name: imports_for_sources
+** Sources
+*** Imports 
+#+NAME: imports_for_sources
 #+BEGIN_SRC python
 # -*- coding: utf-8 -*-
+from runtime.config.config import Config
 from runtime.exceptions.custom_exceptions import *
+
+#+END_SRC
+
+** Tests
+*** Imports 
+#+NAME: imports_for_tests
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+import unittest
+from flask_testing import TestCase
+from sqlalchemy.exc import IntegrityError
+from runtime.system.system import *
+from runtime.system.persistence_delegate import *
+from runtime.rest.app import create_app
+
+config = {
+    'SQLALCHEMY_DATABASE_URI': ''
+}
+
 #+end_src
+
+*** Running tests
+#+NAME: run_test_cases
+#+BEGIN_SRC python
+if __name__ == '__main__':
+    unittest.main()
+
+#+END_SRC
+
 
 
 * Tangling                                                      :boilerplate:
 
+** Sources
 #+BEGIN_SRC python :tangle system.py :eval no :noweb yes
 <<imports_for_sources>>
 <<class_system>>
+<<session_for_authorization>>
 <<arity_type_checks>>
 <<do_function>>
 <<class_adduser>>
@@ -536,7 +694,17 @@ from runtime.exceptions.custom_exceptions import *
 <<class_get_user_by_email>>
 <<class_setemail>>
 <<class_setname>>
+<<class_login_first_step>>
+<<class_login_second_step>>
 <<ops_table>>
-#+end_src
+
+#+END_SRC
+
+** Tests
+#+BEGIN_SRC python :tangle test_system.py :eval no :noweb yes
+<<imports_for_tests>>
+<<test_constructor>>
+<<run_test_cases>>
+#+END_SRC
 
 

@@ -79,7 +79,7 @@ The rest of the sections have more detailed requirements.
 :PROPERTIES:
 :CUSTOM_ID: req_user_role
 :END: 
-   Each user has exactly one role, and by default when a user is created, the
+   Each user has one or more role, and by default when a user is created, the
    role that is associated with the newly created user is =user=
    
    Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entit_role][Role]]
@@ -101,7 +101,8 @@ The rest of the sections have more detailed requirements.
 :CUSTOM_ID: req_role_mapping_to_user
 :END: 
    Each user is mapped to exactly one role in a given session, In any given
-   session, a user is mapped to his/her role.
+   session, a user is mapped to only one of the roles associated with that
+   user 
 
    Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinalility]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entity_role][Role]] and
    [[../data-model/index.org::#entity_user][User]] entities.
@@ -169,8 +170,9 @@ The rest of the sections have more detailed requirements.
 :PROPERTIES:
 :CUSTOM_ID: req_session_constraints
 :END: 
-   At any given time a user cannot have more than one session.  Realized in
-   data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]] constraints on [[../data-model/index.org::#entity_session][Session]] entity.
+   A user can have more than one session, but no two session of a same user can
+   have the same role. Realized in data model as [[../data-model/index.org::#cardinal_constraints][cardinality]] and [[../data-model/index.org::#referential_constraints][referential]]
+   constraints on [[../data-model/index.org::#entity_session][Session]] entity.
 
 ** Privileges
 :PROPERTIES:
@@ -214,10 +216,10 @@ The rest of the sections have more detailed requirements.
 
 ** Multiple sessions for same user?   
 
-- Question :: Is it possible for a user to be simultaneously
-     logged in into the system in two different sessions?
+   - Question :: Is it possible for a user to be simultaneously logged in into
+        the system in two different sessions?
 
-- Answer :: No.
+   - Answer :: Yes, but each session of a user is mapped to a different role.
 
 
 

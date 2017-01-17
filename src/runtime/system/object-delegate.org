@@ -399,17 +399,17 @@ if __name__ == '__main__':
 ** tests
 #+BEGIN_SRC python :tangle test_object_delegate.py :eval no :noweb yes
 <<imports_for_tests>>
-<<test_initialize_object_delegate>>
-<<test_get_admin_user>>
-<<test_user_exists>>
-<<test_get_role>>
-<<test_is_admin>>
-<<test_add_user>>
-<<test_del_user>>
-<<test_get_users>>
-<<test_get_user_by_email>>
-<<test_set_email>>
-<<test_set_name>>
+# <<test_initialize_object_delegate>>
+# <<test_get_admin_user>>
+# <<test_user_exists>>
+# <<test_get_role>>
+# <<test_is_admin>>
+# <<test_add_user>>
+# <<test_del_user>>
+# <<test_get_users>>
+# <<test_get_user_by_email>>
+# <<test_set_email>>
+# <<test_set_name>>
 <<run_test_cases>>
 #+end_src
 

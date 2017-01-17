@@ -6,7 +6,7 @@
 #+EXCLUDE_TAGS: boilerplate
 #+OPTIONS: ^:nil
 
-The =objects= package holds two modules
+The =objects= package holds all the object entities.
 
  - [[./entities.org][=entities=]]  
 

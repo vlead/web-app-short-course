@@ -27,7 +27,7 @@ class TestAddUser(TestCase):
     def setUp(self):
         db.create_all()
         System.initialize_system(PersistenceDelegate)
-        populate_db()
+        Config.populate_db()
 
     def tearDown(self):
         db.session.remove()
@@ -150,7 +150,7 @@ class TestSetEmail(TestCase):
     def setUp(self):
         db.create_all()
         System.initialize_system(PersistenceDelegate)
-        populate_db()
+        Config.populate_db()
 
     def tearDown(self):
         db.session.remove()
@@ -321,7 +321,7 @@ class TestSetName(TestCase):
     def setUp(self):
         db.create_all()
         System.initialize_system(PersistenceDelegate)
-        populate_db()
+        Config.populate_db()
 
     def tearDown(self):
         db.session.remove()
@@ -458,7 +458,7 @@ class TestShowUsers(TestCase):
     def setUp(self):
         db.create_all()
         System.initialize_system(PersistenceDelegate)
-        populate_db()
+        Config.populate_db()
 
     def tearDown(self):
         db.session.remove()
@@ -518,7 +518,7 @@ class TestDelUser(TestCase):
     def setUp(self):
         db.create_all()
         System.initialize_system(PersistenceDelegate)
-        populate_db()
+        Config.populate_db()
 
     def tearDown(self):
         db.session.remove()
@@ -650,7 +650,7 @@ class TestGetUserByEmail(TestCase):
     def setUp(self):
         db.create_all()
         System.initialize_system(PersistenceDelegate)
-        populate_db()
+        Config.populate_db()
 
     def tearDown(self):
         db.session.remove()
@@ -735,6 +735,167 @@ class TestGetUserByEmail(TestCase):
  #+END_SRC
 
   
+** Test LoginFirstStep
+ #+NAME: test_login_first_step
+ #+BEGIN_SRC python
+class TestLoginFirstStep(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        System.initialize_system(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_get_roles_of_admin_user(self):
+        print "test_get_roles_of_admin_user"
+        admin_user=System.delegate.get_admin_user()
+        roles = System.do("login_first_step",
+                              user=admin_user)
+        self.assertEqual(roles[0].get("name"), Config.admin_role)
+
+    def test_get_roles_of_user(self):
+        print "test_get_roles_of_user"
+        na = Name(name="Jimi Hendrix")
+        na.save()
+
+        em = Email(email="jimi@gnu.org")
+        em.save()
+
+        ro1 = System.delegate.get_role(name=Config.admin_role)
+        ro2 = System.delegate.get_role(name=Config.user_role)
+
+        roles = [ro1, ro2] 
+        usr = User(name=na, email=em, roles=roles)
+        usr.save()
+
+        roles = System.do("login_first_step", user=usr)
+        self.assertEqual(len(roles), 2)
+
+    def test_login_first_step_raises_arity_error(self):
+        print "test_login_first_step_raises_arity_error"
+
+        with self.assertRaises(ArityError):
+            System.do("login_first_step")
+
+    def test_login_first_step_raises_type_check_error(self):
+        print "test_login_first_step_raises_type_check_error"
+
+        with self.assertRaises(TypeError):
+            System.do("login_first_step", user=Role(name="admin_user"))
+
+    def test_login_first_step_raises_state_error(self):
+        print "test_login_first_step_raises_state_error"
+
+        na = Name(name="Jimi Hendrix")
+        na.save()
+
+        em = Email(email="jimi@gnu.org")
+        em.save()
+
+        ro1 = System.delegate.get_role(name=Config.admin_role)
+        ro2 = System.delegate.get_role(name=Config.user_role)
+
+        roles = [ro1, ro2] 
+        usr = User(name=na, email=em, roles=roles)
+        #user is not saved.
+
+        with self.assertRaises(StateError):
+            System.do("login_first_step", user=usr)
+
+ #+END_SRC
+
+
+** Test LoginFirstStep
+ #+NAME: test_login_second_step
+ #+BEGIN_SRC python
+class TestLoginSecondStep(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        System.initialize_system(PersistenceDelegate)
+        na = Name(name="Jimi Hendrix")
+        na.save()
+
+        em = Email(email="jimi@gnu.org")
+        em.save()
+
+        ro1 = System.delegate.get_role(name=Config.admin_role)
+        ro2 = System.delegate.get_role(name=Config.user_role)
+
+        roles = [ro1, ro2] 
+        usr = User(name=na, email=em, roles=roles)
+        usr.save()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_login_second_step_raises_arity_error(self):
+        print "test_login_second_step_raises_arity_error"
+
+        with self.assertRaises(ArityError):
+            System.do("login_second_step")
+
+    def test_login_second_step_raises_type_check_error(self):
+        print "test_login_second_step_raises_type_check_error"
+
+        email = Email(email="jimi@gnu.org")
+        user = System.delegate.get_user(email=email)
+        user_role = System.delegate.get_role(name=Config.user_role)
+        session = Session(user=user, role=user_role, key="12345")
+        
+        with self.assertRaises(TypeError):
+            System.do("login_second_step", session=user)
+                
+    def test_login_second_step_raises_state_error(self):
+        print "test_login_second_step_raises_state_error"
+        email = Email(email="jimi@gnu.org")
+        user = System.delegate.get_user(email=email)
+        user_role = System.delegate.get_role(name=Config.user_role)
+        session1 = Session(user=user, role=user_role, key="12345")
+        session2 = Session(user=user, role=user_role, key="abcde")
+        System.session_set.append(session1)
+        with self.assertRaises(StateError):
+            System.do("login_second_step", session=session2)
+
+    def test_login_second_step_passes(self):
+        print "test_login_second_step_passes"
+        email = Email(email="jimi@gnu.org")
+        user = System.delegate.get_user(email=email)
+        user_role = System.delegate.get_role(name=Config.user_role)
+        session = Session(user=user, role=user_role, key="12345")
+        System.do("login_second_step", session=session)
+
+    def test_login_second_step_passes_with_existing_session(self):
+        print "test_login_second_step_passes_with_existing_session"
+        email = Email(email="jimi@gnu.org")
+        user = System.delegate.get_user(email=email)
+        user_role = System.delegate.get_role(name=Config.user_role)
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        session1 = Session(user=user, role=user_role, key="12345")
+        System.session_set.append(session1)
+        session2 = Session(user=user, role=admin_role, key="12345")
+        System.do("login_second_step", session=session2)
+
+ #+END_SRC
+
+
 * Infra                                                         :boilerplate:
 
 ** Imports 
@@ -755,26 +916,6 @@ config = {
 #+end_src
 
 
-** Initialize database for tests
-    Before any test is run, the database is populated with two roles and one
-    user whose role is admin.
-
-#+name: populate_db
-#+BEGIN_SRC python
-def populate_db():
-    r_a = Role(name=Config.admin_role)
-    r_a.save()
-    r_u = Role(name=Config.user_role)
-    r_u.save()
-    name=Name(name=Config.admin_name)
-    name.save()
-    email=Email(email=Config.admin_email)
-    email.save()
-    usr = User(name=name, email=email, role=r_a)
-    usr.save()
-
-#+END_SRC
-
 
 ** Running tests
 #+NAME: run_test_cases
@@ -789,13 +930,9 @@ if __name__ == '__main__':
 
 #+BEGIN_SRC python :tangle test_system_with_persistence.py :eval no :noweb yes
 <<imports_for_tests>>
-<<populate_db>>
-<<test_adduser>>
-<<test_setemail>>
-<<test_setname>>
-<<test_showusers>>
-<<test_deluser>>
-<<test_get_user_by_email>>
+<<test_login_first_step>>
+<<test_login_second_step>>
 <<run_test_cases>>
+
 #+end_src
 

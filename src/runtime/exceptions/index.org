@@ -1,18 +1,16 @@
 #+TITLE: The =exceptions= Package
 #+AUTHOR: VLEAD
-#+DATE: [2016-06-07 Tue] 
+#+DATE: [2016-06-07 Tue]
 #+SETUPFILE: ../../org-templates/level-2.org
 #+TAGS: boilerplate(b)
 #+EXCLUDE_TAGS: boilerplate
 #+OPTIONS: ^:nil
 
-The =exceptions= package holds two modules
+The =exceptions= package hold custom_exceptions
 
- - [[./custom_exceptions.org][=custom_exceptions=]]  
+1. [[./custom_exceptions.org][=custom_exceptions=]]
 
-
-* Tangle :boilerplate:
+* Tangle                          :boilerplate:
 #+BEGIN_SRC python :eval no :tangle __init__.py
 print "exceptions package"
-__all__ = ['exceptions']
 #+END_SRC

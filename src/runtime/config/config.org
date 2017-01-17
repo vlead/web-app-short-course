@@ -1,15 +1,51 @@
 #+title:  Configuration Parameters
 #+AUTHOR: VLEAD
+#+DATE: [2017-01-12 Thu]
 #+SETUPFILE: ../../org-templates/level-2.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
 
 * Introduction
 
 This holds the application's configuration parameters.
-
-#+BEGIN_SRC python :tangle config.py :eval no :noweb yes
+#+NAME: class_config
+#+BEGIN_SRC python
 class Config:
     admin_name = "admin"
     admin_email = "app-admin@vlabs.ac.in"
     admin_role = "admin"
     user_role = "user"
+
 #+END_SRC
+
+
+* Initialize database for tests
+    Before any test is run, the database is populated with two roles and one
+    user whose role is admin.
+
+#+NAME: populate_db
+#+BEGIN_SRC python
+    @staticmethod
+    def populate_db():
+        r_a = Role(name=Config.admin_role)
+        r_a.save()
+        r_u = Role(name=Config.user_role)
+        r_u.save()
+        name=Name(name=Config.admin_name)
+        name.save()
+        email=Email(email=Config.admin_email)
+        email.save()
+        usr = User(name=name, email=email, roles=[r_a])
+        usr.save()
+
+#+END_SRC
+
+
+* Tangle                                           :boilerplate:
+#+BEGIN_SRC python :tangle config.py :eval no :noweb yes
+from runtime.persistence.entities import *
+
+<<class_config>>
+<<populate_db>>
+#+END_SRC  
