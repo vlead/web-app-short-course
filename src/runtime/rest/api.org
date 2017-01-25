@@ -95,11 +95,12 @@ def logout():
 def authorized():
     try:
         resp = google_oauth.authorized_response()
-        session['google_token'] = (resp['access_token'], '')
         user_info = google_oauth.get('userinfo')
         email = str(user_info.data['email'])
         try:
             roles = SystemInterface.authorize_user(email)
+            session['google_token'] = (resp['access_token'], '')
+            session['email'] = email
             return jsonify_list(roles)
         except Exception as e:
             return jsonify({"Exception" : str(e)})
@@ -119,6 +120,29 @@ def get_google_oauth_token():
 #+END_SRC
 
 
+** Create Session
+#+NAME: create_session
+#+BEGIN_SRC python
+@api.route('/create_session', methods=['POST'])
+def create_session():
+    if request.method == 'GET':
+        return "hello"
+
+    if request.method == 'POST':
+        data_json = json.dumps(request.get_json())
+	data_dict = yaml.safe_load(data_json)
+	email = session['email']
+	role = data_dict['role']
+	key = session['google_key']
+
+        try:
+            system_session = SystemInterface.create_session(email, role, key)
+            return jsonify({"status" : "success"})
+        except Exception as e:
+            print str(e)
+            abort(500)
+
+#+END_SRC
 
 * WebApp
 
@@ -986,6 +1010,7 @@ if __name__ == '__main__':
 <<logout_route>>
 <<callback_google_api>>
 <<google_oauth_token>>
+<<create_session>>
 #+END_SRC
 
 
