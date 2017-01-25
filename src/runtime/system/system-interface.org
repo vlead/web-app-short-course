@@ -107,7 +107,7 @@ class TestAuthorizeUser(TestCase):
                                         % email_str)
             else:
                 role = role_cls(name=role_str)
-                session = session_cls(user=user, role=role, key=key)
+                session = session_cls(user=user, role=role, key=str(key))
                 return System.do("login_second_step",
                                      session=session)
 

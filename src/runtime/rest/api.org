@@ -129,6 +129,7 @@ def create_session():
         return "hello"
 
     if request.method == 'POST':
+        
         data_json = json.dumps(request.get_json())
 	data_dict = yaml.safe_load(data_json)
 	email = session['email']
@@ -139,8 +140,7 @@ def create_session():
             system_session = SystemInterface.create_session(email, role, key)
             return jsonify({"status" : "success"})
         except Exception as e:
-            print str(e)
-            abort(500)
+            abort(500, str(e))
 
 #+END_SRC
 
