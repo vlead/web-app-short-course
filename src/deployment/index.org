@@ -23,7 +23,8 @@ requires = [
     'oursql',
     'flask-cors',
     'flask-testing',
-    'requests'
+    'requests',
+    'pyyaml'
 ]
 
 setup(

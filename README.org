@@ -1,38 +1,6 @@
-An exmaple applciation built using data modelling
+A show case of model driven developmet of web applications.
 
-* Building the application
-  #+BEGIN_EXAMPLE
-  cd web-app-short-course
-  make
-  #+END_EXAMPLE
-
-* Creating Virtual Environment
-  #+BEGIN_EXAMPLE
-  cd web-app-short-course
-  pip install virtualenv
-  virtualenv venv
-  source venv/bin/activate
-  #+END_EXAMPLE
-
-* Installing all the Dependencies
-  After activating virtual environment, install the dependencies
-  by running setup.py present in web-app-short-course/build/code/deployment/
-
-  #+BEGIN_EXAMPLE
-  cd web-app-short-course/build/code/deployment/
-  python setup.py
-  #+END_EXAMPLE
-
-* Exporting Python Path
-  The path till build/code should be part of PYTHONPATH
-  #+BEGIN_EXAMPLE
-  export PYTHONPATH="/home/travula/bitbucket/web-app-short-course/build/code"
-  #+END_EXAMPLE
-
-* Running Test Cases
-  #+BEGIN_EXAMPLE
-  cd web-app-short-course/build/code
-  python runtime/objects/test_entities.py
-  #+END_EXAMPLE
+Please checkout this [[./src/deployment/run-userdirectory-in-development-environment.org][document]] to run the application in developer's
+environment.
 
 
