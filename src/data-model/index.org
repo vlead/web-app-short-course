@@ -728,15 +728,13 @@ actor performing the operation.
 
      u:user-set AND
      s:session-set AND
+     u ~= s.user  AND
      r:role-set AND
      r in u.role_set AND
-     u.num_roles > 1 AND       
- 
-     if u.role == admin      
-     ensure there is at least
-     one another user        
-     with role admin in the  
-     system.                 
+     u.num_roles > 1
+
+     Since only user with admin role can delete roles of other users and not of
+     self,  this rule ensures that there is always a user with admin role. 
 
 **** Result
      :PROPERTIES:

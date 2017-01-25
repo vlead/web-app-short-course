@@ -919,6 +919,10 @@ class DelRoleOfUser():
             raise StateError("session %s does not exist in System"
                                 % session.to_client())
 
+        elif user is session.get("user"):
+            raise StateError("logged user %s cannot delete self role"
+                                 % user.to_client())
+
         elif not System.delegate.user_exists(user):
             raise StateError("user %s does not exist in System"
                                 % user.to_client())
@@ -932,14 +936,9 @@ class DelRoleOfUser():
                                 % (role.to_client(), user.to_client()))
 
         elif not (len(System.delegate.get_roles_of_user(user)) > 1):
-            raise StateError("number of roles of the user % is not greater "
+            raise StateError("number of roles of the user %s is not greater "
                                  "than one" % role.to_client())
 
-        elif (role.get("name") == Config.admin_role and
-                  not user_with_admin_role_exists()):
-            raise StateError("cannot delete admin role of the lone user in "
-                                 "the system with admin role")
-                  
     @staticmethod
     def action(args):
         user = args["user"]
@@ -950,6 +949,128 @@ class DelRoleOfUser():
 
 #+END_SRC
 
+
+** =ShowSession=
+   Show all the current sessions.  Refer [[../../data-model/index.org::#show-sessions-auth][auth-check]] and referential [[../../data-model/index.org::#show-sessions-ref][integrity]]
+   rules.
+   
+#+NAME: class_show_sessions
+#+BEGIN_SRC python
+class ShowSessions():
+    from runtime.objects.entities import is_session
+    arg_types = {"session": is_session}
+
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        session = args['session']
+        
+        if not (System.is_session_admin(session)):
+            raise NotAuthorizedError("User with role %s" 
+                                " not Authorized to perform this action"
+                                % session.to_client())
+
+    @staticmethod
+    def state_check(args):
+        session = args["session"]
+
+        if not System.session_exists(session):
+            raise StateError("session %s does not exist in System"
+                                % session.to_client())
+
+    @staticmethod
+    def action(args):
+        return System.session_set
+
+#+END_SRC
+
+*** Tests
+#+NAME: test_show_sessions
+#+BEGIN_SRC python
+class TestShowSessions(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        Config.populate_db()
+
+    def tearDown(self):
+        System.delegate = None
+        System.session_set = []
+
+    def test_show_sessions_passes(self):
+        print "test_show_sessions_passes"
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        System.delegate.add_user(user)           
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)        
+        System.session_set.append(user_session)
+
+        session = System.do("show_sessions", 
+                            session=admin_session)
+
+        self.assertEquals(len(session), 2)
+
+    def test_show_sessions_raises_auth_error(self):
+        print "test_show_sessions_raises_auth_error"
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        System.delegate.add_user(user)           
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)        
+        System.session_set.append(user_session)
+
+        with self.assertRaises(NotAuthorizedError):
+            System.do("show_sessions", 
+                          session=user_session)
+
+
+    def test_show_sessions_raises_state_error(self):
+        print "test_show_sessions_raises_state_error"
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        System.delegate.add_user(user)           
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        # sessions not appended to session set
+        # System.session_set.append(admin_session)        
+        # System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("show_sessions", 
+                          session=admin_session)
+
+#+END_SRC
 
 ** Operations Table
     Each operation has a corresponding implementation defined as a class. 
@@ -970,6 +1091,7 @@ ops_table = {'login_first_step': LoginFirstStep,
              'get_roles_of_user': GetRolesOfUser,
              'add_role_to_user': AddRoleToUser,
              'del_role_of_user': DelRoleOfUser,
+             'show_sessions': ShowSessions
             }
 
 #+END_SRC
@@ -1039,6 +1161,7 @@ if __name__ == '__main__':
 <<class_get_roles_of_user>>
 <<class_add_role_to_user>>
 <<class_del_role_of_user>>
+<<class_show_sessions>>
 <<ops_table>>
 
 #+END_SRC
@@ -1047,6 +1170,7 @@ if __name__ == '__main__':
 #+BEGIN_SRC python :tangle test_system.py :eval no :noweb yes
 <<imports_for_tests>>
 <<test_constructor>>
+<<test_show_sessions>>
 <<run_test_cases>>
 #+END_SRC
 

@@ -1700,6 +1700,412 @@ class TestGetRolesOfUser(TestCase):
 #+END_SRC
 
 
+** Test AddRoleToUser
+#+NAME: test_add_role_to_user
+#+BEGIN_SRC python
+class TestAddRoleToUser(TestCase):
+    TESTING = True
+    
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        Config.populate_db()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_add_role_to_user_passes(self):
+        print "test_add_role_to_user_passes"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role])
+
+        System.delegate.add_user(user)           
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)        
+        System.session_set.append(user_session)
+
+        ret_user = System.do("add_role_to_user", 
+                             session=admin_session,
+                             user=user,
+                             role=admin_role)
+        
+        self.assertEquals(len(ret_user.get("roles")), 2)
+
+
+    def test_add_role_to_user_raises_auth_error(self):
+        print "test_add_role_to_user_raises_auth_error"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)        
+        System.session_set.append(user_session)
+
+
+        with self.assertRaises(NotAuthorizedError):
+            System.do("add_role_to_user", 
+                          session=user_session,
+                          user=user,
+                          role=admin_role)
+
+    def test_add_role_to_user_raises_state_error_with_no_session(self):
+        print "test_add_role_to_user_raises_state_error_with_no_session"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        # session not added
+        # System.session_set.append(admin_session)
+        # System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("add_role_to_user", 
+                          session=admin_session,
+                          user=user,
+                          role=admin_role)
+
+    def test_add_role_to_user_raises_state_error_with_no_user(self):
+        print "test_add_role_to_user_raises_state_error_with_no_user"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role])
+        # user not added
+        # System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)
+        System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("add_role_to_user", 
+                          session=admin_session,
+                          user=user,
+                          role=admin_role)
+
+    def test_add_role_to_user_raises_state_error_with_no_role_in_system(self):
+        print "test_add_role_to_user_raises_state_error_with_no_role_in_system"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)
+        System.session_set.append(user_session)
+
+        new_role = Role(name="temp")
+        with self.assertRaises(StateError):
+            System.do("add_role_to_user", 
+                          session=admin_session,
+                          user=user,
+                          role=new_role)
+
+    def test_add_role_to_user_raises_state_error_with_existing_role_of_user(self):
+        print "test_add_role_to_user_raises_state_error_with_existing_role_of_user"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)
+        System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("add_role_to_user", 
+                          session=admin_session,
+                          user=user,
+                          role=user_role)
+#+END_SRC
+
+
+** Test DelRoleOfUser
+#+NAME: test_del_role_of_user
+#+BEGIN_SRC python
+class TestDelRoleOfUser(TestCase):
+    TESTING = True
+    
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        System.initialize_system(PersistenceDelegate)
+        Config.populate_db()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_del_role_of_user_passes(self):
+        print "test_del_role_of_user_passes"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        System.delegate.add_user(user)           
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)        
+        System.session_set.append(user_session)
+
+        ret_user = System.do("del_role_of_user", 
+                             session=admin_session,
+                             user=user,
+                             role=admin_role)
+        
+        self.assertEquals(len(ret_user.get("roles")), 1)
+        self.assertEquals(ret_user.get("roles")[0].get("name"),
+                              Config.user_role)
+
+
+    def test_del_role_of_user_raises_auth_error(self):
+        print "test_del_role_of_user_raises_auth_error"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)        
+        System.session_set.append(user_session)
+
+
+        with self.assertRaises(NotAuthorizedError):
+            System.do("del_role_of_user", 
+                          session=user_session,
+                          user=user,
+                          role=admin_role)
+
+    def test_del_role_of_user_raises_state_error_with_no_session(self):
+        print "test_del_role_of_user_raises_state_error_with_no_session"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        # session not added
+        # System.session_set.append(admin_session)
+        # System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("del_role_of_user", 
+                          session=admin_session,
+                          user=user,
+                          role=admin_role)
+
+    def test_del_role_of_user_raises_state_error_deleting_self_role(self):
+        print "test_del_role_of_user_raises_state_error_deleting_self_role"
+
+        admin_user = System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)
+        System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("del_role_of_user", 
+                          session=admin_session,
+                          user=admin_user,
+                          role=admin_role)
+            
+    def test_del_role_of_user_raises_state_error_with_no_user(self):
+        print "test_del_role_of_user_raises_state_error_with_no_user"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        # user not added
+        # System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)
+        System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("del_role_of_user", 
+                          session=admin_session,
+                          user=user,
+                          role=admin_role)
+
+    def test_del_role_of_user_raises_state_error_with_no_role_in_system(self):
+        print "test_del_role_of_user_raises_state_error_with_no_role_in_system"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role, admin_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)
+        System.session_set.append(user_session)
+
+        new_role = Role(name="temp")
+        with self.assertRaises(StateError):
+            System.do("del_role_of_user", 
+                          session=admin_session,
+                          user=user,
+                          role=new_role)
+
+    def test_del_role_of_user_raises_state_error_for_non_existing_role_of_user(self):
+        print "test_del_role_of_user_raises_state_error_for_non_existing_role_of_user"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)
+        System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("del_role_of_user", 
+                          session=admin_session,
+                          user=user,
+                          role=admin_role)
+
+
+    def test_del_role_of_user_raises_state_error_to_ensure_atleast_one_role(self):
+        print "test_del_role_of_user_raises_state_error_to_ensure_atleast_one_role"
+
+        admin_user=System.delegate.get_admin_user()
+        admin_role = System.delegate.get_role(name=Config.admin_role)
+        user_role = System.delegate.get_role(name=Config.user_role)
+
+        user = User(name=Name(name="me mine myself"),
+                                  email=Email(email="abc@gnu.org"),
+                                  roles=[user_role])
+
+        System.delegate.add_user(user)
+        
+        admin_session = Session(user=admin_user, role=admin_role, key="12345")
+        user_session = Session(user=user, role=user_role, key="abcde")
+
+        System.session_set.append(admin_session)
+        System.session_set.append(user_session)
+
+        with self.assertRaises(StateError):
+            System.do("del_role_of_user", 
+                          session=admin_session,
+                          user=user,
+                          role=user_role)
+
+#+END_SRC
+
+
 * Infra                                                         :boilerplate:
 
 ** Imports 
@@ -1747,6 +2153,8 @@ if __name__ == '__main__':
 <<test_del_user>>
 <<test_get_role_set>>
 <<test_get_roles_of_user>>
+<<test_add_role_to_user>>
+<<test_del_role_of_user>>
 <<run_test_cases>>
 
 #+END_SRC
