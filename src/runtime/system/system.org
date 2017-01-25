@@ -655,7 +655,7 @@ class SetEmail():
 ** =GetUserByEmail=
    If the user exists, the user is returned.  If the user does not exist, None
    object is returned.  It is up to the upper layer to interpret the returned
-   value.  Refer [[../../data-model/index.org::#get-user-by-email-auth][auth-check]] and referential [[../../data-model/index.org::#get-user-by-email-ref][inftegrity]] rules.
+   value.  There are no state or auth checks here.
 
    The roles are masked before the user is returned
 
@@ -663,37 +663,31 @@ class SetEmail():
 #+BEGIN_SRC python
 class GetUserByEmail():
     from runtime.objects.entities import is_email, is_session
-    arg_types = {"email": is_email, "session": is_session}
+    arg_types = {"email": is_email}
     arity_and_type_checks_needed = True
 
     @staticmethod
     def auth_check(args):
-        session = args['session']
-        if not ((System.is_session_admin(session)) or 
-                    (System.is_session_user(session))):
-            raise NotAuthorizedError("Role not Authorized to perform this action")
+        pass
 
     @staticmethod
     def state_check(args):
-        session = args["session"]
-
-        if not System.session_exists(session):
-            raise StateError("session %s does not exist in System"
-                                % session.to_client())
+        pass
         
     @staticmethod
     def action(args):
         from runtime.objects.entities import User
+
         email = args["email"]
         user = System.delegate.get_user_by_email(email)
-
         new_user = None
+
         if user is not None:
             new_user = User(name=user.get("name"),
                             email=user.get("email"),
                             roles=[])
             new_user.id = user.id
-            print new_user.to_client()
+
         return new_user
 
 #+END_SRC
@@ -1071,6 +1065,7 @@ class TestShowSessions(TestCase):
                           session=admin_session)
 
 #+END_SRC
+
 
 ** Operations Table
     Each operation has a corresponding implementation defined as a class. 

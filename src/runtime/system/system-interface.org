@@ -1,0 +1,212 @@
+#+TITLE: System Interface implementation for Web App as Short Course
+#+AUTHOR: VLEAD
+#+DATE: [2017-01-25 Wed]
+#+SETUPFILE: ../../org-templates/level-2.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
+
+* Introduction
+  System Interface is the glue that between the =rest= and =system=.  The world
+  of =rest= uses =json= and the world of =system= uses objects.  System
+  Interface allows these two worlds to talk to each other.
+
+
+* The =SystemInterface= class
+
+** Constructor
+
+#+NAME: class_system_interface
+#+begin_src python
+class SystemInterface ():
+
+    def __init__(self):
+        raise Error('Can not instantiate')
+
+    @staticmethod
+    def initialize(cls):
+        System.initialize_system(cls)
+
+#+end_src
+
+
+** Authorize the User
+#+NAME: authorize_user
+#+BEGIN_SRC python
+    @staticmethod
+    def authorize_user(email_str):
+        try:
+            email_cls = System.delegate.entities["email"]
+            email = email_cls(email=email_str)
+
+            user = System.do("get_user_by_email",
+                                 email=email)
+
+            if user is None:
+                raise NotFoundError("User with email = %s is not found"
+                                        % email_str)
+            else:
+                return System.do("login_first_step",
+                              user=user)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test AuthorizeUser
+#+NAME: test_authorize_user
+#+BEGIN_SRC python
+class TestAuthorizeUser(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_authorize_user_passes(self):
+        print "test_authorize_user_passes"
+
+        roles = SystemInterface.authorize_user(Config.admin_email)
+                                                               
+        self.assertEqual(len(roles), 1)
+
+#+END_SRC
+
+
+** Create Session
+#+NAME: create_session
+#+BEGIN_SRC python
+    @staticmethod
+    def create_session(email_str, role_str, key):
+        try:
+            email_cls = System.delegate.entities["email"]
+            role_cls = System.delegate.entities["role"]
+            session_cls = System.delegate.entities["session"]
+
+            email = email_cls(email=email_str)
+            user = System.do("get_user_by_email",
+                                 email=email)
+            
+            
+            if user is None:
+                raise NotFoundError("User with email = %s is not found"
+                                        % email_str)
+            else:
+                role = role_cls(name=role_str)
+                session = session_cls(user=user, role=role, key=key)
+                return System.do("login_second_step",
+                                     session=session)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test CreateSession
+#+NAME: test_create_session
+#+BEGIN_SRC python
+class TestCreateSession(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_create_session_passes(self):
+        print "test_create_session_passes"
+
+        session = SystemInterface.create_session(Config.admin_email,
+                                                   Config.admin_role,
+                                                   "abcde")
+                                                               
+        self.assertEqual(session.get("role").get("name"), Config.admin_role)
+
+#+END_SRC
+
+
+* Infra                                                         :boilerplate:
+  
+** sources
+*** Imports 
+#+NAME: imports_for_sources
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+from runtime.system.system import *
+from runtime.exceptions.custom_exceptions import *
+
+#+END_SRC
+
+
+** Tests
+*** Imports 
+#+NAME: imports_for_tests
+#+BEGIN_SRC python
+# -*- coding: utf-8 -*-
+import unittest
+from flask_testing import TestCase
+from sqlalchemy.exc import IntegrityError
+
+from runtime.system.system_interface import *
+from runtime.system.persistence_delegate import *
+from runtime.rest.app import create_app
+
+config = {
+         'SQLALCHEMY_DATABASE_URI': ''
+         }
+
+#+END_SRC
+
+*** Running tests
+#+NAME: run_test_cases
+#+BEGIN_SRC python
+if __name__ == '__main__':
+    unittest.main()
+
+#+END_SRC
+
+
+* Tangling                                                      :boilerplate:
+
+** sources
+#+BEGIN_SRC python :tangle system_interface.py :eval no :noweb yes
+<<imports_for_sources>>
+<<class_system_interface>>
+<<authorize_user>>
+<<create_session>>
+#+END_SRC
+
+
+** tests
+#+BEGIN_SRC python :tangle test_system_interface.py :eval no :noweb yes
+<<imports_for_tests>>
+<<test_authorize_user>>
+<<test_create_session>>
+<<run_test_cases>>
+#+END_SRC

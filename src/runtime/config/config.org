@@ -42,10 +42,55 @@ class Config:
 #+END_SRC
 
 
+* Flask Application Configuration
+  Configuration for the flask application. 
+#+NAME: flask_app_config
+#+BEGIN_SRC python
+# DB URI
+# example DB URI:
+# mysql+oursql://scott:tiger@localhost/mydatabase
+# postgresql+psycopg2://scott:tiger@localhost/mydatabase
+SQLALCHEMY_DATABASE_URI = 'mysql+oursql://<userid>:<password>@<servername>/<db_name>'
+# example
+# SQLALCHEMY_DATABASE_URI = 'mysql+oursql://root:root@localhost/feedback'
+
+# Debug from SQLAlchemy
+# Turn this to False on production
+SQLALCHEMY_ECHO = False
+SQLALCHEMY_TRACK_MODIFICATIONS = True
+
+# List of allowed origins for CORS
+ALLOWED_ORIGINS = "['*']"
+
+# List of allowed IPs
+WHITELIST_IPS = ["127.0.0.1"]
+
+# Configure your log paths
+LOG_FILE_DIRECTORY = 'logs'
+LOG_FILE = 'webapp.log'
+
+# Log level for the application
+#10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL",
+LOG_LEVEL = 10
+
+#+END_SRC
+
+
 * Tangle                                           :boilerplate:
+** System Configuration
 #+BEGIN_SRC python :tangle config.py :eval no :noweb yes
 from runtime.persistence.entities import *
 
 <<class_config>>
 <<populate_db>>
+
 #+END_SRC  
+
+** flask_app_config
+
+
+#+BEGIN_SRC python :tangle flask_app_config.py :eval no :noweb yes
+
+<<flask_app_config>>
+
+#+END_SRC

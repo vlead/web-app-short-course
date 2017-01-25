@@ -100,7 +100,9 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def user_exists(self, user):
         if self.email_exists(user.get("email")):
-            return user == self.get_user(email=user.get("email"))
+            user_retrieved = self.get_user(email=user.get("email"))
+            if user_retrieved is not None:
+                return user.get("email") == user_retrieved.get("email")
         else:
             return False
 

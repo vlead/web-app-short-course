@@ -36,29 +36,15 @@ setup(
 
 * Program to set up the database
 #+BEGIN_SRC python :tangle db_setup.py :eval no
-
-from src.app import create_app
-from src.db import *
-import src.config as config
-
-
-def create_roles():
-    role1 = Role(name=Name("admin"))
-    role1.save()
-
-    role2 = Role(name=Name("user"))
-    role2.save()
-
-def create_admin_user():
-    user = User(name=Name("Admin User"),
-                email=Email("xyz@gmail.com"),
-                roles=[Role.get_by_id(1)])
-    user.save()
+from runtime.config.config import populate_db
+from runtime.rest.app import create_app
+from runtime.config import flask_app_config as config
+from runtime.utils.class_persistence_template import db
+from runtime.system.system import System
 
 if __name__ == "__main__":
     db.create_all(app=create_app(config))
-    create_roles()
-    create_admin_user()
+    populate_db()
 
 #+END_SRC
 

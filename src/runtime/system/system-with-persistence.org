@@ -1174,8 +1174,8 @@ class TestGetUserByEmail(TestCase):
         System.session_set.append(user_session)
 
         ret_user = System.do("get_user_by_email",
-                                    email=email,
-                                    session=admin_session)
+                                    email=email)
+
 
         self.assertEqual(ret_user.get("name").get("name"),
                              user.get("name").get("name"))
@@ -1201,8 +1201,8 @@ class TestGetUserByEmail(TestCase):
         System.session_set.append(user_session)
 
         ret_user = System.do("get_user_by_email",
-                                    email=email,
-                                    session=user_session)
+                                    email=email)
+
         self.assertEqual(ret_user.get("name").get("name"),
                              user.get("name").get("name"))
 
@@ -1227,8 +1227,7 @@ class TestGetUserByEmail(TestCase):
         System.session_set.append(user_session)
 
         ret_user = System.do("get_user_by_email",
-                                    email=Email(email="none@none.com"),
-                                    session=user_session)
+                                    email=Email(email="none@none.com"))
 
         self.assertEqual(ret_user, None)
 
@@ -1253,59 +1252,7 @@ class TestGetUserByEmail(TestCase):
         System.session_set.append(user_session)
 
         with self.assertRaises(ArityError):
-            System.do("get_user_by_email", email=email)
-
-
-    def test_get_user_by_email_raises_type_check_error(self):
-        print "test_get_user_by_email_raises_type_check_error"
-        
-        admin_user=System.delegate.get_admin_user()
-        admin_role = System.delegate.get_role(name=Config.admin_role)
-        user_role = System.delegate.get_role(name=Config.user_role)
-
-        email = Email(email="abc@gnu.org")
-        user = User(name=Name(name="me mine myself"),
-                                  email=email,
-                                  roles=[user_role])
-
-        System.delegate.add_user(user)           
-
-        admin_session = Session(user=admin_user, role=admin_role, key="12345")
-        user_session = Session(user=user, role=user_role, key="abcde")
-
-        System.session_set.append(admin_session)
-        System.session_set.append(user_session)
-
-        with self.assertRaises(TypeError):
-            System.do("get_user_by_email",
-                          email=admin_session,
-                          session=admin_session)
-
-
-    def test_get_user_by_email_raises_state_error_with_no_session(self):
-        print "test_get_user_by_email_raises_state_error_with_no_session"
-        
-        admin_user=System.delegate.get_admin_user()
-        admin_role = System.delegate.get_role(name=Config.admin_role)
-        user_role = System.delegate.get_role(name=Config.user_role)
-
-        email = Email(email="abc@gnu.org")
-        user = User(name=Name(name="me mine myself"),
-                                  email=email,
-                                  roles=[user_role])
-
-        System.delegate.add_user(user)           
-
-        admin_session = Session(user=admin_user, role=admin_role, key="12345")
-        user_session = Session(user=user, role=user_role, key="abcde")
-
-        # System.session_set.append(admin_session)
-        # System.session_set.append(user_session)
-
-        with self.assertRaises(StateError):
-            System.do("get_user_by_email",
-                          email=email,
-                          session=admin_session)
+            System.do("get_user_by_email")
 
 #+END_SRC
 
