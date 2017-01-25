@@ -52,7 +52,7 @@ class Config:
 # postgresql+psycopg2://scott:tiger@localhost/mydatabase
 SQLALCHEMY_DATABASE_URI = 'mysql+oursql://<userid>:<password>@<servername>/<db_name>'
 # example
-# SQLALCHEMY_DATABASE_URI = 'mysql+oursql://root:root@localhost/feedback'
+# SQLALCHEMY_DATABASE_URI = 'mysql+oursql://root:root@localhost/webapp'
 
 # Debug from SQLAlchemy
 # Turn this to False on production
@@ -75,7 +75,7 @@ LOG_LEVEL = 10
 
 #+END_SRC
 
-
+  
 * Tangle                                           :boilerplate:
 ** System Configuration
 #+BEGIN_SRC python :tangle config.py :eval no :noweb yes
