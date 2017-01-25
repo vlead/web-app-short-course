@@ -216,7 +216,7 @@ User.__eq__ = lambda self, other: \
                   isinstance(other, self.__class__) and \
                   self.get("email") == other.get("email")
 
-def append_role(self,role):
+def append_role(self, role):
     if is_role(role):
         roles = self.get('roles')
         roles.append(role)

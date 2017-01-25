@@ -213,7 +213,8 @@ class ClassTemplate():
 
             check_dict(args)
             tmp = obj.state.copy()
-
+            do_not_save = False
+            
             for key, value in args.iteritems():
                 # arg variables should be a subset of those in the formal spec
                 if key in cls.sorted_state_vars:
@@ -222,7 +223,10 @@ class ClassTemplate():
                     # if so update tmp with the new bindings in args
                     tmp[key] = value
                 else:
-                    raise TypeError("set: Invalid field name %s" % key)
+                    if key == "do_not_save":
+                       do_not_save = True
+                    else:
+                        raise TypeError("set: Invalid field name %s" % key)  
 
             # now check the invariant on tmp
             if not obj.inv(tmp):
@@ -231,8 +235,8 @@ class ClassTemplate():
             # now save the state
             obj.state = tmp
 
-            if 'save_handler' in (cls.custom_handlers):
-                cls.custom_handlers['save_handler'](obj)
+            if 'save_handler' in (cls.custom_handlers) and not do_not_save:
+                cls.custom_handlers['save_handler'](obj) 
 
         return fn
 

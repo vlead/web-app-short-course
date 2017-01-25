@@ -274,59 +274,514 @@ actor performing the operation.
  - D  delete a user      
 
 ** Actor
-Operations are performed by Actors.  Our application has two
-types of actors:  =system= and =session=. 
+   Operations are performed by Actors.  Our application has two types of
+   actors: =system= and =session=.
 
-|--------------------------------------+---------------------+-----------------+--------------------|
-| Operation                            | Actor               | Ref.            | Result             |
-|                                      | Credentials         | Integrity       |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| addUser(u:User, s:Session)           | s.role=admin        | u:~user-set     | return user or     |
-|                                      |                     | s:session-set   | Failure            |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| showUsers(s: Session)                | s.user.role=admin   | s:session-set   | return user-set or |
-|                                      | OR s.user.role=user |                 | Failure            |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| delUser(u: User, s: Session          | s.user.role=admin   | u:user-set      | return user or     |
-|                                      |                     | s:session-set   | Failure            |
-|                                      |                     | u.role != admin |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| getUserByEmail(e: Email, s: Session  |                     | s:session-set   | return user        |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| makeUser(e:Email, n:Name, s:Session  | s.user.role = admin | e:~email-set    |                    |
-|                                      |                     | s:session-set   |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| getEmail(u:User,s: Session           |                     | u:user-set      |                    |
-|                                      |                     | s:session-set   |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| getName(u: User, s:Session           |                     | u:user-set      |                    |
-|                                      |                     | s:session-set   |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| getRole(u: user, s:Session           |                     | u:user-set      |                    |
-|                                      |                     | s:session-set   |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| setEmail(u:User, e:Email, s:Session) | s.user.role = admin | u:user-set      |                    |
-|                                      | OR s.user = u       | s:session-set   |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| setName(u:User, n:Name, s:)          | s.user.role =admin  | u:user-set      |                    |
-|                                      | OR s.user = u       | s:session-set   |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| login(u:User, s:System)              |                     | u:user-set      | creates a session  |
-|                                      |                     |                 | and adds it to     |
-|                                      |                     |                 | =session-set=      |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| delSession(s:, s:System)             |                     | es:session-set  |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
-| showSessions(s:)                     | s.user.role=admin   |                 |                    |
-|--------------------------------------+---------------------+-----------------+--------------------|
+*** Authorize a user for Login
+    A user is associated with multiple roles but each login session of a user
+    is associated with a specific role.  The first step in the login use case
+    is to check if the user exists in the user set.  The second step is to
+    allow the user to associate a role to that particular session.
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: login-first-step-op
+     :END:
+     loginFirstStep(u:User)
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: login-first-step-auth
+     :END:
+     nothing to check
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: login-first-step-ref
+     :END:
+     u:user-set
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: login-first-step-result
+     :END:
+     return roles of user or failure
 
 
-** Remarks
+*** Associate a role to a login session
+    The second step ensures every session in the session set is uniquely
+    identified by a user and a role.  This means, a user can have multiple
+    sessions but each session of a user is uniquely identified by a role.  In
+    other words a user cannot have multiple sessions with a same role.  A
+    session is made up of a user, a role and a key.
 
-- =makeUser(e: Email, n:Name, s: Session)= :: WHen a user is created by an
-     admin, that user is assigned the role =user=. 
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: login-second-step-op
+     :END:
+     loginSecondStep(s:Session)
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: login-second-step-auth
+     :END:
+     nothing to check
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: login-second-step-ref
+     :END:
+     s:~session-set
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: login-second-step-result
+     :END:
+     return new session or failure
 
-- =delUser(u:User, s: Session)= ::  Only =admin-user= can delete another user.
-     The =admin-user= may not delete him/herself.
+
+
+*** Logout
+    Logout ensures the session is deleted from the session set.
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: logout-op
+     :END:
+
+     logout(s:Session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: logout-auth
+     :END:
+
+     nothing to check
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: logout-ref
+     :END:
+
+     s:session-set
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: logout-result
+     :END:
+
+     return removed session or failure
+
+
+*** Add User
+    A user is added with the default role =user=.
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: add-user-op
+     :END:
+     addUser(u:User, s:Session)
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: add-user-auth
+     :END:
+     s.role=admin
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: add-user-ref
+     :END:
+     u:~user-set AND
+     s:session-set  AND
+     u.role ~= admin
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: add-user-result
+     :END:
+     return user or failure
+
+
+*** Show Users
+    The information contained for each user in the user-set that is returned is
+    user's name and email.
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: show-users-op
+     :END:
+
+     showUsers(s: Session)            
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: show-users-auth
+     :END:
+
+     s.role=admin OR
+     s.role = user
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: show-users-ref
+     :END:
+
+     s:session-set
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: show-users-result
+     :END:
+     return user or failure
+
+
+*** Show User Details
+    User's name, email and roles are returned when a user is identified by an
+    email. 
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: show-user-details-op
+     :END:
+
+     showUserDetails(e:Email, s: Session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: show-user-details-auth
+     :END:
+
+     s.role=admin OR                
+     (s.role = user AND
+     s.user.email = e) 
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: show-user-details-ref
+     :END:
+
+     s:session-set AND
+     e: email-set 
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: show-user-details-result
+     :END:
+
+     return user or failure
+
+
+*** Set Name of a User
+    Given a user and a name, the user's name is set to the given name. 
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: set-name-op
+     :END:
+
+     setName(u:User, n:Name, s:session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: set-name-auth
+     :END:
+
+     s.role=admin OR                
+     (s.role = user AND
+     s.user = u) 
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: set-name-ref
+     :END:
+
+     u:user-set AND
+     s:session-set 
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: set-name-result
+     :END:
+
+     return user or failure
+
+
+*** Set Email of a User
+    Given a user and an email, the user's email is set to the given name. 
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: set-email-op
+     :END:
+
+     setEmail(u:User, e:Email, s:session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: set-email-auth
+     :END:
+
+     s.role=admin OR                
+     (s.role = user AND
+     s.user = u) 
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: set-email-ref
+     :END:
+     
+     u:user-set AND
+     s:session-set AND
+     e:~email-set
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: set-email-result
+     :END:
+
+     return user or failure
+
+
+*** Get User by Email
+    Return user, but the roles are masked. 
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: get-user-by-email-op
+     :END:
+
+     getUserByEmail(e: Email, s:Session)
+     
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: get-user-by-email-auth
+     :END:
+
+     s.role = admin OR
+     s.role = user
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: get-user-by-email-ref
+     :END:
+
+     s:session-set
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: get-user-by-email-result
+     :END:
+
+     return user or None or failure
+
+
+*** Delete User
+    A user cannot delete self.  A user with admin role has the ability to
+    delete another user with admin role.
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: del-user-op
+     :END:
+
+     delUser(u: User, s: Session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: del-user-auth
+     :END:
+
+     s.role=admin
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: del-user-ref
+     :END:
+
+     u:user-set   
+     s:session-set
+     u ~= s.user  
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: del-user-result
+     :END:
+
+     return deleted user or failure
+
+
+*** Get Roles of a User
+    Get all the roles of a user.
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: get-roles-op
+     :END:
+
+     getRoles(u: user, s:Session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: get-roles-auth
+     :END:
+
+     s.role=admin OR
+     (s.user = u  AND
+      s.role = user)
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: get-roles-ref
+     :END:
+
+     u:user-set   
+     s:session-set
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: get-roles-result
+     :END:
+
+     return roles of a user or failure
+
+
+*** Get Role set in the system.
+    Get all the roles in the system.
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: get-role-set-op
+     :END:
+
+     getRoles(s:Session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: get-role-set-auth
+     :END:
+
+     s.role = admin OR
+     s.role = user
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: get-role-set-ref
+     :END:
+
+     s:session-set
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: get-role-set-result
+     :END:
+
+     return role set in the system. 
+
+
+*** Add Role
+    Add a role to an existing user
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: add-role-op
+     :END:
+
+     addRole(u: user, s:Session, r:Role)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: add-role-auth
+     :END:
+
+     s.role = admin
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: add-role-ref
+     :END:
+
+     u:user-set AND
+     s:session-set AND
+     r:role-set AND
+     r not in u.role_set
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: add-role-result
+     :END:
+
+     return roles of a user or failure
+
+
+
+*** Delete Role
+    Delete a role of an existing user
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: del-role-op
+     :END:
+
+     delRole(u: user, s:Session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: del-role-auth
+     :END:
+
+     s.role = admin
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: del-role-ref
+     :END:
+
+     u:user-set AND
+     s:session-set AND
+     r:role-set AND
+     r in u.role_set AND
+     u.num_roles > 1 AND       
+ 
+     if u.role == admin      
+     ensure there is at least
+     one another user        
+     with role admin in the  
+     system.                 
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: del-role-result
+     :END:
+
+     return roles of a user or failure
+
+
+
+*** Show Sessions
+    Return the session set
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: show-sessions-op
+     :END:
+
+     showSessions(s:Session)
+     
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: show-sessions-auth
+     :END:
+
+     s.role = admin
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: show-sessions-ref
+     :END:
+
+     s:session-set
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: show-sessions-result
+     :END:
+
+     return session set or failure
+
+
+
+
+
+
 
 

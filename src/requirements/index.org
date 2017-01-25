@@ -183,36 +183,54 @@ The rest of the sections have more detailed requirements.
 
 * Interaction with the system and privileges
 
-|----------------------------------+-------+--------------------------+---|
-| Operation                        | Actor | Permission               |   |
-|----------------------------------+-------+--------------------------+---|
-| Create a user                    | =a=   | =a='s role is =admin=    |   |
-|----------------------------------+-------+--------------------------+---|
-| Delete a user =u=                | =a=   | =a='s role is =admin=    |   |
-|                                  |       | AND =u= is not =a=.      |   |
-|----------------------------------+-------+--------------------------+---|
-| Update the details of a user =u= | =a=   | =a= is equal to =u=      |   |
-|                                  |       | OR =a='s role is =admin= |   |
-|----------------------------------+-------+--------------------------+---|
-| View the list of users           | =a=   | always allowed           |   |
-|----------------------------------+-------+--------------------------+---|
-| View the details of a user       | =a=   | always allowed           |   |
-|----------------------------------+-------+--------------------------+---|
+|-----------------------------------------+-------+--------------------------+------------------------|
+| Operation                               | Actor | Permission               | Other Constraints      |
+|-----------------------------------------+-------+--------------------------+------------------------|
+| Create a user                           | =a=   | =a='s role is =admin=    |                        |
+|-----------------------------------------+-------+--------------------------+------------------------|
+| Delete a user =u=                       | =a=   | =a='s role is =admin=    |                        |
+|                                         |       | AND =u= is not =a=.      |                        |
+|-----------------------------------------+-------+--------------------------+------------------------|
+| Update the name and email of a user =u= | =a=   | =a= is equal to =u=      |                        |
+|                                         |       | OR =a='s role is =admin= |                        |
+|-----------------------------------------+-------+--------------------------+------------------------|
+| Update or delete a role of a user =u=   | =a=   | =a='s role is =admin=    |                        |
+|                                         |       |                          |                        |
+|-----------------------------------------+-------+--------------------------+------------------------|
+| View the list of users                  | =a=   | always allowed           | The details contain    |
+|                                         |       |                          | only name and email    |
+|                                         |       |                          | and not role           |
+|-----------------------------------------+-------+--------------------------+------------------------|
+| view the details of a user              | =a=   | =a= is equal to =u=      | The details contian    |
+|                                         |       | OR =a='s role is =admin= | name, email and roles. |
+|-----------------------------------------+-------+--------------------------+------------------------|
 
 
 * Questions/scenarios
+
 ** Deleting oneself?  
+:PROPERTIES:
+:CUSTOM_ID: delete-user-q
+:END:
+
 - Question :: Can a user delete himself/herself?
 - Ans :: No
 
+
 ** No user with admin role? 
+:PROPERTIES:
+:CUSTOM_ID: user-with-admin-role
+:END:
 
 - Question :: Is it possible for the system to have no user
      with role admin?
 
-- Answer :: No.  There is at least one user in the system
-     with role =admin=.  This is ensured by configuring the
-     system with an initial user with role =admin=. 
+- Answer :: No.  There is at least one user in the system with role =admin=.
+     This is ensured by: 
+  1. configuring the system with an initial user with role
+  2. Only a user with =admin= role can delete a user and
+  3. [[./index.org::#delete-user-q][A user cannot delete himself/herself]]
+
 
 ** Multiple sessions for same user?   
 

@@ -247,8 +247,8 @@ class TestSystemConstructor(TestCase):
 #+end_src
 
 *** Test Arity and Type Checks
-  #+NAME: test_arity_and_types
-  #+BEGIN_SRC python
+#+NAME: test_arity_and_types
+#+BEGIN_SRC python
     def test_arity(self):
         print "test_arity"
         with self.assertRaises(ArityError):
@@ -267,7 +267,7 @@ class TestSystemConstructor(TestCase):
         with self.assertRaises(TypeError):
             System.type_check(args, arg_types)
 
-  #+END_SRC
+#+END_SRC
 
 
 * =do= method 
@@ -316,10 +316,117 @@ class TestSystemConstructor(TestCase):
 
   Once these checks are satisfied, either the system state is modified or retrieved.
 
+** =LoginFirstStep=
+   A user is associated with multiple roles but each login session of a user is
+   associated with a specific role.  The first step in the login use case is to
+   check if the user exists in the user set.  The second step is to allow the
+   user to associate a role to that particular session.
+
+   Refer [[../../data-model/index.org::#login-first-step-auth][auth-check]] and referential [[../../data-model/index.org::#login-first-step-ref][integrity]] rules.
+
+#+NAME: class_login_first_step
+#+BEGIN_SRC python
+class LoginFirstStep():
+    from runtime.objects.entities import is_user
+    arg_types = {"user": is_user}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        pass
+
+    @staticmethod
+    def state_check(args):
+        user = args["user"]
+        if not System.delegate.user_exists(user):
+            raise StateError("user %s does not exist in System"
+                                % user.to_client())
+        
+    @staticmethod
+    def action(args):
+        user = args["user"]
+        user_from_system = System.delegate.get_user(email=user.get("email"))
+        roles = user_from_system.get("roles")
+        return roles
+
+#+END_SRC
+
+
+** =LoginSecondStep=
+   The second step ensures every session in the session set is uniquely
+   identified by a user and a role.  This means, a user can have multiple
+   sessions but each session of a user is uniquely identified by a role.  In
+   other words a user cannot have multiple sessions with a same role.
+
+   A session is made up of a user, a role and a key.  A new login attempt might
+   have a different key, but the fact that a session exists for a user and a
+   role is sufficient to raise a state error.  Refer [[../../data-model/index.org::#login-second-step-auth][auth-check]] and referential
+   [[../../data-model/index.org::#login-second-step-ref][integrity]] rules.
+
+#+NAME: class_login_second_step
+#+BEGIN_SRC python
+class LoginSecondStep():
+    from runtime.objects.entities import is_session
+    arg_types = {"session": is_session}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        pass
+
+    @staticmethod
+    def state_check(args):
+        session = args["session"]
+
+        if System.session_exists_without_key(session):
+            raise StateError("session %s already exists in System"
+                                 % session.to_client())
+        
+    @staticmethod
+    def action(args):
+        session = args["session"]
+        System.session_set.append(session)
+        return session
+
+#+END_SRC
+
+
+** =Logout=
+   Logout ensures the session is deleted from the session set.  Refer
+   [[../../data-model/index.org::#logout-auth][auth-check]] and referential [[../../data-model/index.org::#logout-ref][integrity]] rules.
+
+#+NAME: class_logout
+#+BEGIN_SRC python
+class Logout():
+    from runtime.objects.entities import is_session
+    arg_types = {"session": is_session}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        pass
+
+    @staticmethod
+    def state_check(args):
+        session = args["session"]
+
+        if not System.session_exists(session):
+            raise StateError("session %s does not exist in System"
+                                 % session.to_client())
+    @staticmethod
+    def action(args):
+        session = args["session"]
+        System.session_set.remove(session)
+        return session
+
+#+END_SRC
+
+
 ** =AddUser=
-   
- #+NAME: class_adduser
- #+begin_src python
+   A user is added to the system.  Refer [[../../data-model/index.org::#add-user-auth][auth-check]] and referential [[../../data-model/index.org::#add-user-ref][integrity]]
+   rules.
+#+NAME: class_add_user
+#+begin_src python
 class AddUser():
     from runtime.objects.entities import is_user, is_session
     arg_types = {"user": is_user, "session": is_session}
@@ -329,7 +436,7 @@ class AddUser():
     def auth_check(args):
         session = args['session']
         if not (System.is_session_admin(session)):
-            raise AuthError("User with role %s" 
+            raise NotAuthorizedError("User with role %s" 
                                 " not Authorized to perform this action"
                                 % session.to_client())
 
@@ -352,12 +459,151 @@ class AddUser():
         user = args["user"]
         user = System.delegate.add_user(user)
         return user
- #+end_src
+
+#+END_SRC
+
+
+** =ShowUsers=
+   User's name and email is returned for every user in the set returned.  The
+   users fetched by the delegate contain information about the roles for each
+   user.  But the contract for =showusers= is to provide =name= and =email= of
+   a user.  Therefore, before the user list is returned, the roles of each user
+   are masked.  
+
+   Refer [[../../data-model/index.org::#show-users-auth][auth-check]] and referential [[../../data-model/index.org::#show-users-ref][integrity]] rules.
+
+#+NAME: class_show_users
+#+BEGIN_SRC python
+class ShowUsers():
+    from runtime.objects.entities import is_session
+    arg_types = {"session": is_session}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        session = args['session']
+        if not ((System.is_session_admin(session)) or 
+                (System.is_session_user(session))):
+            raise NotAuthorizedError("Role not Authorized to perform this action")
+
+    @staticmethod
+    def state_check(args):
+        session = args["session"]
+
+        if not System.session_exists(session):
+            raise StateError("session %s does not exist in System"
+                                % session.to_client())
+
+    @staticmethod
+    def action(args):
+        from runtime.objects.entities import User
+        users = System.delegate.get_user_set()
+        users_to_return = []
+        for user in users:
+            new_user = User(name=user.get("name"),
+                            email=user.get("email"),
+                            roles=[])
+            new_user.id = user.id
+            users_to_return.append(new_user)
+
+        return users_to_return
+                                
+#+END_SRC
+
+
+** =ShowUserDetails=
+   User's name, email and roles are returned for the user identified by email.
+   Refer [[../../data-model/index.org::#show-user-details-auth][auth-check]] and referential [[../../data-model/index.org::#show-user-details-ref][integrity]] rules.
+
+#+NAME: class_show_user_details
+#+BEGIN_SRC python
+class ShowUserDetails():
+    from runtime.objects.entities import is_session, is_email
+    arg_types = {"session": is_session, "email": is_email}
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        session = args['session']
+        email = args['email']
+        if not ((System.is_session_admin(session)) or 
+                (System.is_session_user(session) and
+                     session.get("user").get("email") == email)):
+            raise NotAuthorizedError("Role not Authorized to perform this action")
+
+    @staticmethod
+    def state_check(args):
+        session = args["session"]
+        email = args['email']
+
+        if not (System.session_exists(session) and
+                    System.delegate.email_exists(email)):
+            raise StateError("session: %s or email: %s does not exist in System"
+                                % (session.to_client(), email.to_client()))
+
+    @staticmethod
+    def action(args):
+        email = args['email']
+        return System.delegate.get_user_by_email(email)
+                                
+#+END_SRC
+
+
+** =SetName=
+   Set the name of an existing user to a new value.  Refer [[../../data-model/index.org::#set-name-auth][auth-check]] and
+   referential [[../../data-model/index.org::#set-name-ref][integrity]] rules.
+
+#+NAME: class_set_name
+#+BEGIN_SRC python
+class SetName():
+    from runtime.objects.entities import is_user, is_name, is_session
+    arg_types = {"user": is_user, 
+                 "name": is_name, 
+                 "session": is_session
+                }
+
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        session = args['session']
+        user = args["user"]
+        
+        if not (System.is_session_admin(session) or
+                    user is session.get("user")):
+            raise NotAuthorizedError("User with role %s" 
+                                " not Authorized to perform this action"
+                                % session.to_client())
+
+    @staticmethod
+    def state_check(args):
+        session = args["session"]
+        user = args["user"]
+
+        if not System.session_exists(session):
+            raise StateError("session %s does not exist in System"
+                                % session.to_client())
+
+        elif not System.delegate.user_exists(user):
+            raise StateError("user %s does not exist in System"
+                                % user.to_client())
+
+    @staticmethod
+    def action(args):
+        user = args["user"]
+        name = args["name"]
+        user = System.delegate.set_name(user, name)
+        return user
+
+#+END_SRC
+
 
 ** =SetEmail=
+   Set the name of an existing user to a new value.  Refer [[../../data-model/index.org::#set-email-auth][auth-check]] and
+   referential [[../../data-model/index.org::#set-email-ref][inftegrity]] rules.
    
- #+NAME: class_setemail
- #+begin_src python
+#+NAME: class_set_email
+#+BEGIN_SRC python
 class SetEmail():
     from runtime.objects.entities import is_user, is_email, is_session
     arg_types = {"user": is_user, 
@@ -374,7 +620,7 @@ class SetEmail():
         
         if not (System.is_session_admin(session) or
                     user is session.get("user")):
-            raise AuthError("User with role %s" 
+            raise NotAuthorizedError("User with role %s" 
                                 " not Authorized to perform this action"
                                 % session.to_client())
 
@@ -403,69 +649,29 @@ class SetEmail():
         user = System.delegate.set_email(user, email)
         return user
 
- #+end_src
+#+END_SRC
 
-** =SetName=
-   
- #+NAME: class_setname
- #+begin_src python
-class SetName():
-    from runtime.objects.entities import is_user, is_name, is_session
-    arg_types = {"user": is_user, 
-                 "name": is_name, 
-                 "session": is_session
-                }
 
-    arity_and_type_checks_needed = True
+** =GetUserByEmail=
+   If the user exists, the user is returned.  If the user does not exist, None
+   object is returned.  It is up to the upper layer to interpret the returned
+   value.  Refer [[../../data-model/index.org::#get-user-by-email-auth][auth-check]] and referential [[../../data-model/index.org::#get-user-by-email-ref][inftegrity]] rules.
 
-    @staticmethod
-    def auth_check(args):
-        session = args['session']
-        user = args["user"]
-        
-        if not (System.is_session_admin(session) or
-                    user is session.get("user")):
-            raise AuthError("User with role %s" 
-                                " not Authorized to perform this action"
-                                % session.to_client())
+   The roles are masked before the user is returned
 
-    @staticmethod
-    def state_check(args):
-        session = args["session"]
-        user = args["user"]
-
-        if not System.session_exists(session):
-            raise StateError("session %s does not exist in System"
-                                % session.to_client())
-
-        elif not System.delegate.user_exists(user):
-            raise StateError("user %s does not exist in System"
-                                % user.to_client())
-
-    @staticmethod
-    def action(args):
-        user = args["user"]
-        name = args["name"]
-        user = System.delegate.set_name(user, name)
-        return user
-
- #+end_src
-
-** =ShowUsers=
-  
- #+NAME: class_showusers
- #+begin_src python
-class ShowUsers():
-    from runtime.objects.entities import is_session
-    arg_types = {"session": is_session}
+#+NAME: class_get_user_by_email
+#+BEGIN_SRC python
+class GetUserByEmail():
+    from runtime.objects.entities import is_email, is_session
+    arg_types = {"email": is_email, "session": is_session}
     arity_and_type_checks_needed = True
 
     @staticmethod
     def auth_check(args):
         session = args['session']
         if not ((System.is_session_admin(session)) or 
-                (System.is_session_user(session))):
-            raise AuthError("Role not Authorized to perform this action")
+                    (System.is_session_user(session))):
+            raise NotAuthorizedError("Role not Authorized to perform this action")
 
     @staticmethod
     def state_check(args):
@@ -474,17 +680,31 @@ class ShowUsers():
         if not System.session_exists(session):
             raise StateError("session %s does not exist in System"
                                 % session.to_client())
-
+        
     @staticmethod
     def action(args):
-        return System.delegate.get_users()
+        from runtime.objects.entities import User
+        email = args["email"]
+        user = System.delegate.get_user_by_email(email)
 
- #+end_src
+        new_user = None
+        if user is not None:
+            new_user = User(name=user.get("name"),
+                            email=user.get("email"),
+                            roles=[])
+            new_user.id = user.id
+            print new_user.to_client()
+        return new_user
+
+#+END_SRC
+
 
 ** =DelUser=
-   
- #+NAME: class_deluser
- #+begin_src python
+   Delete an existing user from the system.  Refer [[../../data-model/index.org::#del-user-auth][auth-check]] and
+   referential [[../../data-model/index.org::#del-user-ref][inftegrity]] rules.
+
+#+NAME: class_del_user
+#+BEGIN_SRC python
 class DelUser():
     from runtime.objects.entities import is_user, is_session
     arg_types = {"user": is_user, "session": is_session}
@@ -494,7 +714,7 @@ class DelUser():
     def auth_check(args):
         session = args['session']
         if not (System.is_session_admin(session)):
-            raise AuthError("Role not Authorized to perform this action")
+            raise NotAuthorizedError("Role not Authorized to perform this action")
 
     @staticmethod
     def state_check(args):
@@ -521,25 +741,31 @@ class DelUser():
         user = args["user"]
         user = System.delegate.del_user(user)
         return user
- #+end_src
 
-** =GetUserByEmail=
-   If the user exists, an object is returned.  If the user does not exist, None
-   object is returned.  It is up to the upper layer to interpret the returned
-   value
- #+NAME: class_get_user_by_email
- #+begin_src python
-class GetUserByEmail():
-    from runtime.objects.entities import is_email, is_session
-    arg_types = {"email": is_email, "session": is_session}
+#+END_SRC
+
+
+** =GetRoleSet=
+   Get the role set in the system.  Refer [[../../data-model/index.org::#get-role-set-auth][auth-check]] and referential [[../../data-model/index.org::#get-role-set-ref][integrity]]
+   rules.
+   
+#+NAME: class_get_role_set
+#+BEGIN_SRC python
+class GetRoleSet():
+    from runtime.objects.entities import is_session
+    arg_types = {"session": is_session}
+
     arity_and_type_checks_needed = True
 
     @staticmethod
     def auth_check(args):
         session = args['session']
-        if not ((System.is_session_admin(session)) or 
-                    (System.is_session_user(session))):
-            raise AuthError("Role not Authorized to perform this action")
+        
+        if not (System.is_session_admin(session) or
+                System.is_session_user(session)):
+            raise NotAuthorizedError("User with role %s" 
+                                " not Authorized to perform this action"
+                                % session.to_client())
 
     @staticmethod
     def state_check(args):
@@ -548,95 +774,205 @@ class GetUserByEmail():
         if not System.session_exists(session):
             raise StateError("session %s does not exist in System"
                                 % session.to_client())
-        
+
     @staticmethod
     def action(args):
-        email = args["email"]
-        user = System.delegate.get_user_by_email(email)
-        return user
- #+end_src
+        return System.delegate.get_role_set()
 
-** =LoginFirstStep=
-   A user is associated with multiple roles but each login session is
-   associated with a specific role.  The first step in the login use case is to
-   check if the user exists in the user set.  The second step is to allow the
-   user to associate a role to that particular session.
+#+END_SRC
 
- #+NAME: class_login_first_step
- #+BEGIN_SRC python
-class LoginFirstStep():
-    from runtime.objects.entities import is_user
-    arg_types = {"user": is_user}
+
+** =GetRolesOfUser=
+   Get the roles of a user.  Refer [[../../data-model/index.org::#get-roles-auth][auth-check]] and referential [[../../data-model/index.org::#get-roles-ref][integrity]] rules.
+   
+#+NAME: class_get_roles_of_user
+#+BEGIN_SRC python
+class GetRolesOfUser():
+    from runtime.objects.entities import is_user, is_session
+    arg_types = {"user": is_user, 
+                 "session": is_session
+                }
+
     arity_and_type_checks_needed = True
 
     @staticmethod
     def auth_check(args):
-        pass
+        session = args['session']
+        user = args["user"]
+        
+        if not (System.is_session_admin(session) or
+                    user is session.get("user")):
+            raise NotAuthorizedError("User with role %s" 
+                                " not Authorized to perform this action"
+                                % session.to_client())
 
     @staticmethod
     def state_check(args):
+        session = args["session"]
         user = args["user"]
-        if not System.delegate.user_exists(user):
+
+        if not System.session_exists(session):
+            raise StateError("session %s does not exist in System"
+                                % session.to_client())
+
+        elif not System.delegate.user_exists(user):
             raise StateError("user %s does not exist in System"
                                 % user.to_client())
-        
+
     @staticmethod
     def action(args):
         user = args["user"]
-        user_from_system = System.delegate.get_user(email=user.get("email"))
-        roles = user_from_system.get("roles")
+        roles = System.delegate.get_roles_of_user(user)
         return roles
 
- #+end_src
+#+END_SRC
 
-** =LoginSecondStep=
-   The second step ensures every session in the session set is uniquely
-   identified by a user and a role.  This means, a user can have multiple
-   sessions but each session of a user is uniquely identified by a role.  A
-   user cannot have multiple sessions with a same role.
 
-#+NAME: class_login_second_step
+** =AddRole=
+   Add a role to a user.  Refer [[../../data-model/index.org::#add-role-auth][auth-check]] and referential [[../../data-model/index.org::#add-role-ref][integrity]] rules.
+   
+#+NAME: class_add_role_to_user
 #+BEGIN_SRC python
-class LoginSecondStep():
-    from runtime.objects.entities import is_session
-    arg_types = {"session": is_session}
+class AddRoleToUser():
+    from runtime.objects.entities import is_user, is_session, is_role
+    arg_types = {"user": is_user, 
+                 "session": is_session,
+                 'role': is_role
+                }
+
     arity_and_type_checks_needed = True
 
     @staticmethod
     def auth_check(args):
-        pass
+        session = args['session']
+        user = args["user"]
+        role = args["role"]
+        
+        if not (System.is_session_admin(session)):
+            raise NotAuthorizedError("User with role %s" 
+                                " not Authorized to perform this action"
+                                % session.to_client())
 
     @staticmethod
     def state_check(args):
         session = args["session"]
+        user = args["user"]
+        role = args["role"]
 
-        if System.session_exists_without_key(session):
-            raise StateError("session %s already exists in System"
-                                 % session.to_client())
-        
+        if not System.session_exists(session):
+            raise StateError("session %s doeps not exist in System"
+                                % session.to_client())
+
+        elif not System.delegate.user_exists(user):
+            raise StateError("user %s does not exist in System"
+                                % user.to_client())
+
+        elif not System.delegate.role_exists_in_system(role):
+            raise StateError("role %s does not exist in System"
+                                % role.to_client())
+
+        elif System.delegate.role_exists_for_user(role, user):
+            raise StateError("role %s already exists for user %s"
+                                % (role.to_client(), user.to_client()))
+
     @staticmethod
     def action(args):
-        session = args["session"]
-        System.session_set.append(session)
-        return session
+        user = args["user"]
+        role = args["role"]
 
- #+end_src
+        user = System.delegate.add_role_to_user(role, user)
+        return user
+
+#+END_SRC
+
+
+** =DeleteRole=
+   Delete a role of a user.  Refer [[../../data-model/index.org::#del-role-auth][auth-check]] and referential [[../../data-model/index.org::#del-role-ref][integrity]] rules.
+   
+#+NAME: class_del_role_of_user
+#+BEGIN_SRC python
+class DelRoleOfUser():
+    from runtime.objects.entities import is_user, is_session, is_role
+    arg_types = {"user": is_user, 
+                 "session": is_session,
+                 'role': is_role
+                }
+
+    arity_and_type_checks_needed = True
+
+    @staticmethod
+    def auth_check(args):
+        session = args['session']
+        
+        if not (System.is_session_admin(session)):
+            raise NotAuthorizedError("User with role %s" 
+                                " not Authorized to perform this action"
+                                % session.to_client())
+
+    @staticmethod
+    def state_check(args):
+        session = args["session"]
+        user = args["user"]
+        role = args["role"]
+
+        if not System.session_exists(session):
+            raise StateError("session %s does not exist in System"
+                                % session.to_client())
+
+        elif not System.delegate.user_exists(user):
+            raise StateError("user %s does not exist in System"
+                                % user.to_client())
+
+        elif not System.delegate.role_exists_in_system(role):
+            raise StateError("role %s does not exist in System"
+                                % role.to_client())
+
+        elif not System.delegate.role_exists_for_user(role, user):
+            raise StateError("role %s does not exist for user %s"
+                                % (role.to_client(), user.to_client()))
+
+        elif not (len(System.delegate.get_roles_of_user(user)) > 1):
+            raise StateError("number of roles of the user % is not greater "
+                                 "than one" % role.to_client())
+
+        elif (role.get("name") == Config.admin_role and
+                  not user_with_admin_role_exists()):
+            raise StateError("cannot delete admin role of the lone user in "
+                                 "the system with admin role")
+                  
+    @staticmethod
+    def action(args):
+        user = args["user"]
+        role = args["role"]
+
+        user = System.delegate.del_role_of_user(role, user)
+        return user
+
+#+END_SRC
+
 
 ** Operations Table
     Each operation has a corresponding implementation defined as a class. 
  #+NAME: ops_table
  #+BEGIN_SRC python                                                                          
-ops_table = {'add_user': AddUser,
+ops_table = {'login_first_step': LoginFirstStep,
+             'login_second_step': LoginSecondStep,
+             'logout': Logout,
+             'add_user': AddUser,
              'show_users': ShowUsers,
-             'del_user': DelUser,
-             'get_user_by_email': GetUserByEmail,
-             'set_email': SetEmail,
+             'show_user_details': ShowUserDetails,
+             'show_user_details': ShowUserDetails,
              'set_name': SetName,
-             'login_first_step': LoginFirstStep,
-             'login_second_step': LoginSecondStep
+             'set_email': SetEmail,
+             'get_user_by_email': GetUserByEmail,
+             'del_user': DelUser,
+             'get_role_set': GetRoleSet,
+             'get_roles_of_user': GetRolesOfUser,
+             'add_role_to_user': AddRoleToUser,
+             'del_role_of_user': DelRoleOfUser,
             }
 
- #+END_SRC   
+#+END_SRC
 
 
 * Infra                                                         :boilerplate:
@@ -650,6 +986,7 @@ from runtime.config.config import Config
 from runtime.exceptions.custom_exceptions import *
 
 #+END_SRC
+
 
 ** Tests
 *** Imports 
@@ -688,14 +1025,20 @@ if __name__ == '__main__':
 <<session_for_authorization>>
 <<arity_type_checks>>
 <<do_function>>
-<<class_adduser>>
-<<class_deluser>>
-<<class_showusers>>
-<<class_get_user_by_email>>
-<<class_setemail>>
-<<class_setname>>
 <<class_login_first_step>>
 <<class_login_second_step>>
+<<class_logout>>
+<<class_add_user>>
+<<class_show_users>>
+<<class_show_user_details>>
+<<class_set_name>>
+<<class_set_email>>
+<<class_get_user_by_email>>
+<<class_del_user>>
+<<class_get_role_set>>
+<<class_get_roles_of_user>>
+<<class_add_role_to_user>>
+<<class_del_role_of_user>>
 <<ops_table>>
 
 #+END_SRC

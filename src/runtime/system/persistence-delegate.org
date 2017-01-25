@@ -138,9 +138,6 @@ class TestPersistenceDelegate(TestCase):
 
 #+END_SRC
 
-p
-
-
 *** Check if =email= already exists
     This function checks if email is already in the database of the =System=.
 #+NAME: email_exists
@@ -162,16 +159,89 @@ p
 
 #+END_SRC
 
+*** Check if =role= already exists
+    This function checks if role is already in the database of the =System=.
+#+NAME: role_exists_in_system
+#+BEGIN_SRC python
+    def role_exists_in_system(self, role):
+        return role == self.get_role(name=role.get("name"))
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_role_exists_in_system
+#+BEGIN_SRC python
+    def test_role_exists_in_system(self):
+         print "test_role_exists"
+         role = Role(name=Config.admin_role)
+         self.assertEqual(self.delegate.role_exists_in_system(role), True)
+         role = Role(name="temp")
+         self.assertEqual(self.delegate.role_exists_in_system(role), False)
+
+#+END_SRC
+
+*** Check if =role= already exists for a user
+    This function checks if role is already is present for a given user.
+#+NAME: role_exists_for_user
+#+BEGIN_SRC python
+    def role_exists_for_user(self, role, user):
+        return role in user.get("roles")
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_role_exists_for_user
+#+BEGIN_SRC python
+    def test_role_exists_for_user(self):
+         print "test_role_exists_for_user"
+         user = self.delegate.get_user_set()[0]
+         role = Role(name=Config.admin_role)
+         self.assertEqual(self.delegate.role_exists_for_user(role, user), True)
+         role = Role(name="temp")
+         self.assertEqual(self.delegate.role_exists_for_user(role, user), False)
+
+#+END_SRC
+*** Check if user with role =admin= exists in the system
+    This function checks if a user with admin role exists in the system
+#+NAME: user_with_admin_role_exists
+#+BEGIN_SRC python
+    def user_with_admin_role_exists(self):
+        for user in self.get_user_set():
+            if self.is_admin(user):
+                return True
+
+        return False
+            
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_user_with_admin_role_exists
+#+BEGIN_SRC python
+    def test_user_with_admin_role_exists(self):
+         print "test_user_with_admin_role_exists"
+         self.assertEqual(self.delegate.user_with_admin_role_exists(), True)
+         self.delegate.del_user(self.delegate.get_user(email=Email(email=Config.admin_email)))
+         self.assertEqual(self.delegate.user_with_admin_role_exists(), False)
+
+#+END_SRC
 
 *** Add a user to the system
-    This function adds a user to the database of the system.
+    This function adds a user to the database of the system.  When a name is
+    already present in the system, user's name is set to it before user is
+    saved to system. 
 #+NAME: add_user
 #+BEGIN_SRC python
     def add_user(self, user):
         name = user.get("name")
         email = user.get("email")
+
         if not self.name_exists(name):
             name.save()
+        else:
+            name = self.get_name(name=name.get("name"))
+            user.set(name=name, do_not_save=True)
+            
         email.save()
         user.save()
         return self.get_user(email=email)
@@ -186,10 +256,17 @@ p
          name=Name(name="some user")
          email=Email(email="tt@kk.com")
          user = User(name=name, email=email, 
-                         role=self.delegate.get_role_set()[1])
+                         roles=[self.delegate.get_role(name=Config.user_role)])
 
          user = self.delegate.add_user(user)
+         another_user = User(name=name,
+                                 email=Email(email="xyz@gnu.org"),
+                                 roles=[self.delegate.get_role(name=Config.user_role)])
+
+         user = self.delegate.add_user(another_user)
+
          self.assertEqual(self.delegate.user_exists(user), True)
+         self.assertEqual(self.delegate.user_exists(another_user), True)
 
 #+END_SRC
 
@@ -219,7 +296,7 @@ p
          name=Name(name="some user")
          email=Email(email="tt@kk.com")
          user = User(name=name, email=email, 
-                         role=self.delegate.get_role_set()[1])
+                         roles=self.delegate.get_role_set())
 
          user = self.delegate.add_user(user)
          self.assertEqual(self.delegate.user_exists(user), True)
@@ -258,11 +335,20 @@ p
 
 
 *** Check if user has admin role
-    This function returns true if role of a user is admin
+    This function returns true if role of a user is admin.  A user has a list
+    of roles, and this list is mapped to booleans and later reduced to either a
+    =true= or a =false=.
 #+NAME: is_admin
 #+BEGIN_SRC python
     def is_admin(self, user):
-        return user.get("role").get("name") == Config.admin_role
+        roles = user.get("roles")
+        ret_val = False
+        if roles:
+            ret_val = reduce(lambda a, b: a or b, \
+                                map(lambda role: \
+                                    role.get("name") == Config.admin_name, 
+                                    roles))
+        return ret_val
 
 #+END_SRC
 
@@ -277,7 +363,7 @@ p
          email=Email(email="tt@kk.com")
          email.save()
          user = User(name=name, email=email, 
-                         role=self.delegate.get_role_set()[1])
+                         roles=[self.delegate.get_role(name=Config.user_role)])
 
          user = self.delegate.add_user(user)
 
@@ -287,8 +373,8 @@ p
          name.save()
          email=Email(email="someanother@gnu.org")
          email.save()
-         user = User(name=name, email=email, 
-                         role=self.delegate.get_role_set()[0])
+         user = User(name=name, email=email,
+                        roles=[self.delegate.get_role(name=Config.admin_role)])
 
          user = self.delegate.add_user(user)
 
@@ -331,7 +417,7 @@ p
     def test_get_name(self):
          print "test_get_name"
          name_obj = self.delegate.get_name(name=Config.admin_name)
-         self.assertEqual(name_obj.get("name"),  Config.admin_name)
+         self.assertEqual(name_obj.get("name"), Config.admin_name)
 
 #+END_SRC
 
@@ -397,7 +483,6 @@ p
          self.assertEqual(roles[0].get("name"), Config.admin_role)
 
 #+END_SRC
-
 
 *** Get the =admin= role
 #+NAME: get_admin_role
@@ -553,6 +638,62 @@ p
 
 #+END_SRC
 
+*** Add a role to the user in the system
+#+NAME: add_role_to_user
+#+BEGIN_SRC python 
+    def add_role_to_user(self, role, user):
+        user = self.get_user(email=user.get("email"))
+        roles = user.get("roles")
+        role = self.get_role(name=role.get("name"))
+        roles.append(role)
+        user.set(roles=roles)
+        return self.get_user(email=user.get("email"))
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_add_role_to_user
+#+BEGIN_SRC python
+    def test_add_role_to_user(self):
+        user = self.delegate.get_user(email=Email(email=Config.admin_email))
+        self.assertTrue(len(user.get("roles")) == 1)
+        user_role = Role(name=Config.user_role)
+        user_with_new_role = self.delegate.add_role_to_user(user_role, user)
+        self.assertTrue(len(user_with_new_role.get("roles")) == 2)
+
+#+END_SRC
+
+
+
+*** Delete a role of the user in the system
+#+NAME: del_role_of_user
+#+BEGIN_SRC python 
+    def del_role_of_user(self, role, user):
+        user = self.get_user(email=user.get("email"))
+        roles = user.get("roles")
+        roles.remove(role)
+        user.set(roles=roles)
+        return self.get_user(email=user.get("email"))
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_del_role_of_user
+#+BEGIN_SRC python
+    def test_del_role_of_user(self):
+        user = self.delegate.get_user(email=Email(email=Config.admin_email))
+        self.assertTrue(len(user.get("roles")) == 1)
+
+        user_role = Role(name=Config.user_role)
+        user_with_new_role = self.delegate.add_role_to_user(user_role, user)
+        self.assertTrue(len(user_with_new_role.get("roles")) == 2)
+
+        user_with_one_less_role = self.delegate.del_role_of_user(user_role, user_with_new_role)
+        self.assertTrue(len(user_with_one_less_role.get("roles")) == 1)
+
+#+END_SRC
+
+
 
 * Infra                                                         :boilerplate:
 
@@ -613,6 +754,18 @@ if __name__ == '__main__':
 <<user_exists>>
 <<email_exists>>
 <<get_roles_of_user>>
+<<is_admin>>
+<<add_user>>
+<<name_exists>>
+<<set_email>>
+<<set_name>>
+<<get_name>>
+<<del_user>>
+<<role_exists_for_user>>
+<<role_exists_in_system>>
+<<add_role_to_user>>
+<<user_with_admin_role_exists>>
+<<del_role_of_user>>
 
 #+END_SRC
 
@@ -628,6 +781,18 @@ if __name__ == '__main__':
 <<test_user_exists>>
 <<test_email_exists>>
 <<test_get_roles_of_user>>
+<<test_is_admin>>
+<<test_add_user>>
+<<test_name_exists>>
+<<test_get_name>>
+<<test_set_email>>
+<<test_set_name>>
+<<test_del_user>>
+<<test_role_exists_for_user>>
+<<test_role_exists_in_system>>
+<<test_add_role_to_user>>
+<<test_user_with_admin_role_exists>>
+<<test_del_role_of_user>>
 <<run_test_cases>>
 
 #+END_SRC

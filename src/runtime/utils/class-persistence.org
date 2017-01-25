@@ -271,6 +271,10 @@ class TestPersistence(TestCase):
 
     def testCreationOfAPersistentClass(self):
         print "testCreationOfAPersistentClass"
+        
+        Name = ClassTemplate.mk_class("Name")
+        Name.add_attributes(name=is_alphabetic_str)
+
         args = {"__tablename__": "names",
                 "id": db.Column(db.Integer, primary_key=True),
                 "name": db.Column(db.String(128), nullable=False)
@@ -328,7 +332,6 @@ from type_utils import *
 from class_templates import *
 from class_persistence_template import *
 from runtime.rest.app import create_app
-from runtime.objects.entities import Answer as Name
 
 config = {
     'SQLALCHEMY_DATABASE_URI': ''
