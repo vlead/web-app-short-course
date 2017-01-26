@@ -151,6 +151,77 @@ class TestCreateSession(TestCase):
 #+END_SRC
 
 
+** Logout
+#+NAME: logout
+#+BEGIN_SRC python
+    @staticmethod
+    def logout(email_str, role_str, key):
+        try:
+            email_cls = System.delegate.entities["email"]
+            role_cls = System.delegate.entities["role"]
+            session_cls = System.delegate.entities["session"]
+
+            email = email_cls(email=email_str)
+            user = System.do("get_user_by_email",
+                                 email=email)
+            
+            
+            if user is None:
+                raise NotFoundError("User with email = %s is not found"
+                                        % email_str)
+            else:
+                role = role_cls(name=role_str)
+                session = session_cls(user=user, role=role, key=str(key))
+                return System.do("logout", session=session)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Logout
+#+NAME: test_logout
+#+BEGIN_SRC python
+class TestLogout(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_logout_passes(self):
+        print "test_logout_passes"
+
+
+        session = SystemInterface.create_session(Config.admin_email,
+                                                   Config.admin_role,
+                                                   "abcde")
+
+        self.assertEqual(len(System.session_set), 1)
+
+        session = SystemInterface.logout(Config.admin_email,
+                                             Config.admin_role,
+                                             "abcde")
+
+        self.assertEqual(len(System.session_set), 0)
+
+#+END_SRC
+
+
+
 * Infra                                                         :boilerplate:
   
 ** sources
@@ -200,6 +271,8 @@ if __name__ == '__main__':
 <<class_system_interface>>
 <<authorize_user>>
 <<create_session>>
+<<logout>>
+
 #+END_SRC
 
 
@@ -208,5 +281,7 @@ if __name__ == '__main__':
 <<imports_for_tests>>
 <<test_authorize_user>>
 <<test_create_session>>
+<<test_logout>>
 <<run_test_cases>>
+
 #+END_SRC
