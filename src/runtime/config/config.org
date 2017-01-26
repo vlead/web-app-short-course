@@ -52,7 +52,7 @@ class Config:
 # postgresql+psycopg2://scott:tiger@localhost/mydatabase
 SQLALCHEMY_DATABASE_URI = 'mysql+oursql://<userid>:<password>@<servername>/<db_name>'
 # example
-# SQLALCHEMY_DATABASE_URI = 'mysql+oursql://root:root@localhost/feedback'
+# SQLALCHEMY_DATABASE_URI = 'mysql+oursql://root:root@localhost/userdirectory'
 
 # Debug from SQLAlchemy
 # Turn this to False on production
@@ -73,9 +73,21 @@ LOG_FILE = 'webapp.log'
 #10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL",
 LOG_LEVEL = 10
 
+
 #+END_SRC
 
 
+* Google OAuth Configurations
+  Configuration for the flask application. 
+#+NAME: google_oauth_conf
+#+BEGIN_SRC python
+CONSUMER_KEY = "<key>"
+CONSUMER_SECRET = "<key>"
+
+
+#+END_SRC
+
+  
 * Tangle                                           :boilerplate:
 ** System Configuration
 #+BEGIN_SRC python :tangle config.py :eval no :noweb yes
@@ -92,5 +104,10 @@ from runtime.persistence.entities import *
 #+BEGIN_SRC python :tangle flask_app_config.py :eval no :noweb yes
 
 <<flask_app_config>>
+
+#+END_SRC
+** Google_OAuth_config
+#+BEGIN_SRC python :tangle google_oauth_config.py :eval no :noweb yes
+<<google_oauth_conf>>
 
 #+END_SRC

@@ -270,7 +270,7 @@ class ClassTemplate():
                     to_client_var[key] = value
 
             if cls.custom_handlers['persistence']:
-                to_client_var["id"] = obj.id
+                to_client_var["id"] = str(obj.id)
 
             return to_client_var
 
