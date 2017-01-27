@@ -1,0 +1,30 @@
+#+TITLE: Google Oauth Configuration
+#+AUTHOR: VLEAD
+#+DATE: [2017-01-27 Fri]
+#+SETUPFILE: ../org-templates/level-1.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
+
+* Setup Google Oauth credentials
+    - Visit the link [[https://console.developers.google.com][Google Dashboard]] and login with your gmail id
+    - Create project
+        + Click on drop-down menu which is on top-left corner of the
+          page and choose =Create-project=
+        + Enter =Project name= and click on =CREATE= button (This will
+          take a while (5-10 sec)
+    - Create =OAuth= credentials
+        + After project has been created choose the created project on
+          drop-down menu which is on top-left corner of the page
+        + Click on =Credentials= option which is on left side pane.
+        + Then click on =OAuth consent screen= and fill the project
+          related details and =save= the fields
+	+ Click on =Credentials= and then  =Create
+          credentials= choose =OAuth client ID= and select =Web Application= option.
+	+ Configure =Authorised redirect URIs= as below if you are
+          running application in =localhost=
+	  #+BEGIN_EXAMPLE
+	  http://localhost:5000/authorized
+	  #+END_EXAMPLE
+        + Click on =Create=
+        + Note down =client ID= and =client secret=

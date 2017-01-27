@@ -95,6 +95,8 @@ def logout():
 def authorized():
     try:
         resp = google_oauth.authorized_response()
+        if resp is None:
+            return jsonify({"Status" : "User denied access"})
         user_info = google_oauth.get('userinfo')
         email = str(user_info.data['email'])
         try:
@@ -107,7 +109,8 @@ def authorized():
 
     except Exception as e:
         print str(e)
-        session['error'] = "Error in Google Authentication : " + str(e) 
+        return jsonify({"Exception" : str(e)})
+        
 #+END_SRC
 ** Google token getter
       - Once the google verfies the credentials token will be shared.
@@ -118,7 +121,6 @@ def get_google_oauth_token():
     return session.get('google_token')
 
 #+END_SRC
-
 
 ** Create Session
 #+NAME: create_session
@@ -143,6 +145,7 @@ def create_session():
             abort(500, str(e))
 
 #+END_SRC
+
 
 * WebApp
 
