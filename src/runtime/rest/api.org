@@ -134,7 +134,7 @@ def logout():
 #+END_SRC
 
 ** Create Session
-   - API to create login anssession
+   - API to create login and system sessions
 #+NAME: create_session
 #+BEGIN_SRC python
 @api.route('/create_session', methods=['POST'])
