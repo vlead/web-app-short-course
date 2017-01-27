@@ -385,7 +385,7 @@ actor performing the operation.
      :END:
      u:~user-set AND
      s:session-set  AND
-     u.role ~= admin
+     u.role = user-role
 **** Result
      :PROPERTIES:
      :CUSTOM_ID: add-user-result
@@ -775,11 +775,5 @@ actor performing the operation.
      :END:
 
      return session set or failure
-
-
-
-
-
-
 
 

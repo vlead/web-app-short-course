@@ -93,7 +93,7 @@ def is_user_status(s):
 #+begin_src python
 Name.add_attributes(name=is_alphabetic_str)
 Name.__eq__ = lambda self, other: \
-                  isinstance(other, self.__class__) and \
+                  is_name(other) and \
                   self.get("name") == other.get("name")
 
 #+end_src
@@ -130,7 +130,7 @@ class TestName(TestCase):
 Email.add_attributes(email=is_email_str)
 
 Email.__eq__ = lambda self, other: \
-                  isinstance(other, self.__class__) and \
+                  is_email(other) and \
                   self.get("email") == other.get("email")
 
 #+end_src
@@ -169,7 +169,7 @@ Role = ClassTemplate.mk_class("Role",
                               name=is_alphabetic_str)
 
 Role.__eq__ = lambda self,other: \
-	    isinstance(other, self.__class__) and \
+            self.__class__.__name__ == other.__class__.__name__ and \
 	    self.get("name") == other.get("name")
 
 Role.admin = Role(name="admin")
@@ -213,7 +213,7 @@ User.add_attributes(name=is_name,
                     roles=are_roles_or_empty_list)
 
 User.__eq__ = lambda self, other: \
-                  isinstance(other, self.__class__) and \
+                  is_user(other) and \
                   self.get("email") == other.get("email")
 
 def append_role(self, role):
@@ -288,7 +288,7 @@ class TestUser(TestCase):
 #+BEGIN_SRC python
 Session.add_attributes(user=is_user, role=is_role, key=is_str)
 Session.__eq__ = lambda self, other: \
-                  isinstance(other, self.__class__) and \
+                  is_inst(other) and \
                   self.get("user") == other.get("user") and \
                   self.get("role") == other.get("role") and \
                   self.get("key") == other.get("key")
