@@ -77,11 +77,13 @@ def authorized():
             session['email'] = email
             return jsonify_list(roles)
         except Exception as e:
+            session.pop('google_token', None)
             return jsonify({"Exception" : str(e)})
 
     except Exception as e:
         print str(e)
         return jsonify({"Exception" : str(e)})
+
         
 #+END_SRC
 ** Google token getter
@@ -105,9 +107,7 @@ def login():
 #+END_SRC
 ** =Logout= API
       - When user clicks on =logout= button from f/e it will invoke
-  =/logout= api and thereby it will destroy all session variables.
-
-
+   =/logout= api and thereby it will destroy all session variables.
 #+NAME: logout_route
 #+BEGIN_SRC python
 
@@ -120,9 +120,16 @@ def logout():
         local_session = {'email': email,
                          'role': role,
                          'key': key }        
-        session = SystemInterface.logout(local_session)
-        session.pop('google_token', None)
-
+        try:
+            session_obj = SystemInterface.logout(local_session)
+            session.pop('google_token', None)
+            session.pop('email', None)
+            session.pop('role', None)
+            return jsonify({"status" : "Successfully logged out from system"})
+        except Exception as e:
+            return jsonify({"Exception" :  str(e)})
+    else:
+        return jsonify({"status" :  "You are not logged in user"})
 
 #+END_SRC
 
@@ -141,12 +148,11 @@ def create_session():
                          'role': role,
                          'key': key }        
         try:            
-            session = SystemInterface.create_session_in_system(local_session)
+            session_obj = SystemInterface.create_session_in_system(local_session)
             session['role'] = role
             return jsonify({"status" : "success"})
         except Exception as e:
             abort(500, str(e))
-
 
 #+END_SRC
 ** Create Users
@@ -159,6 +165,10 @@ def create_users():
         
         data_json = json.dumps(request.get_json())
 	data_dict = yaml.safe_load(data_json)
+        local_user = {'email': data_dict['email'],
+                      'role': data_dict['role'],
+                      'name': data_dict['name'] }
+        
 	email = session['email']
 	role = session['role']
 	key = session['google_token']
@@ -166,18 +176,15 @@ def create_users():
                          'role': role,
                          'key': key }        
         try:            
-
-            local_user = {'email': 'abc@gnu.org',
-                          'role': Config.user_role,
-                          'name': "Test User" }
-            
-            session = SystemInterface.create_session_in_system(local_session)
-            ret_user = SystemInterface.add_user(local_session, local_user)
+            session_obj = SystemInterface.create_session_in_system(local_session)
+            user_obj = SystemInterface.add_user(local_session, local_user)
             return jsonify({"status" : "success"})
         except Exception as e:
             abort(500, str(e))
 
+
 #+END_SRC
+
 
 * WebApp
 
