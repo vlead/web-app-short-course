@@ -134,6 +134,7 @@ def logout():
 #+END_SRC
 
 ** Create Session
+   - API to create login and system sessions
 #+NAME: create_session
 #+BEGIN_SRC python
 @api.route('/create_session', methods=['POST'])
@@ -156,6 +157,7 @@ def create_session():
 
 #+END_SRC
 ** Create Users
+   - API to create users
 #+NAME: create_users
 #+BEGIN_SRC python
 
@@ -176,7 +178,6 @@ def create_users():
                          'role': role,
                          'key': key }        
         try:            
-            session_obj = SystemInterface.create_session_in_system(local_session)
             user_obj = SystemInterface.add_user(local_session, local_user)
             return jsonify({"status" : "success"})
         except Exception as e:
