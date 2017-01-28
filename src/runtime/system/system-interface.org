@@ -163,6 +163,53 @@ class TestMakeUser(TestCase):
 #+END_SRC
 
 
+** Make Email
+   Make an Email object that the system can interpret from email string. 
+   make-email: string -> object
+#+NAME: make_email
+#+BEGIN_SRC python
+    @staticmethod
+    def make_email(email_str):
+        email_cls = System.delegate.entities["email"]
+
+        email = email_cls(email=email_str)
+
+        return email
+
+#+END_SRC
+
+*** Test Make User
+#+NAME: test_make_email
+#+BEGIN_SRC python
+class TestMakeEmailr(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_make_email_passes(self):
+        print "test_make_email_passes"
+
+        email_str = Config.admin_email
+
+       email = SystemInterface.make_email(email_str)
+                                                               
+        self.assertEqual(email.get("email"), Config.admin_email)
+
+#+END_SRC
+
+
 ** Authorize the User
 #+NAME: authorize_user
 #+BEGIN_SRC python
@@ -409,7 +456,7 @@ class TestAddUser(TestCase):
 *** Test Show Users
 #+NAME: test_show_users
 #+BEGIN_SRC python
-class TestShowUser(TestCase):
+class TestShowUsers(TestCase):
     TESTING = True
 
     def create_app(self):
@@ -437,6 +484,61 @@ class TestShowUser(TestCase):
         user_list = SystemInterface.show_users(session_dict)
 
         self.assertEqual(len(user_list), 1)
+
+#+END_SRC
+
+
+** ShowUserDetails
+   show_user_details: session_dict, email -> user
+#+NAME: show_user_details
+#+BEGIN_SRC python
+    @staticmethod
+    def show_user_details(session_dict, email_str):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            email = SystemInterface.make_email(email_str)
+            return System.do("show_user_details", session=session, email=email)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Show User Details
+#+NAME: test_show_user_details
+#+BEGIN_SRC python
+class TestShowUserDetails(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_show_user_details_passes(self):
+        print "test_show_user_details_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        user = SystemInterface.show_user_details(session_dict, 
+                                                     Config.admin_email)
+
+        self.assertEqual(user.get("email").get("email"), Config.admin_email)
 
 #+END_SRC
 
@@ -490,11 +592,13 @@ if __name__ == '__main__':
 <<class_system_interface>>
 <<make_session>>
 <<make_user>>
+<<make_email>>
 <<authorize_user>>
 <<create_session_in_system>>
 <<logout>>
 <<add_user>>
 <<show_users>>
+<<show_user_details>>
 
 #+END_SRC
 
@@ -509,6 +613,7 @@ if __name__ == '__main__':
 <<test_logout>>
 <<test_add_user>>
 <<test_show_users>>
+<<test_show_user_details>>
 <<run_test_cases>>
 
 #+END_SRC

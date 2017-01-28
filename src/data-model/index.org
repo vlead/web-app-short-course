@@ -599,6 +599,38 @@ actor performing the operation.
 
      return deleted user or failure
 
+*** Get Role set in the system.
+    Get all the roles in the system.
+
+**** Operation
+     :PROPERTIES:
+     :CUSTOM_ID: get-role-set-op
+     :END:
+
+     getRoles(s:Session)
+
+**** Actor Credentials
+     :PROPERTIES:
+     :CUSTOM_ID: get-role-set-auth
+     :END:
+
+     s.role = admin OR
+     s.role = user
+
+**** Referential Integrity
+     :PROPERTIES:
+     :CUSTOM_ID: get-role-set-ref
+     :END:
+
+     s:session-set
+
+**** Result
+     :PROPERTIES:
+     :CUSTOM_ID: get-role-set-result
+     :END:
+
+     return role set in the system. 
+
 
 *** Get Roles of a User
     Get all the roles of a user.
@@ -633,40 +665,6 @@ actor performing the operation.
      :END:
 
      return roles of a user or failure
-
-
-*** Get Role set in the system.
-    Get all the roles in the system.
-
-**** Operation
-     :PROPERTIES:
-     :CUSTOM_ID: get-role-set-op
-     :END:
-
-     getRoles(s:Session)
-
-**** Actor Credentials
-     :PROPERTIES:
-     :CUSTOM_ID: get-role-set-auth
-     :END:
-
-     s.role = admin OR
-     s.role = user
-
-**** Referential Integrity
-     :PROPERTIES:
-     :CUSTOM_ID: get-role-set-ref
-     :END:
-
-     s:session-set
-
-**** Result
-     :PROPERTIES:
-     :CUSTOM_ID: get-role-set-result
-     :END:
-
-     return role set in the system. 
-
 
 *** Add Role
     Add a role to an existing user
