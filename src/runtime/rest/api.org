@@ -141,48 +141,70 @@ def logout():
 def create_session():
     if request.method == 'POST':        
         data_json = json.dumps(request.get_json())
-	data_dict = yaml.safe_load(data_json)
-	email = session['email']
-	role = data_dict['role']
-	key = session['google_token']
-        local_session = {'email': email,
-                         'role': role,
-                         'key': key }        
+        data_dict = yaml.safe_load(data_json)
+        email = session['email']
+        role = data_dict['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
         try:            
-            session_obj = SystemInterface.create_session_in_system(local_session)
+            session_obj = SystemInterface.create_session_in_system(session_dict)
             session['role'] = role
             return jsonify({"status" : "success"})
         except Exception as e:
             abort(500, str(e))
 
 #+END_SRC
-** Create Users
+** Add User
    - API to create users
-#+NAME: create_users
+#+NAME: add_user
 #+BEGIN_SRC python
 
-@api.route('/users', methods=['POST'])
-def create_users():
+@api.route('/add_user', methods=['POST'])
+def add_user():
     if request.method == 'POST':
         
         data_json = json.dumps(request.get_json())
-	data_dict = yaml.safe_load(data_json)
-        local_user = {'email': data_dict['email'],
-                      'role': data_dict['role'],
-                      'name': data_dict['name'] }
+        data_dict = yaml.safe_load(data_json)
+        user_dict = {'email': data_dict['email'],
+                        'role': data_dict['role'],
+                        'name': data_dict['name'] }
         
-	email = session['email']
-	role = session['role']
-	key = session['google_token']
-        local_session = {'email': email,
-                         'role': role,
-                         'key': key }        
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
         try:            
-            user_obj = SystemInterface.add_user(local_session, local_user)
+            user_obj = SystemInterface.add_user(session_dict, user_dict)
             return jsonify({"status" : "success"})
         except Exception as e:
             abort(500, str(e))
 
+
+#+END_SRC
+
+** Show Users
+   - API to Show Users
+#+NAME: show_users
+#+BEGIN_SRC python
+
+@api.route('/show_users', methods=['GET'])
+def show_users():
+    if request.method == 'GET':
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
+        try:            
+            users = SystemInterface.show_users(session_dict)
+            return jsonify_list(users)
+        except Exception as e:
+            abort(500, str(e))
 
 #+END_SRC
 
@@ -1054,7 +1076,9 @@ if __name__ == '__main__':
 <<callback_google_api>>
 <<google_oauth_token>>
 <<create_session>>
-<<create_users>>
+<<add_user>>
+<<show_users>>
+
 #+END_SRC
 
 
