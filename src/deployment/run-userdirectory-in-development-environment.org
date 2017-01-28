@@ -78,6 +78,17 @@ export PYTHONPATH=${PWD}
   cd build/code/deployment
   python db_setup.py
   #+END_EXAMPLE
+* [[./google-oauth-configuration.org][Obtain Google OAuth Credentials]]
+* Congigure OAuth for Application
+  =build/code/runtime/config/google_oauth_config.py= so that the application
+  can use the Google OAuth API.
+  =CONSUMER_KEY= and =CONSUMER_SECRET= that were obtained from the previous
+  step should be filled up
+  #+BEGIN_EXAMPLE
+    CONSUMER_KEY = "<key>"
+    CONSUMER_SECRET = "<key>"
+  #+END_EXAMPLE
+
 
 * Run the application
   
