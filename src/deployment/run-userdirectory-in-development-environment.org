@@ -72,12 +72,6 @@ cd build/code/
 export PYTHONPATH=${PWD}
 #+END_EXAMPLE
 
-* Insert Dafault data
-  Run db_setup.py to insert roles and an admin user. 
-  #+BEGIN_EXAMPLE
-  cd build/code/deployment
-  python db_setup.py
-  #+END_EXAMPLE
 * [[./google-oauth-configuration.org][Obtain Google OAuth Credentials]]
 * Congigure OAuth for Application
   =build/code/runtime/config/google_oauth_config.py= so that the application
@@ -89,7 +83,25 @@ export PYTHONPATH=${PWD}
     CONSUMER_SECRET = "<key>"
   #+END_EXAMPLE
 
-
+* Insert Dafault data
+  Edit =build/code/runtime/config/config.py= and set =admin-email= to
+  have a valid admin user when the web app launches.
+  #+BEGIN_SRC python 
+    # config.py
+    # ---------
+    
+    admin_email = "<your google email id which was used to create OAuth credentials>"
+  #+END_SRC
+ 
+  Run =build/code/deployment/db_setup.py= to insert roles and an admin user. 
+  #+BEGIN_SRC shell
+    # db_setup.py
+    # -----------
+    
+    cd build/code/deployment
+    python db_setup.py
+  #+END_SRC
+  
 * Run the application
   
   The application can now be run from the =build/code= directory
