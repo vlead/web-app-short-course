@@ -34,6 +34,9 @@ class SystemInterface ():
    Make a session object that the system can interpret from the email, role and
    key that are passed as strings from the REST API Layer.   These three values
    are passed as key value pairs.
+
+   make_session: dictionary -> object
+
 #+NAME: make_session
 #+BEGIN_SRC python
     @staticmethod
@@ -55,7 +58,6 @@ class SystemInterface ():
             session = session_cls(user=user,
                                       role=role,
                                       key=key)
-
             return session
 
 #+END_SRC
@@ -103,6 +105,7 @@ class TestMakeUser(TestCase):
    that are passed as strings from the upper layer which here is REST API
    Layer.  These three values are passed as key value pairs.
 
+   make-user: dictionary -> object
 #+NAME: make_user
 #+BEGIN_SRC python
     @staticmethod
@@ -224,11 +227,11 @@ class TestAuthorizeUser(TestCase):
 #+NAME: create_session_in_system
 #+BEGIN_SRC python
     @staticmethod
-    def create_session_in_system(local_session):
+    def create_session_in_system(session_dict):
         try:
-            session = SystemInterface.make_session(local_session)
+            session_obj = SystemInterface.make_session(session_dict)
             return System.do("login_second_step",
-                                 session=session)
+                                 session=session_obj)
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
@@ -261,11 +264,11 @@ class TestCreateSessionInSystem(TestCase):
     def test_create_session_passes(self):
         print "test_create_session_passes"
 
-        local_session = {'email': Config.admin_email,
+        session_dict = {'email': Config.admin_email,
                              'role': Config.admin_role,
                              'key': "abcde" }
         
-        session = SystemInterface.create_session_in_system(local_session)
+        session = SystemInterface.create_session_in_system(session_dict)
                                                                
         self.assertEqual(session.get("role").get("name"), Config.admin_role)
 
@@ -276,9 +279,9 @@ class TestCreateSessionInSystem(TestCase):
 #+NAME: logout
 #+BEGIN_SRC python
     @staticmethod
-    def logout(local_session):
+    def logout(session_dict):
         try:
-            session = SystemInterface.make_session(local_session)
+            session = SystemInterface.make_session(session_dict)
             return System.do("logout", session=session)
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
@@ -312,13 +315,13 @@ class TestLogout(TestCase):
     def test_logout_passes(self):
         print "test_logout_passes"
 
-        local_session = {'email': Config.admin_email,
+        session_dict = {'email': Config.admin_email,
                              'role': Config.admin_role,
                              'key': "abcde" }
-        session = SystemInterface.create_session_in_system(local_session)
+        session = SystemInterface.create_session_in_system(session_dict)
         self.assertEqual(len(System.session_set), 1)
 
-        session = SystemInterface.logout(local_session)
+        session = SystemInterface.logout(session_dict)
         self.assertEqual(len(System.session_set), 0)
 
 #+END_SRC
@@ -326,13 +329,14 @@ class TestLogout(TestCase):
 
 
 ** AddUser
+   add_user: session_dict, user_dict -> user
 #+NAME: add_user
 #+BEGIN_SRC python
     @staticmethod
-    def add_user(local_session, local_user):
+    def add_user(session_dict, user_dict):
         try:
-            session = SystemInterface.make_session(local_session)
-            new_user = SystemInterface.make_user(local_user)
+            session = SystemInterface.make_session(session_dict)
+            new_user = SystemInterface.make_user(user_dict)
             return System.do("add_user", session=session, user=new_user)
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
@@ -366,19 +370,73 @@ class TestAddUser(TestCase):
     def test_add_user_passes(self):
         print "test_add_user_passes"
 
-        local_session = {'email': Config.admin_email,
+        session_dict = {'email': Config.admin_email,
                              'role': Config.admin_role,
                              'key': "abcde" }
 
-        local_user = {'email': 'abc@gnu.org',
+        user_dict = {'email': 'abc@gnu.org',
                              'role': Config.user_role,
                              'name': "Test User" }
 
-        session = SystemInterface.create_session_in_system(local_session)
-        ret_user = SystemInterface.add_user(local_session, local_user)
+        session = SystemInterface.create_session_in_system(session_dict)
+        ret_user = SystemInterface.add_user(session_dict, user_dict)
 
         self.assertEqual(ret_user.get("name").get("name"), 
-                             local_user['name'])
+                             user_dict['name'])
+
+#+END_SRC
+
+
+** ShowUsers
+   show_users: session_dict -> list of user objects
+#+NAME: show_users
+#+BEGIN_SRC python
+    @staticmethod
+    def show_users(session_dict):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            users = System.do("show_users", session=session) 
+            return users
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Show Users
+#+NAME: test_show_users
+#+BEGIN_SRC python
+class TestShowUser(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_show_users_passes(self):
+        print "test_show_users_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        user_list = SystemInterface.show_users(session_dict)
+
+        self.assertEqual(len(user_list), 1)
 
 #+END_SRC
 
@@ -405,7 +463,7 @@ import unittest
 from flask_testing import TestCase
 from sqlalchemy.exc import IntegrityError
 
-from runtime.system.system_interface import *
+from system_interface import *
 from runtime.system.persistence_delegate import *
 from runtime.rest.app import create_app
 
@@ -436,6 +494,7 @@ if __name__ == '__main__':
 <<create_session_in_system>>
 <<logout>>
 <<add_user>>
+<<show_users>>
 
 #+END_SRC
 
@@ -449,6 +508,7 @@ if __name__ == '__main__':
 <<test_create_session_in_system>>
 <<test_logout>>
 <<test_add_user>>
+<<test_show_users>>
 <<run_test_cases>>
 
 #+END_SRC

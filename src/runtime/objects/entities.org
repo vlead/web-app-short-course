@@ -61,6 +61,7 @@ check_user = check_pred(is_user)
 is_session = is_inst(Session)
 check_session = check_pred(is_session)
 
+
 def are_roles_or_empty_list(rls):
     ret_val = True
 
@@ -169,7 +170,7 @@ Role = ClassTemplate.mk_class("Role",
                               name=is_alphabetic_str)
 
 Role.__eq__ = lambda self,other: \
-            self.__class__.__name__ == other.__class__.__name__ and \
+            is_role(other) and \
 	    self.get("name") == other.get("name")
 
 Role.admin = Role(name="admin")
@@ -288,7 +289,7 @@ class TestUser(TestCase):
 #+BEGIN_SRC python
 Session.add_attributes(user=is_user, role=is_role, key=is_str)
 Session.__eq__ = lambda self, other: \
-                  is_inst(other) and \
+                  is_session(other) and \
                   self.get("user") == other.get("user") and \
                   self.get("role") == other.get("role") and \
                   self.get("key") == other.get("key")

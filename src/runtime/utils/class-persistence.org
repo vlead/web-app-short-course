@@ -85,14 +85,35 @@
 
 **** Save Object
      This function provides the class with the functionality to save the object
-     to the database.
+     to the database.  
 #+NAME: save_method
 #+BEGIN_SRC python
     @staticmethod
     def mk_save(cls) :
         def fn(obj):
+
+            def retreive_from_db(value):
+                if hasattr(value, 'unique_key_list'):
+                    for unique_key in value.__class__.unique_key_list:
+                        args_dict = {}
+                        args_dict[unique_key] = value.get(unique_key)
+                        new_val = value.__class__.apply_filters(**args_dict)[0]
+                else:
+                    new_val = value
+
+                return new_val
+            
             for key, value in obj.state.iteritems():
-                setattr(obj, key, value)
+                new_val = None
+                if is_list(value):
+                    new_val_list = []
+                    for item in value:
+                        new_val_list.append(retreive_from_db(item))
+                    new_val = new_val_list
+                else:
+                    new_val = retreive_from_db(value)
+
+                setattr(obj, key, new_val)
 
             db.session.autoflush = False
             db.session.add(obj)
@@ -149,9 +170,8 @@
             obj.state = {}
             for key in cls.sorted_state_vars:
                 value = getattr(obj, key)
-                
-                if value.__class__.__name__ is 'InstrumentedList' or \
-                  value.__class__.__name__ is'list':
+
+                if is_instrumented_list(value) or is_list(value):
                     val_list = []
                     for val in value:
                         if hasattr(val.__class__, 'set_state') and \

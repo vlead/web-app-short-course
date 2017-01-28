@@ -100,9 +100,7 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def user_exists(self, user):
         if self.email_exists(user.get("email")):
-            user_retrieved = self.get_user(email=user.get("email"))
-            if user_retrieved is not None:
-                return user.get("email") == user_retrieved.get("email")
+            return user == self.get_user(email=user.get("email"))
         else:
             return False
 
@@ -238,17 +236,17 @@ class TestPersistenceDelegate(TestCase):
         name = user.get("name")
         email = user.get("email")
 
-        roles = []
-        for role in user.get("roles"):
-            db_role = self.get_role(name=role.get("name"))
-            roles.append(db_role)
+        # roles = []
+        # for role in user.get("roles"):
+        #     db_role = self.get_role(name=role.get("name"))
+        #     roles.append(db_role)
 
-        user.set(roles=roles, do_not_save=True)
+        # user.set(roles=roles, do_not_save=True)
         if not self.name_exists(name):
             name.save()
-        else:
-            name = self.get_name(name=name.get("name"))
-            user.set(name=name, do_not_save=True)
+        # else:
+        #     name = self.get_name(name=name.get("name"))
+        #     user.set(name=name, do_not_save=True)
             
         email.save()
         user.save()

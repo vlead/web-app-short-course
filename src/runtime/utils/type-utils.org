@@ -29,6 +29,7 @@ is_bool = is_inst(bool)
 is_str = is_inst(str)
 is_dict = is_inst(dict)
 is_list = is_inst(list)
+is_instrumented_list = is_inst(InstrumentedList)
 is_string = is_inst(str)
 is_unicode = is_inst(unicode)
 is_str_or_none = lambda str: is_str(str) or str == None
@@ -338,7 +339,7 @@ import re
 import types
 import datetime
 import json
-
+from sqlalchemy.orm.collections import InstrumentedList
 from flask import make_response
 
 #+END_SRC
