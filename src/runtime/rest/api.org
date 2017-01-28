@@ -208,7 +208,6 @@ def show_users():
 
 #+END_SRC
 
-
 ** Show User Details
    - API to Show User Deatils
 #+NAME: show_user_details
@@ -229,7 +228,7 @@ def show_user_details():
                             'role': role,
                             'key': key }        
         try:            
-            user = SystemInterface.show_users(session_dict, email_str)
+            user = SystemInterface.show_user_details(session_dict, email_str)
             return jsonify(user.to_client())
         except Exception as e:
             abort(500, str(e))
