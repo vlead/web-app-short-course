@@ -133,6 +133,7 @@ def logout():
 
 #+END_SRC
 
+
 ** Create Session
    - API to create login and system sessions
 #+NAME: create_session
@@ -156,6 +157,7 @@ def create_session():
             abort(500, str(e))
 
 #+END_SRC
+
 ** Add User
    - API to create users
 #+NAME: add_user
@@ -185,6 +187,7 @@ def add_user():
 
 
 #+END_SRC
+
 
 ** Show Users
    - API to Show Users
