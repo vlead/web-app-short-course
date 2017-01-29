@@ -444,7 +444,7 @@ using =render_template= in flask. We will change this eventually to be served by
 Notice the =static/= in our URLs that is used to refer to our static files. We follow this convention
 so that when we are actually deploying this app, the static files can be served by apache/ngix/whatever
 
-#+BEGIN_SRC html :tangle ../../src/templates/index.html :eval no :noweb yes
+#+BEGIN_SRC html :tangle index.html :eval no :noweb yes
   <html>
   <head>
   
@@ -469,7 +469,7 @@ so that when we are actually deploying this app, the static files can be served 
 
 * CSS : Consolidated
 
-#+BEGIN_SRC css :tangle ../../src/static/css/main.css
+#+BEGIN_SRC css :tangle static/css/main.css
   body {
       background-color: #EFEFEF;
       padding-left: 80px;
@@ -499,7 +499,7 @@ so that when we are actually deploying this app, the static files can be served 
   }
 #+END_SRC
 * JS: Consolidated
-#+BEGIN_SRC js :tangle ../../src/static/js/main.js :eval no :noweb yes
+#+BEGIN_SRC js :tangle static/js/main.js :eval no :noweb yes
 
 //system code
 <<post_json>>

@@ -12,6 +12,14 @@
   
 * REST
 
+** Serve index.html
+#+NAME: serve_index_html
+#+BEGIN_SRC python 
+@api.route("/", methods=['GET'])
+def index():
+    if request.method == 'GET':
+    return render_template("index.html")
+#+END_SRC
 ** Google OAuth Credentials
       - Google OAuth service required URLs (Credentials) should be specified
 
@@ -319,6 +327,7 @@ if __name__ == '__main__':
 #+BEGIN_SRC python :tangle api.py :eval no :noweb yes
 
 <<imports_for_sources>>
+<<serve_index_html>>
 <<google_oauth_configuration>>
 <<jsonify_list>>
 <<login_route>>
