@@ -7,9 +7,9 @@
 #+OPTIONS: ^:nil
 
 * Introduction
-  System Interface is the glue that between the =rest= and =system=.  The world
-  of =rest= uses =json= and the world of =system= uses objects.  System
-  Interface allows these two worlds to talk to each other.
+  System Interface is the glue between the =rest= and =system=.  The world of
+  =rest= uses =json= and the world of =system= uses objects.  System Interface
+  allows these two worlds to talk to each other.
 
 
 * The =SystemInterface= class
@@ -488,6 +488,60 @@ class TestShowUsers(TestCase):
 #+END_SRC
 
 
+** ShowRoles
+   show_roles: session_dict -> list of roles objects
+#+NAME: show_roles
+#+BEGIN_SRC python
+    @staticmethod
+    def show_roles(session_dict):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            roles = System.do("get_role_set", session=session) 
+            return roles
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Show Roles
+#+NAME: test_show_roles
+#+BEGIN_SRC python
+class TestShowRoles(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_show_roles_passes(self):
+        print "test_show_roles_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        role_list = SystemInterface.show_roles(session_dict)
+
+        self.assertEqual(len(role_list), 2)
+
+#+END_SRC
+
+
 ** ShowUserDetails
    show_user_details: session_dict, email -> user
 #+NAME: show_user_details
@@ -599,6 +653,7 @@ if __name__ == '__main__':
 <<add_user>>
 <<show_users>>
 <<show_user_details>>
+<<show_roles>>
 
 #+END_SRC
 
@@ -614,6 +669,7 @@ if __name__ == '__main__':
 <<test_add_user>>
 <<test_show_users>>
 <<test_show_user_details>>
+<<test_show_roles>>
 <<run_test_cases>>
 
 #+END_SRC
