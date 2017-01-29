@@ -14,9 +14,11 @@
 
 #+NAME: application
 #+BEGIN_SRC python
-  def create_app(config):
+def create_app(config):
       # init our app
-      app = Flask(__name__, static_folder="../web/static/")
+      app = Flask(__name__,
+		  static_folder="../web/static/",
+		  template_folder="../web/")
       app.secret_key = 'djfjsdkjXXS7979dfdfd'
       # load config values from the config file
       app.config.from_object(config)

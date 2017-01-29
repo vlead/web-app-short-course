@@ -17,7 +17,6 @@
 #+BEGIN_SRC python 
 @api.route("/", methods=['GET'])
 def index():
-    if request.method == 'GET':
     return render_template("index.html")
 #+END_SRC
 ** Google OAuth Credentials
@@ -59,7 +58,7 @@ def jsonify_list(data):
                          {'content-type': 'application/json'})
 
 #+END_SRC
-
+   
 ** Google Callback response =API=
       - Once the Google verfies the user credentials it will send callback
         response to =/authorized= api which should be registered at google's
