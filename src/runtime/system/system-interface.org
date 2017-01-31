@@ -41,31 +41,25 @@ class SystemInterface ():
 #+BEGIN_SRC python
     @staticmethod
     def make_session(dictionary):
-        email_cls = System.delegate.entities["email"]
-        role_cls = System.delegate.entities["role"]
         session_cls = System.delegate.entities["session"]
-
-        email = email_cls(email=dictionary['email'])
-        user = System.do("get_user_by_email",
-                             email=email)
-
-        if user is None:
-            raise NotFoundError("User with email = %s is not found"
-                                    % email.to_client())
-        else:
-            role = role_cls(name=dictionary['role'])
+        try:
+            user = SystemInterface.get_user_by_email(dictionary['email'])
+            role = SystemInterface.make_role(dictionary['role'])
             key = str(dictionary['key'])
             session = session_cls(user=user,
                                       role=role,
                                       key=key)
             return session
 
+        except Exception as err:
+            raise err
+
 #+END_SRC
 
-*** Test Make User
-#+NAME: test_make_user
+*** Test Make Session
+#+NAME: test_make_session
 #+BEGIN_SRC python
-class TestMakeUser(TestCase):
+class TestMakeSession(TestCase):
     TESTING = True
 
     def create_app(self):
@@ -110,19 +104,20 @@ class TestMakeUser(TestCase):
 #+BEGIN_SRC python
     @staticmethod
     def make_user(dictionary):
-        name_cls = System.delegate.entities["name"]
-        email_cls = System.delegate.entities["email"]
-        role_cls = System.delegate.entities["role"]
         user_cls = System.delegate.entities["user"]
 
-        name = name_cls(name=dictionary['name'])
-        email = email_cls(email=dictionary['email'])
-        role = role_cls(name=dictionary['role'])
+        try:
+            name = SystemInterface.make_name(dictionary['name'])
+            email = SystemInterface.make_email(dictionary['email'])
+            role = SystemInterface.make_role(dictionary['role'])
 
-        user = user_cls(name=name,
+            user = user_cls(name=name,
                             email=email,
                             roles=[role])
-        return user
+            return user
+
+        except Exception as err:
+            raise err
 
 #+END_SRC
 
@@ -172,16 +167,18 @@ class TestMakeUser(TestCase):
     def make_email(email_str):
         email_cls = System.delegate.entities["email"]
 
-        email = email_cls(email=email_str)
-
-        return email
+        try:
+            email = email_cls(email=email_str)
+            return email
+        except Exception as err:
+            raise err
 
 #+END_SRC
 
-*** Test Make User
+*** Test Make Email
 #+NAME: test_make_email
 #+BEGIN_SRC python
-class TestMakeEmailr(TestCase):
+class TestMakeEmail(TestCase):
     TESTING = True
 
     def create_app(self):
@@ -203,29 +200,129 @@ class TestMakeEmailr(TestCase):
 
         email_str = Config.admin_email
 
-       email = SystemInterface.make_email(email_str)
+        email = SystemInterface.make_email(email_str)
                                                                
         self.assertEqual(email.get("email"), Config.admin_email)
 
 #+END_SRC
 
 
-** Get User from email
+** Make Role
+   Make an Role object that the system can interpret from role string. 
+   make-role: string -> object
+#+NAME: make_role
+#+BEGIN_SRC python
+    @staticmethod
+    def make_role(role_str):
+        role_cls = System.delegate.entities["role"]
+
+        try:
+            role = role_cls(name=role_str)
+            return role
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Make Role
+#+NAME: test_make_role
+#+BEGIN_SRC python
+class TestMakeRole(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_make_role_passes(self):
+        print "test_make_role_passes"
+
+        role_str = Config.admin_role
+
+        role = SystemInterface.make_role(role_str)
+                                                               
+        self.assertEqual(role.get("name"), Config.admin_role)
+
+#+END_SRC
+
+
+** Make Name
+   Make an Name object that the system can interpret from name string. 
+   make-name: string -> object
+#+NAME: make_name
+#+BEGIN_SRC python
+    @staticmethod
+    def make_name(name_str):
+        name_cls = System.delegate.entities["name"]
+
+        try:
+            name = name_cls(name=name_str)
+            return name
+        
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Make Name
+#+NAME: test_make_name
+#+BEGIN_SRC python
+class TestMakeName(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_make_name_passes(self):
+        print "test_make_name_passes"
+
+        name_str = Config.admin_name
+
+        name = SystemInterface.make_name(name_str)
+                                                               
+        self.assertEqual(name.get("name"), Config.admin_name)
+
+#+END_SRC
+
+
+** Get User by email
    Gets user from the system from an email string.
    get_user_by_email : email_str -> user object
 
-#+NAME: get_user_from_email
+#+NAME: get_user_by_email
 #+BEGIN_SRC python
     @staticmethod
-    def get_user_from_email(email_str):
-        email_cls = System.delegate.entities["email"]
+    def get_user_by_email(email_str):
         try:
-            user = System.do("get_user_by_email",
-                                 email=email)
+            email = SystemInterface.make_email(email_str)
+            user = System.do("get_user_by_email", email=email)
 
             if user is None:
                 raise NotFoundError("User with email = %s is not found"
                                         % email_str)
+            else:
+                return user
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
@@ -235,10 +332,10 @@ class TestMakeEmailr(TestCase):
 
 #+END_SRC
 
-*** Get User from email
-#+NAME: test_get_user_from_email
+*** Test Get User from email
+#+NAME: test_get_user_by_email
 #+BEGIN_SRC python
-class TestMakeEmailr(TestCase):
+class TestGetUserByEmail(TestCase):
     TESTING = True
 
     def create_app(self):
@@ -255,17 +352,15 @@ class TestMakeEmailr(TestCase):
         db.drop_all()
         System.delegate = None
 
-    def test_make_email_passes(self):
-        print "test_make_email_passes"
+    def test_get_user_by_email_passes(self):
+        print "test_get_user_by_email_passes"
 
         email_str = Config.admin_email
-
-       email = SystemInterface.make_email(email_str)
+        user = SystemInterface.get_user_by_email(email_str)
                                                                
-        self.assertEqual(email.get("email"), Config.admin_email)
+        self.assertEqual(user.get("email").get("email"), Config.admin_email)
 
 #+END_SRC
-
 
 
 ** Authorize the User
@@ -274,18 +369,8 @@ class TestMakeEmailr(TestCase):
     @staticmethod
     def authorize_user(email_str):
         try:
-            email_cls = System.delegate.entities["email"]
-            email = email_cls(email=email_str)
-
-            user = System.do("get_user_by_email",
-                                 email=email)
-
-            if user is None:
-                raise NotFoundError("User with email = %s is not found"
-                                        % email_str)
-            else:
-                return System.do("login_first_step",
-                              user=user)
+            user = SystemInterface.get_user_by_email(email_str)
+            return System.do("login_first_step", user=user)
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
@@ -492,6 +577,66 @@ class TestAddUser(TestCase):
 #+END_SRC
 
 
+** DelUser
+   del_user: session_dict, email -> user
+#+NAME: del_user
+#+BEGIN_SRC python
+    @staticmethod
+    def del_user(session_dict, email_str):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            user = SystemInterface.get_user_by_email(email_str)
+            return System.do("del_user", session=session, user=user)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Del User
+#+NAME: test_del_user
+#+BEGIN_SRC python
+class TestDelUser(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_del_user_passes(self):
+        print "test_del_user_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+
+        user_dict = {'email': 'abc@gnu.org',
+                             'role': Config.user_role,
+                             'name': "Test User" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        ret_user = SystemInterface.add_user(session_dict, user_dict)
+        self.assertEqual(len(SystemInterface.show_users(session_dict)), 2)
+
+        ret_user = SystemInterface.del_user(session_dict, "abc@gnu.org")
+        self.assertEqual(len(SystemInterface.show_users(session_dict)), 1)
+
+#+END_SRC
+
+
 ** ShowUsers
    show_users: session_dict -> list of user objects
 #+NAME: show_users
@@ -546,7 +691,62 @@ class TestShowUsers(TestCase):
 #+END_SRC
 
 
+** ShowSessions
+   show_sessions: session_dict -> list of session objects
+#+NAME: show_sessions
+#+BEGIN_SRC python
+    @staticmethod
+    def show_sessions(session_dict):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            sessions = System.do("show_sessions", session=session) 
+            return sessions
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Show Sessions
+#+NAME: test_show_sessions
+#+BEGIN_SRC python
+class TestShowSessions(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_show_sessions_passes(self):
+        print "test_show_sessions_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        session_list = SystemInterface.show_sessions(session_dict)
+
+        self.assertEqual(len(session_list), 1)
+
+#+END_SRC
+
+
 ** ShowRoles
+   Show all the roles in the system.
    show_roles: session_dict -> list of roles objects
 #+NAME: show_roles
 #+BEGIN_SRC python
@@ -663,8 +863,12 @@ class TestShowUserDetails(TestCase):
     def set_name_of_user(session_dict, email_str, name_str):
         try:
             session = SystemInterface.make_session(session_dict)
-            email = SystemInterface.make_email(email_str)
-            return System.do("show_user_details", session=session, email=email)
+            user = SystemInterface.get_user_by_email(email_str)
+            name = SystemInterface.make_name(name_str)
+            return System.do("set_name",
+                                 session=session,
+                                 name=name,
+                                 user=user)
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
@@ -674,10 +878,10 @@ class TestShowUserDetails(TestCase):
 
 #+END_SRC
 
-*** Test Show User Details
-#+NAME: test_show_user_details
+*** Test Set Name of a User
+#+NAME: test_set_name_of_user
 #+BEGIN_SRC python
-class TestShowUserDetails(TestCase):
+class TestSetNameOfUser(TestCase):
     TESTING = True
 
     def create_app(self):
@@ -694,21 +898,278 @@ class TestShowUserDetails(TestCase):
         db.drop_all()
         System.delegate = None
 
-    def test_show_user_details_passes(self):
-        print "test_show_user_details_passes"
+    def test_set_name_of_user_passes(self):
+        print "test_set_name_of_user_passes"
 
         session_dict = {'email': Config.admin_email,
                              'role': Config.admin_role,
                              'key': "abcde" }
 
         session = SystemInterface.create_session_in_system(session_dict)
-        user = SystemInterface.show_user_details(session_dict, 
-                                                     Config.admin_email)
+        user = SystemInterface.set_name_of_user(session_dict, 
+                                                    Config.admin_email,
+                                                    "Temp Admin")
+                                                    
 
-        self.assertEqual(user.get("email").get("email"), Config.admin_email)
+        self.assertEqual(user.get("name").get("name"), "Temp Admin")
 
 #+END_SRC
 
+
+
+** SetEmailOfUser
+   set_email_of_user: session_dict, email, email -> user
+#+NAME: set_email_of_user
+#+BEGIN_SRC python
+    @staticmethod
+    def set_email_of_user(session_dict, email_str, set_email_str):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            user = SystemInterface.get_user_by_email(email_str)
+            email = SystemInterface.make_email(set_email_str)
+            return System.do("set_email",
+                                 session=session,
+                                 email=email,
+                                 user=user)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Set Email of a User
+#+NAME: test_set_email_of_user
+#+BEGIN_SRC python
+class TestSetEmailOfUser(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_set_email_of_user_passes(self):
+        print "test_set_email_of_user_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        user = SystemInterface.set_email_of_user(session_dict, 
+                                                    Config.admin_email,
+                                                    "tt@gnu.org")
+                                                    
+
+        self.assertEqual(user.get("email").get("email"), "tt@gnu.org")
+
+#+END_SRC
+
+
+
+** GetRolesOfUser
+   get_roles_of_user: session_dict, email -> roles
+#+NAME: get_roles_of_user
+#+BEGIN_SRC python
+    @staticmethod
+    def get_roles_of_user(session_dict, email_str):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            user = SystemInterface.get_user_by_email(email_str)
+            return System.do("get_roles_of_user", session=session, user=user)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Get Roles of User
+#+NAME: test_get_roles_of_user
+#+BEGIN_SRC python
+class TestGetRolesOfUser(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_get_roles_of_user_passes(self):
+        print "test_get_roles_of_user_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        roles = SystemInterface.get_roles_of_user(session_dict, 
+                                                  Config.admin_email)
+
+        self.assertEqual(roles[0].get("name"), Config.admin_name)
+        self.assertEqual(len(roles), 1)
+
+#+END_SRC
+
+
+** AddRoleToUser
+   add_role_to_user: session_dict, email, role -> user
+#+NAME: add_role_to_user
+#+BEGIN_SRC python
+    @staticmethod
+    def add_role_to_user(session_dict, email_str, role_str):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            user = SystemInterface.get_user_by_email(email_str)
+            role = SystemInterface.make_role(role_str)
+            return System.do("add_role_to_user", 
+                             session=session,
+                             user=user,
+                             role=role)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Add Role to User
+#+NAME: test_add_role_to_user
+#+BEGIN_SRC python
+class TestAddRoleToUser(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_add_role_to_user_passes(self):
+        print "test_add_role_to_user_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+        
+        user_dict = {'email': 'abc@gnu.org',
+                             'role': Config.user_role,
+                             'name': "Test User" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        user = SystemInterface.add_user(session_dict, user_dict)
+        self.assertEqual(len(user.get("roles")), 1)
+        user = SystemInterface.add_role_to_user(session_dict,
+                                                    "abc@gnu.org",
+                                                    Config.admin_role)
+        self.assertEqual(len(user.get("roles")), 2)
+
+#+END_SRC
+
+
+** DelRoleOfUser
+   del_role_of_user: session_dict, email, role -> user
+#+NAME: del_role_of_user
+#+BEGIN_SRC python
+    @staticmethod
+    def del_role_of_user(session_dict, email_str, role_str):
+        try:
+            session = SystemInterface.make_session(session_dict)
+            user = SystemInterface.get_user_by_email(email_str)
+            role = SystemInterface.make_role(role_str)
+            return System.do("del_role_of_user", 
+                             session=session,
+                             user=user,
+                             role=role)
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
+
+#+END_SRC
+
+*** Test Del Role of User
+#+NAME: test_del_role_of_user
+#+BEGIN_SRC python
+class TestDelRoleOfUser(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        Config.populate_db()
+        SystemInterface.initialize(PersistenceDelegate)
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        System.delegate = None
+
+    def test_del_role_of_user_passes(self):
+        print "test_del_role_of_user_passes"
+
+        session_dict = {'email': Config.admin_email,
+                             'role': Config.admin_role,
+                             'key': "abcde" }
+        
+        user_dict = {'email': 'abc@gnu.org',
+                             'role': Config.user_role,
+                             'name': "Test User" }
+
+        session = SystemInterface.create_session_in_system(session_dict)
+        user = SystemInterface.add_user(session_dict, user_dict)
+
+        self.assertEqual(len(user.get("roles")), 1)
+
+        user = SystemInterface.add_role_to_user(session_dict,
+                                                    "abc@gnu.org",
+                                                    Config.admin_role)
+        self.assertEqual(len(user.get("roles")), 2)
+
+        user = SystemInterface.del_role_of_user(session_dict,
+                                                    "abc@gnu.org",
+                                                    Config.admin_role)
+        self.assertEqual(len(user.get("roles")), 1)
+
+#+END_SRC
 
 
 * Infra                                                         :boilerplate:
@@ -761,13 +1222,23 @@ if __name__ == '__main__':
 <<make_session>>
 <<make_user>>
 <<make_email>>
+<<make_name>>
+<<make_role>>
 <<authorize_user>>
 <<create_session_in_system>>
 <<logout>>
 <<add_user>>
+<<del_user>>
 <<show_users>>
 <<show_user_details>>
 <<show_roles>>
+<<get_user_by_email>>
+<<set_name_of_user>>
+<<set_email_of_user>>
+<<get_roles_of_user>>
+<<add_role_to_user>>
+<<del_role_of_user>>
+<<show_sessions>>
 
 #+END_SRC
 
@@ -777,13 +1248,24 @@ if __name__ == '__main__':
 <<imports_for_tests>>
 <<test_make_session>>
 <<test_make_user>>
+<<test_make_role>>
+<<test_make_name>>
+<<test_make_email>>
 <<test_authorize_user>>
 <<test_create_session_in_system>>
 <<test_logout>>
 <<test_add_user>>
+<<test_del_user>>
 <<test_show_users>>
 <<test_show_user_details>>
 <<test_show_roles>>
+<<test_get_user_by_email>>
+<<test_set_name_of_user>>
+<<test_set_email_of_user>>
+<<test_get_roles_of_user>>
+<<test_add_role_to_user>>
+<<test_del_role_of_user>>
+<<test_show_sessions>>
 <<run_test_cases>>
 
 #+END_SRC
