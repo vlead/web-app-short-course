@@ -449,8 +449,9 @@ def del_user(email_str):
         session_dict = {'email': email,
                             'role': role,
                             'key': key }        
-        try:            
-            user_obj = SystemInterface.del_user(session_dict, email_str)
+        try:
+           
+            user_obj = SystemInterface.del_user(session_dict, str(email_str))
             return jsonify({"status" : "success"})
 
         except NotAuthorizedError as e:
@@ -633,8 +634,15 @@ def show_sessions():
         try:            
             sessions = SystemInterface.show_sessions(session_dict)
             return jsonify_list(sessions)
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
@@ -702,8 +710,15 @@ def show_roles():
         try:            
             roles = SystemInterface.show_roles(session_dict)
             return jsonify_list(roles)
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
@@ -762,10 +777,17 @@ def show_user_details():
                             'role': role,
                             'key': key }        
         try:            
-            user = SystemInterface.show_user_details(session_dict, email_str)
+            user = SystemInterface.show_user_details(session_dict, str(email_str))
             return jsonify(user.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
@@ -854,8 +876,15 @@ def set_email():
                                                              set_email_str)
                                                         
             return jsonify(user_obj.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
@@ -943,8 +972,15 @@ def set_name():
                                                              name_str)
                                                         
             return jsonify(user_obj.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
@@ -1005,8 +1041,15 @@ def show_roles_of_user():
             roles = SystemInterface.show_roles_of_user(session_dict,
                                                            email_str)
             return jsonify_list(roles)
+ 
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
@@ -1098,8 +1141,15 @@ def add_role_to_user():
                                                             email_str,
                                                             role_str)
             return jsonify(user_obj.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
@@ -1124,22 +1174,22 @@ def add_role_to_user():
     + Content ::
       #+BEGIN_EXAMPLE
       {
-  "email": {
-    "email": "xyz@gmail.com", 
-    "id": "3"
-  }, 
-  "id": "2", 
-  "name": {
-    "id": "3", 
-    "name": "XYZ"
-  }, 
-  "roles": [
-    {
+      "email": {
+      "email": "xyz@gmail.com", 
+      "id": "3"
+      }, 
+      "id": "2", 
+      "name": {
+      "id": "3", 
+      "name": "XYZ"
+      }, 
+      "roles": [
+      {
       "id": "2", 
       "name": "user"
-    }
-  ]
-}
+      }
+      ]
+      }
       #+END_EXAMPLE
 
   - Error Response ::
@@ -1170,7 +1220,7 @@ def add_role_to_user():
 
 @api.route('/del_role_of_user', methods=['PUT'])
 def del_role_of_user():
-    if request.method == 'POST':
+    if request.method == 'PUT':
         data_json = json.dumps(request.get_json())
         data_dict = yaml.safe_load(data_json)
         email_str = data_dict['email']
@@ -1187,8 +1237,16 @@ def del_role_of_user():
                                                             email_str,
                                                             role_str)
             return jsonify(user_obj.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
+
 
 #+END_SRC
 
