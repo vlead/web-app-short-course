@@ -154,6 +154,7 @@ def get_google_oauth_token():
 
  #+END_SRC
 
+
 ** Create Session
    API to create login and system sessions
 
@@ -172,9 +173,11 @@ def get_google_oauth_token():
      + Code: 200
 
      + Content:
-       {
+       #+BEGIN_EXAMPLE
+        {
          status: "success"
-       }
+        }
+       #+END_EXAMPLE
 
   - Error Response ::
     + Code: 401 UNAUTHORIZED
@@ -244,7 +247,11 @@ def create_session():
   - Success Response ::
     + Code: 200
 
-    + Content :: {"status" : "Successfully logged out from system"}
+    + Content :: 
+      #+BEGIN_EXAMPLE
+      {"status" : "Successfully logged out from system"}
+      #+END_EXAMPLE     
+
 
   - Error Response ::
     + Code: 401 UNAUTHORIZED
@@ -317,26 +324,26 @@ def logout():
      + Code: 200
 
      + Content:
-#+BEGIN_EXAMPLE
-{
-  "email": {
-    "email": "xyz@gmail.com",
-    "id": "2"
-  },
-  "id": "2",
-  "name": {
-    "id": "2",
-    "name": "xyz"
-  },
-  "roles": [
-    {
-      "id": "2",
-      "name": "user"
-    }
-  ]
-}
-
-#+END_EXAMPLE
+       #+BEGIN_EXAMPLE
+       {
+       "email": {
+       "email": "xyz@gmail.com",
+       "id": "2"
+       },
+       "id": "2",
+       "name": {
+       "id": "2",
+       "name": "xyz"
+       },
+       "roles": [
+       {
+       "id": "2",
+       "name": "user"
+       }
+       ]
+       }
+       
+       #+END_EXAMPLE
    
   - Error Response ::
     + Code: 401 UNAUTHORIZED
@@ -394,7 +401,7 @@ def add_user():
 
 #+END_SRC
 
-
+    
 ** Del User
    API to delete a user
 
@@ -563,9 +570,29 @@ def show_users():
   - Success Response ::
     + Code: 200
 
-    + Content :: list of roles
+    + Content :: list of sessions
       #+BEGIN_EXAMPLE
-
+      [
+  {
+    "role": {
+      "name": "admin",
+      "id": "None"
+    },
+    "user": {
+      "id": "1",
+      "name": {
+        "name": "admin",
+        "id": "1"
+      },
+      "roles": [],
+      "email": {
+        "email": "xyz@vlabs.ac.in",
+        "id": "1"
+      }
+    },
+    "key": "(u'ya29.GlvlAwItRd_ahdDONLq5EymPoOTaMf5jNh1k65PUPu8Zx6TLo5H5vOipa_RCAXhEeQ7qlHsM4MS96DwamtLXbqgbUuPVCmQ4v_AbfOi6wP1i7mXQ9wg9qu4aEwxQ', '')"
+  }
+]
       #+END_EXAMPLE
 
   - Error Response ::
@@ -745,10 +772,70 @@ def show_user_details():
 
 ** Set email of a User
    API to change the email of the user.
+*** API Design
+
+  - URL :: /set_email
+  - Method :: GET
+
+  - URL Params ::  None
+    #+BEGIN_EXAMPLE
+    {
+    "email" : "abc@gmail.com",
+    "set_email_str" : "xyz@gmail.com"
+    
+    }
+    #+END_EXAMPLE		   
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+{
+  "email": {
+    "email": "xyz@gmail.com", 
+    "id": "3"
+  }, 
+  "id": "2", 
+  "name": {
+    "id": "2", 
+    "name": "Sreepathi"
+  }, 
+  "roles": [
+    {
+      "id": "2", 
+      "name": "user"
+    }
+  ]
+}
+      #+END_EXAMPLE
+		
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/set_email
+    #+END_EXAMPLE
+*** Implementation
 #+NAME: set_email_of_user
 #+BEGIN_SRC python
 @api.route('/set_email', methods=['PUT'])
-def set_name():
+def set_email():
     if request.method == 'PUT':
         data_json = json.dumps(request.get_json())
         data_dict = yaml.safe_load(data_json)
@@ -774,7 +861,66 @@ def set_name():
 
 
 ** Set name of a User
-   API to change the email of the user.
+   API to change the name of the user.
+*** API Design
+
+  - URL :: /set_name
+  - Method :: GET
+
+  - URL Params :: 
+      #+BEGIN_EXAMPLE
+      {
+      "email" : "xyz@gmail.com",
+      "name_str" : "XYZ"      
+      }
+      #+END_EXAMPLE		   
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      {
+  "email": {
+    "email": "xyz@gmail.com", 
+    "id": "3"
+  }, 
+  "id": "2", 
+  "name": {
+    "id": "3", 
+    "name": "XYZ"
+  }, 
+  "roles": [
+    {
+      "id": "2", 
+      "name": "user"
+    }
+  ]
+}
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/set_name
+    #+END_EXAMPLE
+*** Implementation
 #+NAME: set_name_of_user
 #+BEGIN_SRC python
 @api.route('/set_name', methods=['PUT'])
@@ -792,7 +938,7 @@ def set_name():
                             'role': role,
                             'key': key }        
         try:            
-            user_obj = SystemInterface.set_email_of_user(session_dict,
+            user_obj = SystemInterface.set_name_of_user(session_dict,
                                                              email_str,
                                                              name_str)
                                                         
@@ -805,6 +951,44 @@ def set_name():
 
 ** Show Roles of a user
    API to show all roles of a user
+*** API Design
+
+  - URL :: /show_roles_of_user
+  - Method :: GET
+
+  - URL Params ::  None
+       
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/show_users
+    #+END_EXAMPLE
+*** Implementation
 #+NAME: show_roles_of_user
 #+BEGIN_SRC python
 @api.route('/show_roles_of_user', methods=['GET'])
@@ -829,9 +1013,72 @@ def show_roles_of_user():
 
 ** Add Role to a user 
    API to add a role to a user.
+*** API Design
+
+  - URL :: /add_role_to_user
+  - Method :: GET
+
+  - URL Params ::  
+    #+BEGIN_EXAMPLE
+      {
+      "email" : "xyz@gmail.com",
+      "role" : "admin"      
+    #+END_EXAMPLE
+
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      {
+  "email": {
+    "email": "xyz@gmail.com", 
+    "id": "3"
+  }, 
+  "id": "2", 
+  "name": {
+    "id": "3", 
+    "name": "XYZ"
+  }, 
+  "roles": [
+    {
+      "id": "1", 
+      "name": "admin"
+    }, 
+    {
+      "id": "2", 
+      "name": "user"
+    }
+  ]
+}
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/add_role_to_user
+    #+END_EXAMPLE
+*** Implementation
 #+NAME: add_role_to_user
 #+BEGIN_SRC python
-@api.route('/add_role_to_user', methods=['PUT'])
+@api.route('/add_role_to_user', methods=['POST'])
 def add_role_to_user():
     if request.method == 'POST':
         
@@ -859,11 +1106,70 @@ def add_role_to_user():
 
 ** Del Role of user 
    API to delete a role of a user.
+*** API Design
+
+  - URL :: /del_role_of_user
+  - Method :: PUT
+
+  - URL Params ::  None
+    #+BEGIN_EXAMPLE
+    {
+    "email" : "sripathi.iiit@gmail.com",
+    "role" : "admin"
+    }
+    #+END_EXAMPLE		   
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      {
+  "email": {
+    "email": "xyz@gmail.com", 
+    "id": "3"
+  }, 
+  "id": "2", 
+  "name": {
+    "id": "3", 
+    "name": "XYZ"
+  }, 
+  "roles": [
+    {
+      "id": "2", 
+      "name": "user"
+    }
+  ]
+}
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/del_role_of_user
+    #+END_EXAMPLE
+*** Implementation
 #+NAME: del_role_of_user
 #+BEGIN_SRC python
 
 @api.route('/del_role_of_user', methods=['PUT'])
-def add_role_to_user():
+def del_role_of_user():
     if request.method == 'POST':
         data_json = json.dumps(request.get_json())
         data_dict = yaml.safe_load(data_json)
@@ -877,7 +1183,7 @@ def add_role_to_user():
                             'role': role,
                             'key': key }        
         try:            
-            user_obj = SystemInterface.add_role_to_user(session_dict, 
+            user_obj = SystemInterface.del_role_of_user(session_dict, 
                                                             email_str,
                                                             role_str)
             return jsonify(user_obj.to_client())
@@ -978,6 +1284,11 @@ if __name__ == '__main__':
 <<show_sessions>>
 <<show_user_details>>
 <<show_roles>>
+<<set_email_of_user>>
+<<set_name_of_user>>
+<<show_roles_of_user>>
+<<add_role_to_user>>
+<<del_role_of_user>>
 
 #+END_SRC
 
