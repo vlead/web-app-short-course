@@ -154,7 +154,6 @@ def get_google_oauth_token():
 
  #+END_SRC
 
-
 ** Create Session
    API to create login and system sessions
 
@@ -326,21 +325,21 @@ def logout():
      + Content:
        #+BEGIN_EXAMPLE
        {
-       "email": {
-       "email": "xyz@gmail.com",
-       "id": "2"
-       },
+         "email": {
+         "email": "xyz@gmail.com",
+         "id": "2"
+          },
        "id": "2",
        "name": {
        "id": "2",
        "name": "xyz"
-       },
+          },
        "roles": [
-       {
-       "id": "2",
-       "name": "user"
-       }
-       ]
+             {
+            "id": "2",
+            "name": "user"
+             }
+           ]
        }
        
        #+END_EXAMPLE
@@ -480,34 +479,34 @@ def del_user(email_str):
     + Code: 200
 
     + Content ::
-#+BEGIN_EXAMPLE
-[
-  {
-    "id": "1",
-    "email": {
-      "email": "xyz@vlabs.ac.in",
-      "id": "1"
-    },
-    "roles": [],
-    "name": {
-      "name": "admin",
-      "id": "1"
-    }
-  },
-  {
-    "id": "2",
-    "email": {
-      "email": "abc@gmail.com",
-      "id": "2"
-    },
-    "roles": [],
-    "name": {
-      "name": "abc",
-      "id": "2"
-    }
-  }
-]
-#+END_EXAMPLE
+      #+BEGIN_EXAMPLE
+      [
+	{
+	  "id": "1",
+	  "email": {
+	    "email": "xyz@vlabs.ac.in",
+	    "id": "1"
+	  },
+	  "roles": [],
+	  "name": {
+	    "name": "admin",
+	    "id": "1"
+	  }
+	},
+	{
+	  "id": "2",
+	  "email": {
+	    "email": "abc@gmail.com",
+	    "id": "2"
+	  },
+	  "roles": [],
+	  "name": {
+	    "name": "abc",
+	    "id": "2"
+	  }
+	}
+      ]
+      #+END_EXAMPLE
 
   - Error Response ::
     + Code: 401 UNAUTHORIZED
@@ -574,26 +573,26 @@ def show_users():
     + Content :: list of sessions
       #+BEGIN_EXAMPLE
       [
-  {
-    "role": {
-      "name": "admin",
-      "id": "None"
-    },
-    "user": {
-      "id": "1",
-      "name": {
-        "name": "admin",
-        "id": "1"
-      },
-      "roles": [],
-      "email": {
-        "email": "xyz@vlabs.ac.in",
-        "id": "1"
-      }
-    },
-    "key": "(u'ya29.GlvlAwItRd_ahdDONLq5EymPoOTaMf5jNh1k65PUPu8Zx6TLo5H5vOipa_RCAXhEeQ7qlHsM4MS96DwamtLXbqgbUuPVCmQ4v_AbfOi6wP1i7mXQ9wg9qu4aEwxQ', '')"
-  }
-]
+	{
+	  "role": {
+	    "name": "admin",
+	    "id": "None"
+	  },
+	  "user": {
+	    "id": "1",
+	    "name": {
+	      "name": "admin",
+	      "id": "1"
+	    },
+	    "roles": [],
+	    "email": {
+	      "email": "xyz@vlabs.ac.in",
+	      "id": "1"
+	    }
+	  },
+	  "key": "(u'ya29.GlvlAwItRd_ahdDONLq5EymPoOTaMf5jNh1k65PUPu8Zx6TLo5H5vOipa_RCAXhEeQ7qlHsM4MS96DwamtLXbqgbUuPVCmQ4v_AbfOi6wP1i7mXQ9wg9qu4aEwxQ', '')"
+	}
+      ]
       #+END_EXAMPLE
 
   - Error Response ::
@@ -658,18 +657,18 @@ def show_sessions():
     + Code: 200
 
     + Content :: list of roles
-#+BEGIN_EXAMPLE
+      #+BEGIN_EXAMPLE
       [
-  {
-    "name": "admin",
-    "id": "1"
-  },
-  {
-    "name": "user",
-    "id": "2"
-  }
-]
-#+END_EXAMPLE
+        {
+       "name": "admin",
+       "id": "1"
+        },
+       {
+       "name": "user",
+       "id": "2"
+       }
+      ]
+      #+END_EXAMPLE
 
   - Error Response ::
     + Code: 401 UNAUTHORIZED
@@ -736,7 +735,23 @@ def show_roles():
 
     + Content :: user with roles
       #+BEGIN_EXAMPLE
-
+      {
+	"email": {
+	  "email": "xyz@vlabs.ac.in", 
+	  "id": "1"
+	}, 
+	"id": "1", 
+	"name": {
+	  "id": "1", 
+	  "name": "admin"
+	}, 
+	"roles": [
+	  {
+	    "id": "1", 
+	    "name": "admin"
+	  }
+	]
+      }
       #+END_EXAMPLE
 
   - Error Response ::
@@ -759,7 +774,7 @@ def show_roles():
 
   - Example ::
     #+BEGIN_EXAMPLE
-    http://localhost:5000/show_roles
+    http://localhost:5000/show_user_details?email=<email_str>
     #+END_EXAMPLE
 
 *** Implementation
@@ -812,23 +827,23 @@ def show_user_details():
 
     + Content ::
       #+BEGIN_EXAMPLE
-{
-  "email": {
-    "email": "xyz@gmail.com", 
-    "id": "3"
-  }, 
-  "id": "2", 
-  "name": {
-    "id": "2", 
-    "name": "Sreepathi"
-  }, 
-  "roles": [
-    {
-      "id": "2", 
-      "name": "user"
-    }
-  ]
-}
+      {
+	"email": {
+	  "email": "xyz@gmail.com", 
+	  "id": "3"
+	}, 
+	"id": "2", 
+	"name": {
+	  "id": "2", 
+	  "name": "Sreepathi"
+	}, 
+	"roles": [
+	  {
+	    "id": "2", 
+	    "name": "user"
+	  }
+	]
+      }
       #+END_EXAMPLE
 		
   - Error Response ::
@@ -908,23 +923,23 @@ def set_email():
 
     + Content ::
       #+BEGIN_EXAMPLE
-      {
-  "email": {
-    "email": "xyz@gmail.com", 
-    "id": "3"
-  }, 
-  "id": "2", 
-  "name": {
-    "id": "3", 
-    "name": "XYZ"
-  }, 
-  "roles": [
-    {
-      "id": "2", 
-      "name": "user"
-    }
-  ]
-}
+	    {
+	"email": {
+	  "email": "xyz@gmail.com", 
+	  "id": "3"
+	}, 
+	"id": "2", 
+	"name": {
+	  "id": "3", 
+	  "name": "XYZ"
+	}, 
+	"roles": [
+	  {
+	    "id": "2", 
+	    "name": "user"
+	  }
+	]
+      }
       #+END_EXAMPLE
 
   - Error Response ::
@@ -989,17 +1004,18 @@ def set_name():
    API to show all roles of a user
 *** API Design
 
-  - URL :: /show_roles_of_user
+  - URL :: /show_roles_of_user?email=xyz@vlabs.ac.in
   - Method :: GET
 
-  - URL Params ::  None
+  - URL Params :: 
+		  
        
   - Success Response ::
     + Code: 200
 
     + Content ::
       #+BEGIN_EXAMPLE
-
+      [{"name": "admin", "id": "1"}]
       #+END_EXAMPLE
 
   - Error Response ::
@@ -1022,7 +1038,7 @@ def set_name():
 
   - Example ::
     #+BEGIN_EXAMPLE
-    http://localhost:5000/show_users
+    http://localhost:5000/show_roles_of_user?email=xyz@vlabs.ac.in
     #+END_EXAMPLE
 *** Implementation
 #+NAME: show_roles_of_user
@@ -1030,7 +1046,7 @@ def set_name():
 @api.route('/show_roles_of_user', methods=['GET'])
 def show_roles_of_user():
     if request.method == 'GET':
-        email_str = request.args.get('email')
+        email_str = str(request.args.get('email'))
         email = session['email']
         role = session['role']
         key = session['google_token']
@@ -1038,7 +1054,7 @@ def show_roles_of_user():
                             'role': role,
                             'key': key }        
         try:            
-            roles = SystemInterface.show_roles_of_user(session_dict,
+            roles = SystemInterface.get_roles_of_user(session_dict,
                                                            email_str)
             return jsonify_list(roles)
  
@@ -1053,7 +1069,6 @@ def show_roles_of_user():
 
 #+END_SRC
 
-
 ** Add Role to a user 
    API to add a role to a user.
 *** API Design
@@ -1066,6 +1081,7 @@ def show_roles_of_user():
       {
       "email" : "xyz@gmail.com",
       "role" : "admin"      
+      }
     #+END_EXAMPLE
 
   - Success Response ::
@@ -1073,27 +1089,27 @@ def show_roles_of_user():
 
     + Content ::
       #+BEGIN_EXAMPLE
-      {
-  "email": {
-    "email": "xyz@gmail.com", 
-    "id": "3"
-  }, 
-  "id": "2", 
-  "name": {
-    "id": "3", 
-    "name": "XYZ"
-  }, 
-  "roles": [
-    {
-      "id": "1", 
-      "name": "admin"
-    }, 
-    {
-      "id": "2", 
-      "name": "user"
-    }
-  ]
-}
+	    {
+	"email": {
+	  "email": "xyz@gmail.com", 
+	  "id": "3"
+	}, 
+	"id": "2", 
+	"name": {
+	  "id": "3", 
+	  "name": "XYZ"
+	}, 
+	"roles": [
+	  {
+	    "id": "1", 
+	    "name": "admin"
+	  }, 
+	  {
+	    "id": "2", 
+	    "name": "user"
+	  }
+	]
+      }
       #+END_EXAMPLE
 
   - Error Response ::
