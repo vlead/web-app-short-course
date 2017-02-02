@@ -26,7 +26,7 @@
   
      Exit our of the mysql console
 
-* Intial make
+* Initial make
   Run make from =web-app-short-course= directory to build the application.  The
   code gets tangled but the test cases will fail.  This is because some of the
   dependencies have not beeb set up.  To insall the dependencies and run the
