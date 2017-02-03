@@ -60,11 +60,27 @@ get_all_users: function(cb) {
 #+NAME: rest_api
 #+BEGIN_SRC js
 var RestAPI = {
+<<rest_create_session>>
 <<rest_delete_user>>
 <<rest_create_user>>
 <<rest_get_all_users>>
 };
 #+END_SRC
+
+** Create Session
+** Delete User
+#+NAME: rest_create_session
+#+BEGIN_SRC js
+    create_session: function(role, success_cb, error_cb) {
+        post_json("/create_session",
+            {
+              role: role
+            },
+            success_cb,
+            error_cb);
+    },
+#+END_SRC
+
 
 ** Delete User
 #+NAME: rest_delete_user
@@ -182,33 +198,56 @@ views
 #+BEGIN_SRC js
 var API = RestAPI;
 #+END_SRC
-  
+
+
 * User JS - Window onload: setup # handlers, start from register
 #+NAME: user_window_onload
 #+BEGIN_SRC js
+
+function is_logged_in() {
+  return document.cookie.indexOf("session") != -1;
+}
+
   window.onload = function() {
       make_hash_handler({register: register_handler,
                          login:  login_handler,
                          get_all_users: get_all_users_handler,
                          create_user: create_user_handler,
-                         home: home_handler});
-  
+                         home: home_handler,
+                         index: index_handler});
+      
+      // Hashes available when not logged in (authorized)
+      var unauth_available_hashes = ["index"];
+
       //TODO: figure out why this does not trigger onhashchange
       //TRIAL: check if preventing race condition helps
       setTimeout(function() {
+
           let current_hash = get_window_hash_url();
           if (current_hash == "") {
               console.log("defaulting #url to get_all_users");
-              current_hash = "home";
+              current_hash = "index";
           }
+
           console.log("navigating to: #" + current_hash);
-  
-          navigate(current_hash);
+          
+          // If the hash is available to everyone, or if the user
+          // is logged in, give them access
+          if (unauth_available_hashes.indexOf(current_hash) > -1  ||
+             is_logged_in()) {
+            navigate(current_hash);
+          }
+          else {
+            //by default, if unauthorized, send to index page
+            naviagte("index");
+          }
+
           //HACK: I don't know why this is needed for the first hash change. figure it out!
           $(window).trigger("hashchange")
       }, 100);
   }
 #+END_SRC
+
 
 
 All components that are part of our single page application go here
@@ -423,6 +462,7 @@ function login_handler() {
       <li><a onclick="window.location.hash='create_user'"> Create User </a></li>
       <li><a onclick="window.location.hash='get_all_users'"> Get all users </a></li>
       <li><a onclick="window.location.hash='delete_user'"> Delete User </a></li>
+      <li><a onclick="window.location.hash='delete_user'"> Logout </a></li>
     </ul>
   </div>
 #+END_SRC
@@ -432,6 +472,24 @@ function login_handler() {
   function home_handler() {
       hide_all_containers();
       $('#home-container').removeClass("hidden");
+  }
+#+END_SRC
+
+* User Component - Index page
+#+NAME: index_html
+#+BEGIN_SRC html
+  <div id="index-container">
+    <ul>
+      <li><a onclick="window.location='/login'""> Login </a></li>
+    </ul>
+  </div>
+#+END_SRC
+
+#+NAME: user_index_handler
+#+BEGIN_SRC js
+  function index_handler() {
+      hide_all_containers();
+      $('#index-container').removeClass("hidden");
   }
 #+END_SRC
 
@@ -462,6 +520,7 @@ so that when we are actually deploying this app, the static files can be served 
   <<create_user_html>>
   <<delete_user_html>>
   <<home_html>>
+  <<index_html>>
   
   </body>
   </html>
@@ -517,6 +576,7 @@ so that when we are actually deploying this app, the static files can be served 
 <<user_get_all_users_handler>>
 <<user_create_user_handler>>
 <<user_home_handler>>
+<<user_index_handler>>
 
 //NOTE: user_window_onload uses the handlers
 //so keep these below the handlers
