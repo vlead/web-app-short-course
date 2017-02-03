@@ -311,7 +311,6 @@ class TestPersistenceDelegate(TestCase):
 
 #+END_SRC
 
-
 *** Return the users in the system
     This function returns the list of users in the database maintained by the system.
 #+NAME: get_users
@@ -579,6 +578,28 @@ class TestPersistenceDelegate(TestCase):
 
 #+END_SRC
 
+*** Mask roles of a User
+    This function masks the roles of a user
+#+NAME: mask_roles_of_user
+#+BEGIN_SRC python
+    def mask_roles_of_user(self, user):
+        user.set(roles=[], do_not_save=True)
+        return user
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_mask_roles_of_user
+#+BEGIN_SRC python
+    def test_mask_roles_of_user(self):
+        print "test_mask_roles_of_user"
+        email = Email(email=Config.admin_email)
+        user = self.delegate.get_user_by_email(email)
+        user = self.delegate.mask_roles_of_user(user)
+
+        self.assertEqual(user.get("roles"), [])
+
+#+END_SRC
 
 *** Set Email of a User
     This function sets Email of a user in the user set. No exception is thrown
@@ -772,6 +793,7 @@ if __name__ == '__main__':
 <<add_role_to_user>>
 <<user_with_admin_role_exists>>
 <<del_role_of_user>>
+<<mask_roles_of_user>>
 
 #+END_SRC
 
@@ -799,6 +821,7 @@ if __name__ == '__main__':
 <<test_add_role_to_user>>
 <<test_user_with_admin_role_exists>>
 <<test_del_role_of_user>>
+<<test_mask_roles_of_user>>
 <<run_test_cases>>
 
 #+END_SRC

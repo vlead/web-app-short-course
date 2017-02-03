@@ -19,11 +19,119 @@
 def index():
     return render_template("index.html")
 #+END_SRC
-** Google OAuth Credentials
-      - Google OAuth service required URLs (Credentials) should be specified
 
-#+NAME: google_oauth_configuration
-#+BEGIN_SRC python
+
+** Login
+   API to login to the application. 
+   
+*** API Design
+
+  - URL :: /login
+  - Method :: GET
+
+  - URL Params ::  None
+       
+  - Success Response ::
+    + Code: 200
+
+    + Content :: list of roles
+      #+BEGIN_EXAMPLE
+      [
+         {
+         "name": "admin",
+         "id": "1"
+         },
+         {
+         "name": "user",
+         "id": "2"
+         }
+      ]
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/login
+    #+END_EXAMPLE
+
+	      
+*** =Login= API
+    When user clicks on =login= button from f/e it will invoke =/login= api and
+    thereby it will forward request to =google=
+ #+NAME: login_route
+ #+BEGIN_SRC python
+@api.route('/login')
+def login():
+    return google_oauth.authorize(callback=url_for('APIs.authorized',
+                                                       _external=True))
+
+ #+END_SRC
+
+    
+*** Google Callback response =API=
+    - Once the Google verfies the user credentials it will send callback
+      response to =/authorized= api which should be registered at google's
+      dashboard as one of Authorized redirect URIs
+
+    - Once google authenticates the user, =userdirectory= application will
+      authorize the user to use the application.
+
+ #+NAME: callback_google_api
+ #+BEGIN_SRC python
+@api.route('/authorized')
+def authorized():
+    try:
+        resp = google_oauth.authorized_response()
+        if resp is None:
+            return jsonify({"Status" : "User denied access"})
+        session['google_token'] = (resp['access_token'], '')
+        user_info = google_oauth.get('userinfo')
+        email = str(user_info.data['email'])
+        try:
+            roles = SystemInterface.authorize_user(email)
+            session['email'] = email
+            return jsonify_list(roles)
+
+        except NotAuthorizedError as e:
+            session.pop('google_token', None)
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            session.pop('google_token', None)
+            abort(500, 'Error: %s' % str(e))
+
+    except Exception as e:
+        print str(e)
+        abort(500, 'Error: %s' % str(e))
+        
+ #+END_SRC
+
+
+*** Google OAuth Credentials
+    Google OAuth service required URLs (Credentials) should be specified
+
+ #+NAME: google_oauth_configuration
+ #+BEGIN_SRC python
 
 session_list = {}
 oauth = OAuth()
@@ -42,106 +150,68 @@ google_oauth = oauth.remote_app(
     authorize_url='https://accounts.google.com/o/oauth2/auth',
 )
 
-#+END_SRC
-** Jsonify_list
-#+NAME: jsonify_list
-#+BEGIN_SRC python
-# return a list of dicts as json with correct mime types
-# flask does not provide a jsonify for lists; hence this method
-def jsonify_list(data):
-    if type(data) is not list:
-        raise Exception('jsonify_list function accepts only a list')
-    s_data = []
-    for d in data:
-        s_data.append(d.to_client())
-    return make_response(json.dumps(s_data), 200,
-                         {'content-type': 'application/json'})
+ #+END_SRC
 
-#+END_SRC
-   
-** Google Callback response =API=
-      - Once the Google verfies the user credentials it will send callback
-        response to =/authorized= api which should be registered at google's
-        dashboard as one of Authorized redirect URIs
 
-      - Once the google authenticates the user, =Outreach-Portal= will
-        authorize the user by providing the user dashboard based on the role of
-        the user. 
-
-#+NAME: callback_google_api
-#+BEGIN_SRC python
-@api.route('/authorized')
-def authorized():
-    try:
-        resp = google_oauth.authorized_response()
-        if resp is None:
-            return jsonify({"Status" : "User denied access"})
-        session['google_token'] = (resp['access_token'], '')
-        user_info = google_oauth.get('userinfo')
-        email = str(user_info.data['email'])
-        try:
-            roles = SystemInterface.authorize_user(email)
-            session['email'] = email
-            return jsonify_list(roles)
-        except Exception as e:
-            session.pop('google_token', None)
-            return jsonify({"Exception" : str(e)})
-
-    except Exception as e:
-        print str(e)
-        return jsonify({"Exception" : str(e)})
-
-        
-#+END_SRC
-** Google token getter
-      - Once the google verfies the credentials token will be shared.
-#+NAME: google_oauth_token
-#+BEGIN_SRC python
+*** Google token getter
+    - Once the google verfies the credentials token will be shared.
+ #+NAME: google_oauth_token
+ #+BEGIN_SRC python
 @google_oauth.tokengetter
 def get_google_oauth_token():
     return session.get('google_token')
 
-#+END_SRC
-** =Login= API
-   - When user clicks on =login= button from f/e it will invoke
-     =/login= api and thereby it will forward request to =google=
-#+NAME: login_route
-#+BEGIN_SRC python
-@api.route('/login')
-def login():
-    return google_oauth.authorize(callback=url_for('APIs.authorized', _external=True))
+ #+END_SRC
 
-#+END_SRC
-** =Logout= API
-      - When user clicks on =logout= button from f/e it will invoke
-   =/logout= api and thereby it will destroy all session variables.
-#+NAME: logout_route
-#+BEGIN_SRC python
-
-@api.route('/logout')
-def logout():
-    if 'google_token' in session:
-        email = session['email']
-        role = session['role']
-        key = session['google_token']
-        local_session = {'email': email,
-                         'role': role,
-                         'key': key }        
-        try:
-            session_obj = SystemInterface.logout(local_session)
-            session.pop('google_token', None)
-            session.pop('email', None)
-            session.pop('role', None)
-            return jsonify({"status" : "Successfully logged out from system"})
-        except Exception as e:
-            return jsonify({"Exception" :  str(e)})
-    else:
-        return jsonify({"status" :  "You are not logged in user"})
-
-#+END_SRC
 
 ** Create Session
-   - API to create login and system sessions
+   API to create login and system sessions
+
+*** API Design
+
+   - URL :: /create_session
+
+   - Method :: POST
+
+   - Data Params ::
+     #+BEGIN_EXAMPLE
+     {
+     "role": "<value>"
+     }
+     #+END_EXAMPLE		   
+   - Success Response ::
+     + Code: 200
+
+     + Content:
+       #+BEGIN_EXAMPLE
+        {
+         status: "success"
+        }
+       #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/create_session
+    #+END_EXAMPLE
+
+*** Implementation
 #+NAME: create_session
 #+BEGIN_SRC python
 @api.route('/create_session', methods=['POST'])
@@ -159,15 +229,157 @@ def create_session():
             session_obj = SystemInterface.create_session_in_system(session_dict)
             session['role'] = role
             return jsonify({"status" : "success"})
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
+
+
+
+** =Logout= API
+   When user clicks on =logout= button from f/e it will invoke =/logout= api
+   and thereby it will destroy all session variables.
+
+*** API Design
+
+  - URL :: /logout
+  - Method :: GET
+
+  - URL Params ::  None
+       
+  - Success Response ::
+    + Code: 200
+
+    + Content :: 
+      #+BEGIN_EXAMPLE
+      {"status" : "Successfully logged out from system"}
+      #+END_EXAMPLE     
+
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/logout
+    #+END_EXAMPLE
+
+*** Implementation
+#+NAME: logout_route
+#+BEGIN_SRC python
+@api.route('/logout')
+def logout():
+    if 'google_token' in session:
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                         'role': role,
+                         'key': key }        
+        try:
+            session_obj = SystemInterface.logout(session_dict)
+            session.pop('google_token', None)
+            session.pop('email', None)
+            session.pop('role', None)
+            return jsonify({"status" : "Successfully logged out from system"})
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, 'Cannot logout: %s' % str(e))
+    else:
+        abort(500, 'Cannot logout: %s' % "google token in session")
+
+#+END_SRC
+
+
 ** Add User
-   - API to create users
+   API to add a user
+
+*** API Design
+
+   - URL :: /add_user
+
+   - Method :: POST
+
+   - Data Params ::
+     {
+      'email': '<value>',
+      'name': '<value>',
+      'role': '<value>'
+     }
+
+   - Success Response ::
+     + Code: 200
+
+     + Content:
+       #+BEGIN_EXAMPLE
+       {
+         "email": {
+         "email": "xyz@gmail.com",
+         "id": "2"
+          },
+       "id": "2",
+       "name": {
+       "id": "2",
+       "name": "xyz"
+          },
+       "roles": [
+             {
+            "id": "2",
+            "name": "user"
+             }
+           ]
+       }
+       
+       #+END_EXAMPLE
+   
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized error: not Authorized to perform this action" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/add_user
+    #+END_EXAMPLE
+
+*** Implementation
 #+NAME: add_user
 #+BEGIN_SRC python
-
 @api.route('/add_user', methods=['POST'])
 def add_user():
     if request.method == 'POST':
@@ -186,18 +398,155 @@ def add_user():
                             'key': key }        
         try:            
             user_obj = SystemInterface.add_user(session_dict, user_dict)
-            return jsonify({"status" : "success"})
-        except Exception as e:
-            abort(500, str(e))
+            return jsonify(user_obj.to_client())
 
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
+    
+** Del User
+   API to delete a user
+
+*** API design
+   - URL :: /del_user/<email_str>
+
+   - Method :: DELETE
+
+   - Success Response ::
+     + Code: 200
+
+     + Content: 
+       #+BEGIN_EXAMPLE
+       {"status" : "success"}
+       #+END_EXAMPLE
+   
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/del_user/tt@gmail.com
+    #+END_EXAMPLE
+
+*** Implementation
+#+NAME: del_user
+#+BEGIN_SRC python
+@api.route('/del_user/<email_str>', methods=['DELETE'])
+def del_user(email_str):
+    if request.method == 'DELETE':
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
+        try:
+           
+            user_obj = SystemInterface.del_user(session_dict, str(email_str))
+            return jsonify({"status" : "success"})
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, "Error: %s" % str(e))
+
+#+END_SRC
+
+
 ** Show Users
-   - API to Show Users
+   API to Show Users
+
+*** API Design
+
+  - URL :: /show_users
+  - Method :: GET
+
+  - URL Params ::  None
+       
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      [
+	{
+	  "id": "1",
+	  "email": {
+	    "email": "xyz@vlabs.ac.in",
+	    "id": "1"
+	  },
+	  "roles": [],
+	  "name": {
+	    "name": "admin",
+	    "id": "1"
+	  }
+	},
+	{
+	  "id": "2",
+	  "email": {
+	    "email": "abc@gmail.com",
+	    "id": "2"
+	  },
+	  "roles": [],
+	  "name": {
+	    "name": "abc",
+	    "id": "2"
+	  }
+	}
+      ]
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/show_users
+    #+END_EXAMPLE
+
+*** Implementation
 #+NAME: show_users
 #+BEGIN_SRC python
-
 @api.route('/show_users', methods=['GET'])
 def show_users():
     if request.method == 'GET':
@@ -210,14 +559,155 @@ def show_users():
         try:            
             users = SystemInterface.show_users(session_dict)
             return jsonify_list(users)
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
+
+#+END_SRC
+
+
+** Show Sessions
+   API to Show Sessions
+*** API Design
+  - URL :: /show_sessions
+  - Method :: GET
+
+  - URL Params ::  None
+       
+  - Success Response ::
+    + Code: 200
+
+    + Content :: list of sessions
+      #+BEGIN_EXAMPLE
+      [
+	{
+	  "role": {
+	    "name": "admin",
+	    "id": "None"
+	  },
+	  "user": {
+	    "id": "1",
+	    "name": {
+	      "name": "admin",
+	      "id": "1"
+	    },
+	    "roles": [],
+	    "email": {
+	      "email": "xyz@vlabs.ac.in",
+	      "id": "1"
+	    }
+	  },
+	  "key": "(u'ya29.GlvlAwItRd_ahdDONLq5EymPoOTaMf5jNh1k65PUPu8Zx6TLo5H5vOipa_RCAXhEeQ7qlHsM4MS96DwamtLXbqgbUuPVCmQ4v_AbfOi6wP1i7mXQ9wg9qu4aEwxQ', '')"
+	}
+      ]
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/show_sessions
+    #+END_EXAMPLE
+
+*** Implementation
+#+NAME: show_sessions
+#+BEGIN_SRC python
+@api.route('/show_sessions', methods=['GET'])
+def show_sessions():
+    if request.method == 'GET':
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
+        try:            
+            sessions = SystemInterface.show_sessions(session_dict)
+            return jsonify_list(sessions)
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
 
 ** Show Roles
-   - API to Show all roles in the system. 
+*** API Design
+  - URL :: /show_roles
+  - Method :: GET
+
+  - URL Params ::  None
+       
+  - Success Response ::
+    + Code: 200
+
+    + Content :: list of roles
+      #+BEGIN_EXAMPLE
+      [
+        {
+       "name": "admin",
+       "id": "1"
+        },
+       {
+       "name": "user",
+       "id": "2"
+       }
+      ]
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/show_roles
+    #+END_EXAMPLE
+
+*** Implementation
+   API to Show all roles in the system. 
 #+NAME: show_roles
 #+BEGIN_SRC python
 @api.route('/show_roles', methods=['GET'])
@@ -232,24 +722,81 @@ def show_roles():
         try:            
             roles = SystemInterface.show_roles(session_dict)
             return jsonify_list(roles)
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
 
 ** Show User Details
-   - API to Show User Deatils
+   API to show user details
+*** API Design
+  - URL :: /show_user_details?email=<email_str>
+  - Method :: GET
+
+  - URL Params :: 
+       
+  - Success Response ::
+    + Code: 200
+
+    + Content :: user with roles
+      #+BEGIN_EXAMPLE
+      {
+	"email": {
+	  "email": "xyz@vlabs.ac.in", 
+	  "id": "1"
+	}, 
+	"id": "1", 
+	"name": {
+	  "id": "1", 
+	  "name": "xyz"
+	}, 
+	"roles": [
+	  {
+	    "id": "1", 
+	    "name": "admin"
+	  }
+	]
+      }
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/show_user_details?email=<email_str>
+    #+END_EXAMPLE
+
+*** Implementation
 #+NAME: show_user_details
 #+BEGIN_SRC python
-
-@api.route('/show_user_details', methods=['POST'])
+@api.route('/show_user_details', methods=['GET'])
 def show_user_details():
-
-    if request.method == 'POST':
-        data_json = json.dumps(request.get_json())
-        data_dict = yaml.safe_load(data_json)
-        email_str = data_dict['email']
+    if request.method == 'GET':
+        email_str = request.args.get('email')
 
         email = session['email']
         role = session['role']
@@ -258,14 +805,498 @@ def show_user_details():
                             'role': role,
                             'key': key }        
         try:            
-            user = SystemInterface.show_user_details(session_dict, email_str)
+            user = SystemInterface.show_user_details(session_dict, str(email_str))
             return jsonify(user.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
         except Exception as e:
-            abort(500, str(e))
+            abort(500, "Error: %s" % str(e))
 
 #+END_SRC
 
+
+** Set email of a User
+   API to change the email of the user.
+*** API Design
+
+  - URL :: /set_email
+  - Method :: GET
+
+  - URL Params ::  None
+    #+BEGIN_EXAMPLE
+    {
+    "email" : "abc@gmail.com",
+    "set_email_str" : "xyz@gmail.com"    
+    }
+    #+END_EXAMPLE		   
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      {
+	"email": {
+	  "email": "xyz@gmail.com", 
+	  "id": "3"
+	}, 
+	"id": "2", 
+	"name": {
+	  "id": "2", 
+	  "name": "xyz"
+	}, 
+	"roles": [
+	  {
+	    "id": "2", 
+	    "name": "user"
+	  }
+	]
+      }
+      #+END_EXAMPLE
+		
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/set_email
+    #+END_EXAMPLE
+*** Implementation
+#+NAME: set_email_of_user
+#+BEGIN_SRC python
+@api.route('/set_email', methods=['PUT'])
+def set_email():
+    if request.method == 'PUT':
+        data_json = json.dumps(request.get_json())
+        data_dict = yaml.safe_load(data_json)
+        email_str = data_dict['email']
+        set_email_str = data_dict['set_email_str']
+        
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
+        try:            
+            user_obj = SystemInterface.set_email_of_user(session_dict,
+                                                             email_str,
+                                                             set_email_str)
+                                                        
+            return jsonify(user_obj.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, "Error: %s" % str(e))
+
+#+END_SRC
+
+
+** Set name of a User
+   API to change the name of the user.
+*** API Design
+
+  - URL :: /set_name
+  - Method :: GET
+
+  - URL Params :: 
+      #+BEGIN_EXAMPLE
+      {
+      "email" : "xyz@gmail.com",
+      "name_str" : "XYZ"      
+      }
+      #+END_EXAMPLE		   
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      {
+	"email": {
+	  "email": "xyz@gmail.com", 
+	  "id": "3"
+	}, 
+	"id": "2", 
+	"name": {
+	  "id": "3", 
+	  "name": "XYZ"
+	}, 
+	"roles": [
+	  {
+	    "id": "2", 
+	    "name": "user"
+	  }
+	]
+      }
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/set_name
+    #+END_EXAMPLE
+*** Implementation
+#+NAME: set_name_of_user
+#+BEGIN_SRC python
+@api.route('/set_name', methods=['PUT'])
+def set_name():
+    if request.method == 'PUT':
+        data_json = json.dumps(request.get_json())
+        data_dict = yaml.safe_load(data_json)
+        email_str = data_dict['email']
+        name_str = data_dict['name_str']
+        
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
+        try:            
+            user_obj = SystemInterface.set_name_of_user(session_dict,
+                                                             email_str,
+                                                             name_str)
+                                                        
+            return jsonify(user_obj.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, "Error: %s" % str(e))
+
+#+END_SRC
+
+
+** Show Roles of a user
+   API to show all roles of a user
+*** API Design
+
+  - URL :: /show_roles_of_user?email=<email_str>
+  - Method :: GET
+
+  - URL Params :: 
+		  
+       
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      [{"name": "admin", "id": "1"}]
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/show_roles_of_user?email=xyz@vlabs.ac.in
+    #+END_EXAMPLE
+*** Implementation
+#+NAME: show_roles_of_user
+#+BEGIN_SRC python
+@api.route('/show_roles_of_user', methods=['GET'])
+def show_roles_of_user():
+    if request.method == 'GET':
+        email_str = str(request.args.get('email'))
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
+        try:            
+            roles = SystemInterface.get_roles_of_user(session_dict,
+                                                           email_str)
+            return jsonify_list(roles)
+ 
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, "Error: %s" % str(e))
+
+#+END_SRC
+
+** Add Role to a user 
+   API to add a role to a user.
+*** API Design
+
+  - URL :: /add_role_to_user
+  - Method :: GET
+
+  - URL Params ::  
+    #+BEGIN_EXAMPLE
+      {
+      "email" : "xyz@gmail.com",
+      "role" : "admin"      
+      }
+    #+END_EXAMPLE
+
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      {
+	"email": {
+	  "email": "xyz@gmail.com", 
+	  "id": "3"
+	}, 
+	"id": "2", 
+	"name": {
+	  "id": "3", 
+	  "name": "XYZ"
+	}, 
+	"roles": [
+	  {
+	    "id": "1", 
+	    "name": "admin"
+	  }, 
+	  {
+	    "id": "2", 
+	    "name": "user"
+	  }
+	]
+      }
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/add_role_to_user
+    #+END_EXAMPLE
+*** Implementation
+#+NAME: add_role_to_user
+#+BEGIN_SRC python
+@api.route('/add_role_to_user', methods=['POST'])
+def add_role_to_user():
+    if request.method == 'POST':
+        
+        data_json = json.dumps(request.get_json())
+        data_dict = yaml.safe_load(data_json)
+        email_str = data_dict['email']
+        role_str = data_dict['role']
+        
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
+        try:            
+            user_obj = SystemInterface.add_role_to_user(session_dict, 
+                                                            email_str,
+                                                            role_str)
+            return jsonify(user_obj.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, "Error: %s" % str(e))
+
+#+END_SRC
+
+
+** Del Role of user 
+   API to delete a role of a user.
+*** API Design
+
+  - URL :: /del_role_of_user
+  - Method :: PUT
+
+  - URL Params ::  None
+    #+BEGIN_EXAMPLE
+    {
+    "email" : "xyz@gmail.com",
+    "role" : "admin"
+    }
+    #+END_EXAMPLE		   
+  - Success Response ::
+    + Code: 200
+
+    + Content ::
+      #+BEGIN_EXAMPLE
+      {
+        "email": {
+	  "email": "xyz@gmail.com", 
+	  "id": "3"
+	  }, 
+	  "id": "2", 
+	  "name": {
+	  "id": "3", 
+	  "name": "XYZ"
+	  }, 
+	  "roles": [
+	  {
+	  "id": "2", 
+	  "name": "user"
+	  }
+	  ]
+      }
+      #+END_EXAMPLE
+
+  - Error Response ::
+    + Code: 401 UNAUTHORIZED
+
+    + Content: { error : "Not Authorized" }
+
+    OR
+
+    + Code: 400 Bad Request
+
+    + Content: { error : "Malformed arguments" }
+
+    OR
+
+    + Code: 500
+
+    + Content: { error : Exception String}
+
+
+  - Example ::
+    #+BEGIN_EXAMPLE
+    http://localhost:5000/del_role_of_user
+    #+END_EXAMPLE
+*** Implementation
+
+#+NAME: del_role_of_user
+#+BEGIN_SRC python
+
+@api.route('/del_role_of_user', methods=['PUT'])
+def del_role_of_user():
+    if request.method == 'PUT':
+        data_json = json.dumps(request.get_json())
+        data_dict = yaml.safe_load(data_json)
+        email_str = data_dict['email']
+        role_str = data_dict['role']
+        
+        email = session['email']
+        role = session['role']
+        key = session['google_token']
+        session_dict = {'email': email,
+                            'role': role,
+                            'key': key }        
+        try:            
+            user_obj = SystemInterface.del_role_of_user(session_dict, 
+                                                            email_str,
+                                                            role_str)
+            return jsonify(user_obj.to_client())
+
+        except NotAuthorizedError as e:
+            abort(401, 'Not Authorized error: %s' % str(e))
+
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
+
+        except Exception as e:
+            abort(500, "Error: %s" % str(e))
+
+
+#+END_SRC
+
+
+** Jsonify_list
+   Returns a list of dicts as json with correct mime types.  flask does not
+   provide a jsonify for lists; hence this method
+#+NAME: jsonify_list
+#+BEGIN_SRC python
+def jsonify_list(data):
+    if type(data) is not list:
+        raise Exception('jsonify_list function accepts only a list')
+    s_data = []
+    for d in data:
+        s_data.append(d.to_client())
+    return make_response(json.dumps(s_data), 200,
+                         {'content-type': 'application/json'})
+
+#+END_SRC
    
+
 * Infra                                                         :boilerplate:
 
 ** sources
@@ -335,9 +1366,16 @@ if __name__ == '__main__':
 <<google_oauth_token>>
 <<create_session>>
 <<add_user>>
+<<del_user>>
 <<show_users>>
+<<show_sessions>>
 <<show_user_details>>
 <<show_roles>>
+<<set_email_of_user>>
+<<set_name_of_user>>
+<<show_roles_of_user>>
+<<add_role_to_user>>
+<<del_role_of_user>>
 
 #+END_SRC
 

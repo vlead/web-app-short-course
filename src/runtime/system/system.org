@@ -680,15 +680,9 @@ class GetUserByEmail():
 
         email = args["email"]
         user = System.delegate.get_user_by_email(email)
-        new_user = None
-
         if user is not None:
-            new_user = User(name=user.get("name"),
-                            email=user.get("email"),
-                            roles=[])
-            new_user.id = user.id
-
-        return new_user
+            user = System.delegate.mask_roles_of_user(user)
+        return user
 
 #+END_SRC
 

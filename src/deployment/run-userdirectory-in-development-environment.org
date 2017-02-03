@@ -1,0 +1,117 @@
+#+TITLE: UserDirectory
+#+Author: VLEAD
+#+Date: [2016-05-05 Thu]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ./org-templates/level-0.org
+#+options: ^:nil
+
+* Introduction
+  This document helps in setting up development environment for run the
+  =userdirectory= application. 
+
+* Creation of database
+  1. Login to mysql
+     #+BEGIN_EXAMPLE
+     mysql -u <username> -p<password>
+     #+END_EXAMPLE
+  2. Show all databases
+     #+BEGIN_EXAMPLE
+     show databases;
+     #+END_EXAMPLE
+  3. If <userdirectory> database is not present, create it
+     #+BEGIN_EXAMPLE
+     create database userdirectory
+     #+END_EXAMPLE
+  
+     Exit our of the mysql console
+
+* Initial make
+  Run make from =web-app-short-course= directory to build the application.  The
+  code gets tangled but the test cases will fail.  This is because some of the
+  dependencies have not beeb set up.  To insall the dependencies and run the
+  application, follow the steps listed below.
+
+#+BEGIN_EXAMPLE
+% make
+#+END_EXAMPLE
+
+* Creation of Virtual Environment
+
+  + Create Virtual Environemnt in the =web-app-short-course= directory
+  #+BEGIN_EXAMPLE
+  virtualenv venv
+  #+END_EXAMPLE
+  + Activate the Virtual Environment
+  #+BEGIN_EXAMPLE
+  source venv/bin/activate
+  #+END_EXAMPLE
+
+* Setting up dependencies
+
+  Install all the dependencies for running the =user-directory= applciation.
+  The =setup.py= script is in the =build/code/deployment= directory
+  #+BEGIN_EXAMPLE
+  cd <path to build/code/deployment> directory
+  python setup.py install
+  #+END_EXAMPLE
+
+* Set SQLALCHEMY_DATABASE_URI
+  The variable =SQLALCHEMY_DATABASE_URI= has to be set to proper value in
+  =build/code/runtime/config/flask_app_config.py= so that the application can
+  use the database.  In the example below, =root= is the user and =mysql= is
+  the password.
+  #+BEGIN_EXAMPLE
+  SQLALCHEMY_DATABASE_URI = 'mysql+oursql://root:mysql@localhost/userdirectory'
+  #+END_EXAMPLE
+
+* Export PYTHONPATH
+  Set PYTHONPATH variable and export it to access python modules. 
+#+BEGIN_EXAMPLE
+cd build/code/
+export PYTHONPATH=${PWD}
+#+END_EXAMPLE
+
+* [[./google-oauth-configuration.org][Obtain Google OAuth Credentials]]
+* Congigure OAuth for Application
+  =build/code/runtime/config/google_oauth_config.py= so that the application
+  can use the Google OAuth API.
+  =CONSUMER_KEY= and =CONSUMER_SECRET= that were obtained from the previous
+  step should be filled up
+  #+BEGIN_EXAMPLE
+    CONSUMER_KEY = "<key>"
+    CONSUMER_SECRET = "<key>"
+  #+END_EXAMPLE
+
+* Insert Dafault data
+  Edit =build/code/runtime/config/config.py= and set =admin-email= to
+  have a valid admin user when the web app launches.
+  #+BEGIN_SRC python 
+    # config.py
+    # ---------
+    
+    admin_email = "<your google email id which was used to create OAuth credentials>"
+  #+END_SRC
+ 
+  Run =build/code/deployment/db_setup.py= to insert roles and an admin user. 
+  #+BEGIN_SRC shell
+    # db_setup.py
+    # -----------
+    
+    cd build/code/deployment
+    python db_setup.py
+  #+END_SRC
+  
+* Run the application
+  
+  The application can now be run from the =build/code= directory
+  #+BEGIN_EXAMPLE
+  cd <path to build/code directory>
+  unset http_proxy
+  unset https_proxy
+  python runtime/rest/app.py
+  #+END_EXAMPLE
+
+* Access the application
+  
+  The application is accessed at =http://localhost:5000=
