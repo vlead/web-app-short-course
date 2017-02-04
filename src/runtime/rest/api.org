@@ -29,7 +29,12 @@ def index():
   - URL :: /login
   - Method :: GET
 
-  - URL Params ::  None
+  - Data Params ::
+     #+BEGIN_EXAMPLE
+     {
+     "role": "<value>"
+     }
+     #+END_EXAMPLE		   
        
   - Success Response ::
     + Code: 200
@@ -77,10 +82,10 @@ def index():
     thereby it will forward request to =google=
  #+NAME: login_route
  #+BEGIN_SRC python
-@api.route('/login')
-def login():
-    return google_oauth.authorize(callback=url_for('APIs.authorized',
-                                                       _external=True))
+@api.route('/login/<role>', methods=["GET"])
+def login(role):
+         return google_oauth.authorize(callback=url_for('APIs.authorized',
+                                                        _external=True))
 
  #+END_SRC
 
@@ -95,37 +100,68 @@ def login():
 
  #+NAME: callback_google_api
  #+BEGIN_SRC python
+def create_session_for_user(email, role, key):
+  try:
+    session_dict = {'email': email,
+                          'role': role,
+                          'key': key }       
+
+    print("session_dict: %s" % session_dict)
+     
+    session_obj = SystemInterface.create_session_in_system(session_dict)
+    return True
+    
+  except NotAuthorizedError as e:
+      abort(401, 'Not Authorized error: %s' % str(e))
+  
+  except TypeError as e:
+      abort(400, 'Malformed arguments, error: %s' % str(e))
+  
+  except Exception as e:
+      abort(500, "Error: %s" % str(e))
+
+
 @api.route('/authorized')
 def authorized():
-    try:
-        resp = google_oauth.authorized_response()
-        if resp is None:
-            return jsonify({"Status" : "User denied access"})
-        session['google_token'] = (resp['access_token'], '')
-        user_info = google_oauth.get('userinfo')
-        email = str(user_info.data['email'])
-        try:
-            roles = SystemInterface.authorize_user(email)
-            session['email'] = email
-            return jsonify_list(roles)
+  try:
+      resp = google_oauth.authorized_response()
+      if resp is None:
+          return jsonify({"Status" : "User denied access"})
+      session['google_token'] = (resp['access_token'], '')
+      user_info = google_oauth.get('userinfo')
+      email = str(user_info.data['email'])
+      
+      try:
+          roles = SystemInterface.authorize_user(email)
+          session['email'] = email
+          
+      except NotAuthorizedError as e:
+          session.pop('google_token', None)
+          abort(401, 'Not Authorized error: %s' % str(e))
 
-        except NotAuthorizedError as e:
-            session.pop('google_token', None)
-            abort(401, 'Not Authorized error: %s' % str(e))
+      except TypeError as e:
+          abort(400, 'Malformed arguments, error: %s' % str(e))
 
-        except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+      except Exception as e:
+          session.pop('google_token', None)
+          abort(500, 'Error: %s' % str(e))
 
-        except Exception as e:
-            session.pop('google_token', None)
-            abort(500, 'Error: %s' % str(e))
+      print("args: %s " % request.args)
+      print("original session: %s" % session)
 
-    except Exception as e:
-        print str(e)
-        abort(500, 'Error: %s' % str(e))
-        
- #+END_SRC
+      role = session['role']
+      print("role: %s" % role)
+      print("calling create_session_for_user...")
+      create_session_for_user(email, role, session['google_token'])
+      print("create_session_for_user Succeeded.")
+      print("redirecting to / ...")
 
+      return redirect("/")
+
+  except Exception as e:
+      print str(e)
+      abort(500, 'Error: %s' % str(e))
+#+END_SRC
 
 *** Google OAuth Credentials
     Google OAuth service required URLs (Credentials) should be specified
@@ -238,7 +274,6 @@ def create_session():
 
         except Exception as e:
             abort(500, "Error: %s" % str(e))
-
 #+END_SRC
 
 
@@ -302,7 +337,8 @@ def logout():
             session.pop('google_token', None)
             session.pop('email', None)
             session.pop('role', None)
-            return jsonify({"status" : "Successfully logged out from system"})
+            return redirect("/")
+            # return jsonify({"status" : "Successfully logged out from system"})
         except NotAuthorizedError as e:
             abort(401, 'Not Authorized error: %s' % str(e))
 

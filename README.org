@@ -2,5 +2,3 @@ A show case of model driven developmet of web applications.
 
 Please checkout this [[./src/deployment/run-userdirectory-in-development-environment.org][document]] to run the application in developer's
 environment.
-
-

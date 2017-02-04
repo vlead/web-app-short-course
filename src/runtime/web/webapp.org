@@ -13,7 +13,6 @@ We tangle all of the JS here
           type: "POST",
           data: JSON.stringify(data),
           contentType: "application/json; charset=utf-8",
-          dataType: "json",
           success: callback,
           error: function (request, status, error) {
               console.log("error on: " + url + 
@@ -28,7 +27,6 @@ We tangle all of the JS here
           }
       });
   }
-  
 #+END_SRC
 
 * System JS - Mock API
@@ -64,6 +62,8 @@ var RestAPI = {
 <<rest_delete_user>>
 <<rest_create_user>>
 <<rest_get_all_users>>
+<<rest_login>>
+<<rest_logout>>
 };
 #+END_SRC
 
@@ -114,6 +114,24 @@ var RestAPI = {
   get_all_users: function (cb) {
     $.get("/users",
           function(data) { console.log(data); cb(data) });
+  },
+#+END_SRC
+
+** Login
+#+NAME: rest_login
+#+BEGIN_SRC js
+  login: function(role) {
+      window.location.href = "/login/" + role;
+  },
+#+END_SRC
+
+
+** Logout
+
+#+NAME: rest_logout
+#+BEGIN_SRC js
+  logout: function(role, success_cb, failure_cb) {
+      $.get("/logout");
   }
 #+END_SRC
 
@@ -226,7 +244,14 @@ function is_logged_in() {
           let current_hash = get_window_hash_url();
           if (current_hash == "") {
               console.log("defaulting #url to get_all_users");
-              current_hash = "index";
+              
+              //send logged in users to home, others to index
+              if (is_logged_in()) {
+                current_hash = "home";
+              }
+              else {
+                current_hash = "index";
+              }
           }
 
           console.log("navigating to: #" + current_hash);
@@ -462,7 +487,7 @@ function login_handler() {
       <li><a onclick="window.location.hash='create_user'"> Create User </a></li>
       <li><a onclick="window.location.hash='get_all_users'"> Get all users </a></li>
       <li><a onclick="window.location.hash='delete_user'"> Delete User </a></li>
-      <li><a onclick="window.location.hash='delete_user'"> Logout </a></li>
+      <li><a onclick="API.logout()"> Logout </a></li>
     </ul>
   </div>
 #+END_SRC
@@ -480,7 +505,7 @@ function login_handler() {
 #+BEGIN_SRC html
   <div id="index-container">
     <ul>
-      <li><a onclick="window.location='/login'""> Login </a></li>
+      <li><a onclick="login_onclick()""> Login </a></li>
     </ul>
   </div>
 #+END_SRC
@@ -490,6 +515,11 @@ function login_handler() {
   function index_handler() {
       hide_all_containers();
       $('#index-container').removeClass("hidden");
+  }
+
+  function login_onclick() {
+    //TODO: make role customizable
+    API.login("admin");
   }
 #+END_SRC
 

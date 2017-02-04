@@ -52,55 +52,83 @@ def configure_system():
 #+NAME: configure_error_handlers
 #+BEGIN_SRC python
 # custom error handlers to return JSON errors with appropiate status codes
+
+# //FIXME: use this to create the different error handlers
+def create_error_handler(app, status_code):
+
+  @app.errorhandler(status_code)
+  def error_handler(err):
+    app.logger.error("error code = %s" % status_code)
+    resp = None
+    try:
+        app.logger.error("error desc = %s" % err.description)
+        resp = make_response(jsonify(error=err.description), status_code)
+    except Exception:
+        try:
+            app.logger.error("error mesg = %s" % err.message)
+            resp = make_response(jsonify(error=err.message), status_code)
+        except Exception:
+            resp = make_response(jsonify(error=str(err)), status_code)
+            app.logger.error("error = %s" % str(err))
+    return resp
+
+
+
+
 def configure_errorhandlers(app):
+    
+    create_error_handler(app, 500)
+    create_error_handler(app, 500)
+    create_error_handler(app, 401)
+    create_error_handler(app, 400)
 
-    @app.errorhandler(500)
-    def server_error(err):
-        app.logger.error("error code = %s" % "500")
-        resp = None
-        try:
-            app.logger.error("error desc = %s" % err.description)
-            resp = make_response(jsonify(error=err.description), 500)
-        except Exception:
-            try:
-                app.logger.error("error mesg = %s" % err.message)
-                resp = make_response(jsonify(error=err.message), 500)
-            except Exception:
-                resp = make_response(jsonify(error=str(err)), 500)
-                app.logger.error("error = %s" % str(err))
-        return resp
+    # @app.errorhandler(500)
+    # def server_error(err):
+    #     app.logger.error("error code = %s" % "500")
+    #     resp = None
+    #     try:
+    #         app.logger.error("error desc = %s" % err.description)
+    #         resp = make_response(jsonify(error=err.description), 500)
+    #     except Exception:
+    #         try:
+    #             app.logger.error("error mesg = %s" % err.message)
+    #             resp = make_response(jsonify(error=err.message), 500)
+    #         except Exception:
+    #             resp = make_response(jsonify(error=str(err)), 500)
+    #             app.logger.error("error = %s" % str(err))
+    #     return resp
 
-    @app.errorhandler(401)
-    def not_authorized(err):
-        app.logger.error("error code = %s" % "401")
-        resp = None
-        try:
-            app.logger.error("error desc = %s" % err.description)
-            resp = make_response(jsonify(error=err.description), 401)
-        except Exception:
-            try:
-                app.logger.error("error mesg = %s" % err.message)
-                resp = make_response(jsonify(error=err.message), 401)
-            except Exception:
-                resp = make_response(jsonify(error=str(err)), 401)
-                app.logger.error("error = %s" % str(err))
-        return resp
+    # @app.errorhandler(401)
+    # def not_authorized(err):
+    #     app.logger.error("error code = %s" % "401")
+    #     resp = None
+    #     try:
+    #         app.logger.error("error desc = %s" % err.description)
+    #         resp = make_response(jsonify(error=err.description), 401)
+    #     except Exception:
+    #         try:
+    #             app.logger.error("error mesg = %s" % err.message)
+    #             resp = make_response(jsonify(error=err.message), 401)
+    #         except Exception:
+    #             resp = make_response(jsonify(error=str(err)), 401)
+    #             app.logger.error("error = %s" % str(err))
+    #     return resp
 
-    @app.errorhandler(400)
-    def bad_request(err):
-        app.logger.error("error code = %s" % "400")
-        resp = None
-        try:
-            app.logger.error("error desc = %s" % err.description)
-            resp = make_response(jsonify(error=err.description), 400)
-        except Exception:
-            try:
-                app.logger.error("error mesg = %s" % err.message)
-                resp = make_response(jsonify(error=err.message), 400)
-            except Exception:
-                resp = make_response(jsonify(error=str(err)), 400)
-                app.logger.error("error = %s" % str(err))
-        return resp
+    # @app.errorhandler(400)
+    # def bad_request(err):
+    #     app.logger.error("error code = %s" % "400")
+    #     resp = None
+    #     try:
+    #         app.logger.error("error desc = %s" % err.description)
+    #         resp = make_response(jsonify(error=err.description), 400)
+    #     except Exception:
+    #         try:
+    #             app.logger.error("error mesg = %s" % err.message)
+    #             resp = make_response(jsonify(error=err.message), 400)
+    #         except Exception:
+    #             resp = make_response(jsonify(error=str(err)), 400)
+    #             app.logger.error("error = %s" % str(err))
+    #     return resp
 
 #+END_SRC
 
@@ -165,6 +193,8 @@ from runtime.config import flask_app_config as config
 from runtime.config.flask_app_config import LOG_FILE_DIRECTORY
 from runtime.config.flask_app_config import LOG_FILE
 from runtime.config.flask_app_config import LOG_LEVEL
+
+import traceback
 
 #+END_SRC
 
