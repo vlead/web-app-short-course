@@ -131,7 +131,7 @@ var RestAPI = {
 #+NAME: rest_logout
 #+BEGIN_SRC js
   logout: function(role, success_cb, failure_cb) {
-      $.get("/logout");
+      window.location = "/logout";
   }
 #+END_SRC
 
