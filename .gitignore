@@ -17,3 +17,4 @@ lint_output
 venv/
 elisp
 literate-tools/
+src/runtime/config/custom-config.org

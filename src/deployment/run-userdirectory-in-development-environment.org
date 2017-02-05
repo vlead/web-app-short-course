@@ -9,6 +9,7 @@
 * Introduction
   This document helps in setting up development environment for run the
   =userdirectory= application. 
+* Rename =src/runtime/config/custom-config.org.sample= to =src/runtime/config/custom-config.org=
 
 * Creation of database
   1. Login to mysql

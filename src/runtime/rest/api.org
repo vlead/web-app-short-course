@@ -265,9 +265,10 @@ def logout():
                          'key': key }        
         try:
             session_obj = SystemInterface.logout(session_dict)
-            session.pop('google_token', None)
-            session.pop('email', None)
-            session.pop('role', None)
+            session.clear()
+            # session.pop('google_token', None)
+            # session.pop('email', None)
+            # session.pop('role', None)
             return redirect("/")
             # return jsonify({"status" : "Successfully logged out from system"})
         except NotAuthorizedError as e:
@@ -276,7 +277,9 @@ def logout():
         except Exception as e:
             abort(500, 'Cannot logout: %s' % str(e))
     else:
-        abort(500, 'Cannot logout: %s' % "google token in session")
+        session.clear()
+        return redirect("/")
+#        abort(500, 'Cannot logout: %s' % "google token in session")
 
 #+END_SRC
 
@@ -293,8 +296,7 @@ def logout():
    - Data Params ::
      {
       'email': '<value>',
-      'name': '<value>',
-      'role': '<value>'
+      'name': '<value>'
      }
 
    - Success Response ::
@@ -354,7 +356,6 @@ def add_user():
         data_json = json.dumps(request.get_json())
         data_dict = yaml.safe_load(data_json)
         user_dict = {'email': data_dict['email'],
-                        'role': data_dict['role'],
                         'name': data_dict['name'] }
         
         email = session['email']
