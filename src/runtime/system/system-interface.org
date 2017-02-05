@@ -526,6 +526,7 @@ class TestLogout(TestCase):
     def add_user(session_dict, user_dict):
         try:
             session = SystemInterface.make_session(session_dict)
+            user_dict['role'] = "user"
             new_user = SystemInterface.make_user(user_dict)
             return System.do("add_user", session=session, user=new_user)
 
@@ -565,7 +566,6 @@ class TestAddUser(TestCase):
                              'key': "abcde" }
 
         user_dict = {'email': 'abc@gnu.org',
-                             'role': Config.user_role,
                              'name': "Test User" }
 
         session = SystemInterface.create_session_in_system(session_dict)
