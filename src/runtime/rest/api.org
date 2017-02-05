@@ -112,21 +112,29 @@ def create_session_for_user(email, role, key):
       return True
 
     except NotAuthorizedError as e:
-        abort(401, 'Not Authorized error: %s' % str(e))
+        msg = {"status": "failure", 
+                        "msg": "Not Authorized error"}
+        return jsonify(msg)
 
     except TypeError as e:
-        abort(400, 'Malformed arguments, error: %s' % str(e))
+        msg = {"status": "failure", 
+                        "msg": "Malformed Arguments"}
+        return jsonify(msg)
 
     except Exception as e:
-        abort(500, "Error: %s" % str(e))
+        msg = {"status": "failure", 
+                        "msg": "Internal Server Error"}
 
+        return jsonify(msg)
 
 @api.route('/authorized')
 def authorized():
     try:
         resp = google_oauth.authorized_response()
+
         if resp is None:
             return jsonify({"Status" : "User denied access"})
+
         session['google_token'] = (resp['access_token'], '')
         user_info = google_oauth.get('userinfo')
         email = str(user_info.data['email'])
@@ -137,14 +145,22 @@ def authorized():
 
         except NotAuthorizedError as e:
             session.pop('google_token', None)
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            session.pop('google_token', None)
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
             session.pop('google_token', None)
-            abort(500, 'Error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+
+            return jsonify(msg)
 
 
         assert len(roles) > 0
@@ -168,8 +184,11 @@ def authorized():
         return redirect("/")
 
     except Exception as e:
-        print str(e)
-        abort(500, 'Error: %s' % str(e))
+        msg = {"status": "failure", 
+                   "msg": "Internal Server Error"}
+
+        return jsonify(msg)
+
 #+END_SRC
 
 *** Google OAuth Credentials
@@ -266,20 +285,25 @@ def logout():
         try:
             session.clear()
             session_obj = SystemInterface.logout(session_dict)
-            # session.pop('google_token', None)
-            # session.pop('email', None)
-            # session.pop('role', None)
             return redirect("/")
-            # return jsonify({"status" : "Successfully logged out from system"})
+
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
+
+        except TypeError as e:
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, 'Cannot logout: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
     else:
         session.clear()
         return redirect("/")
-#        abort(500, 'Cannot logout: %s' % "google token in session")
 
 #+END_SRC
 
@@ -369,13 +393,19 @@ def add_user():
             return jsonify(user_obj.to_client())
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -435,13 +465,19 @@ def del_user(email_str):
             return jsonify({"status" : "success"})
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -529,13 +565,19 @@ def show_users():
             return jsonify_list(users)
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -616,13 +658,19 @@ def show_sessions():
             return jsonify_list(sessions)
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -692,13 +740,19 @@ def show_roles():
             return jsonify_list(roles)
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -777,13 +831,19 @@ def show_user_details():
             return jsonify(user.to_client())
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -873,13 +933,19 @@ def set_email():
             return jsonify(user_obj.to_client())
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -969,13 +1035,19 @@ def set_name():
             return jsonify(user_obj.to_client())
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -1039,13 +1111,19 @@ def show_roles_of_user():
             return jsonify_list(roles)
  
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -1139,13 +1217,19 @@ def add_role_to_user():
             return jsonify(user_obj.to_client())
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
@@ -1236,14 +1320,19 @@ def del_role_of_user():
             return jsonify(user_obj.to_client())
 
         except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Not Authorized error"}
+            return jsonify(msg)
 
         except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
+            msg = {"status": "failure", 
+                       "msg": "Malformed Arguments"}
+            return jsonify(msg)
 
         except Exception as e:
-            abort(500, "Error: %s" % str(e))
-
+            msg = {"status": "failure", 
+                       "msg": "Internal Server Error"}
+            return jsonify(msg)
 
 #+END_SRC
 
