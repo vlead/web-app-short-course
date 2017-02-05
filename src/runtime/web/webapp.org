@@ -361,14 +361,23 @@ function login_handler() {
   }
   
   function user_list_delete(email) {
-      API.delete_user(email, function() { 
-          $("#get-all-users-info-box").val("User successfully deleted");
-          //TODO: use client-side flash for this message
-          console.log("User successfully deleted");
-          //trigger page reload
-          //FIXME: currently forcing' page reload
+      API.delete_user(email, function(request) {
+          console.group("user_list_delete");
+          console.log(request);
+
+          if (request.status === "failure") {
+              $("#get-all-users-error-box").text(request.msg);
+          }
+          else {
+              $("#get-all-users-info-box").text("User successfully deleted");
+              //TODO: use client-side flash for this message
+              console.log("User successfully deleted");
+              //trigger page reload
+              //FIXME: currently forcing' page reload
+          }
           $(window).trigger("hashchange");
           navigate("get_all_users");
+          console.groupEnd();
       }, 
       function(request) {
           $("get-all-users-error-box").val(request.responseText);
