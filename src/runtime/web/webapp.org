@@ -220,7 +220,7 @@ window.onload = function() {
 
 
     let current_hash = get_window_hash_url();
-    if (current_hash == "") {
+    if (current_hash === "") {
         console.log("defaulting #url to get_all_users");
         
         //send logged in users to home, others to index
@@ -447,19 +447,28 @@ function login_handler() {
       let role_id = "user";
   
       let error_box = $("#add-user-error-box");
+      let info_box = $("#add-user-info-box");
+      
       error_box.text("");
-
-      if (name == "") {
+      info_box.text("");
+      
+      if (name === "") {
           error_box.text("Please fill in name");
           return;
       }
-      else if (email == "") {
+      else if (email === "") {
           error_box.text("Please fill in email");
           return;
       }
       
-      function success_callback() {
-          $('#add-user-info-box').text("Success, user: " + name + " added.");
+      function success_callback(req) {
+          console.log(req);
+          if (req.status === "failure") {
+              error_box.text(req.msg);
+          }
+          else {
+              info_box.text("Success, user: " + name + " added.");
+          }
       }
   
       function error_callback(request) {
@@ -520,18 +529,26 @@ function delete_user_handler() {
 function delete_user_callback() {
     let delete_email = $('#delete-user-email-id').val();
     let error_box = $("#delete-user-error-box");
+    let info_box =  $("#delete-user-info-box");
 
     error_box.text("");
-
+    info_box.text("");
+    
     if (delete_email == "") {
         console.error("delete email ID expected!");
         error_box.text("delete email ID expected");
         return;
     }
 
-    function success_cb() {
-        console.log(delete_email + " deleted successfully");
-        $("#delete-user-info-box").text(delete_email + "deleted successfully");
+    function success_callback(req) {
+        console.log(req);
+        if (req.status === "failure") {
+            error_box.text(req.msg);
+        }
+        else {
+            info_box.text(delete_email + " deleted successfully");
+
+        }
     }
     
     function error_cb(request){
@@ -547,7 +564,7 @@ function delete_user_callback() {
         console.groupEnd();
     }
 
-    API.delete_user(delete_email, success_cb, error_cb);
+    API.delete_user(delete_email, success_callback, error_cb);
 }
 #+END_SRC
 
