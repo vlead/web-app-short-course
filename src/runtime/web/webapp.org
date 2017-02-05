@@ -95,7 +95,7 @@ var RestAPI = {
 #+NAME: rest_get_all_users
 #+BEGIN_SRC js
   get_all_users: function (cb) {
-    $.get("/users",
+    $.get("/show_users",
           function(data) { console.log(data); cb(data) });
   },
 #+END_SRC
@@ -321,6 +321,12 @@ function login_handler() {
 #+NAME: get_all_users_html
 #+BEGIN_SRC html
   <div id="get-all-users-container" class="hidden">
+    <ul>
+      <li>
+        <label id="get-all-users-error-box" style="color: #FF5722"></label>
+        <label id="get-all-users-info-box" style="color: #26C6DA"></label>
+      </li>
+    </ul>
     <ul id="users-list">
     </ul>
     <button onclick="window.location.hash='home'"> Goto Home </button>
@@ -330,14 +336,33 @@ function login_handler() {
 #+NAME: get_all_users_handler
 #+BEGIN_SRC js
   function make_li_for_user(user) {
-      console.log("user: " + user + "|email: " + user.email + "|name: " + user.name)
-      let delete_button = "<button style='margin-left: 1em' onclick=user_list_delete(" + user.id + ")> Delete </button>";
-      let li = $("<li>" + "Name: " + user.name + " | Email: " + user.email + delete_button +  "</li>");
+      console.dir(user);
+      
+      let delete_button =
+          "<a style='margin-left: 1em' onclick=user_list_delete(" +
+          '"' + user.email.email + '"'
+          ")> Delete User </a>";
+
+      let roles = "";
+
+      for(var i = 0; i < user.roles.length; i++) {
+          roles += user.roles[i].name;
+          roles += " ";
+      }
+      
+      let li = $("<li style='margin-bottom: 50px' >" + "Name: " +
+                 user.name.name +
+                 " | Email: " +
+                 user.email.email +
+                 delete_button + 
+                 "</li>"
+                 );
       return li;
   }
   
-  function user_list_delete(id) {
-      API.delete_user(id, function() { 
+  function user_list_delete(email) {
+      API.delete_user(email, function() { 
+          $("#get-all-users-info-box").val("User successfully deleted");
           //TODO: use client-side flash for this message
           console.log("User successfully deleted");
           //trigger page reload
@@ -345,8 +370,8 @@ function login_handler() {
           $(window).trigger("hashchange");
           navigate("get_all_users");
       }, 
-      function(req) {
-          alert("error: " + req.responseText);
+      function(request) {
+          $("get-all-users-error-box").val(request.responseText);
       });
   }
   
@@ -357,6 +382,7 @@ function login_handler() {
       container.removeClass("hidden");
       
       API.get_all_users(function(users) {
+          console.group("get_all_users callback");
           console.dir(users);
           let ul = $('#get-all-users-container #users-list');
           ul.empty(); //TODO: slower than removing nodes
@@ -365,6 +391,7 @@ function login_handler() {
               let li = make_li_for_user(user);
               ul.append(li);
           }
+          console.groupEnd();
     });
   
   
@@ -374,38 +401,39 @@ function login_handler() {
 * User Component - Add User
 #+NAME: add_user_html
 #+BEGIN_SRC html
-  <div id='add-user-container'>
-    <ul class="no-bullets">
-      <li> 
-        <label> Name: </label>
-        <input type="text" id="add-user-name"></input>
-      </li>
-      <li>
-        <label> Email: </label>
-        <input type="text" id="add-user-email"></input>
-      </li>
-      <li>
-        <label> Role</label>
-        <select id="add-user-role-id">
-          <option value="user"> user </option>
-          <option value="admin"> admin </option>
-        </select>
-      </li>
-  
-      <li>
-        <button id="add-user-button" onclick="add_user_callback()"> Add User </button>
-      </li>
-  
-      <li>
-        <label id="add-user-error-box" style="color: #FF5722"></label>
-        <label id="add-user-info-box" style="color: #26C6DA"></label>
-      </li>
-      <li>
-        <button onclick="window.location.hash='home'"> Go to Home </button>
-      </li>
-    </ul>
-  </div>
+<div id='add-user-container'>
+  <ul class="no-bullets">
+
+    <li>
+      <label id="add-user-error-box" style="color: #FF5722"></label>
+      <label id="add-user-info-box" style="color: #26C6DA"></label>
+    </li>  
+    <li> 
+      <label> Name: </label>
+      <input type="text" id="add-user-name"></input>
+    </li>
+    <li>
+      <label> Email: </label>
+      <input type="text" id="add-user-email"></input>
+    </li>
+    <li>
+      <label> Role</label>
+      <select id="add-user-role-id">
+        <option value="user"> user </option>
+        <option value="admin"> admin </option>
+      </select>
+    </li>
     
+    <li>
+      <button id="add-user-button" onclick="add_user_callback()"> Add User </button>
+    </li>
+    
+    <li>
+      <button onclick="window.location.hash='home'"> Go to Home </button>
+    </li>
+  </ul>
+</div>
+
 #+END_SRC
 
 #+NAME: add_user_handler
@@ -422,14 +450,15 @@ function login_handler() {
       let email = $('#add-user-email').val();
       let role_id = $('#add-user-role-id').val();
   
-      $("#add-user-error-box").text("");
+      let error_box = $("#add-user-error-box");
+      error_box.text("");
 
       if (name == "") {
-          $("#add-user-error-box").text("Please fill in name");
+          error_box.text("Please fill in name");
           return;
       }
       else if (email == "") {
-          $("#add-user-error-box").text("Please fill in email");
+          error_box.text("Please fill in email");
           return;
       }
       
@@ -440,7 +469,7 @@ function login_handler() {
       function error_callback(request) {
           
           let error_json = JSON.parse(request.responseText);
-          $('#add-user-error-box').text(error_json['error'] || 'Unable to find error');
+          error_box.text(error_json['error'] || 'Unable to find error');
       }
       API.add_user(name,
                    email,
@@ -456,6 +485,11 @@ function login_handler() {
 <div id="delete-user-container">
   <h3> Delete User </h3>
   <ul>    
+    <li>
+      <label id="delete-user-error-box" style="color: #FF5722"></label>
+      <label id="delete-user-info-box" style="color: #26C6DA"></label>
+    </li>
+
     <li>
       <label> Email ID </label>
     </li>
@@ -477,23 +511,44 @@ function login_handler() {
 #+BEGIN_SRC js
 function delete_user_handler() {
     hide_all_containers();
+    
+    let error_box = $("#delete-user-error-box");
+    let info_box = $("#delete-user-info-box");
+    
+    error_box.text("");
+    info_box.text("");
+    
     $("#delete-user-container").removeClass("hidden");
 }
 
 function delete_user_callback() {
     let delete_email = $('#delete-user-email-id').val();
+    let error_box = $("#delete-user-error-box");
+
+    error_box.text("");
 
     if (delete_email == "") {
         console.error("delete email ID expected!");
+        error_box.text("delete email ID expected");
+        return;
     }
 
     function success_cb() {
         console.log(delete_email + " deleted successfully");
+        $("#delete-user-info-box").text(delete_email + "deleted successfully");
     }
+    
     function error_cb(request){
-        let error_json = JSON.parse(request.responseText);
-        console.log("unable to delete user: ");
+        console.group("delete_user error callback");
+        console.dir(request);
+        /*
+          let error_json = JSON.parse(request.responseText);
         console.dir(error_json);
+        ,*/
+        
+        //TODO: once you recieve JSON, extrace the error
+        error_box.text(request.responseText);
+        console.groupEnd();
     }
 
     API.delete_user(delete_email, success_cb, error_cb);
@@ -545,7 +600,7 @@ function home_handler() {
   }
 #+END_SRC
 
-
+  
 * HTML: Consolidated
   
 We need to put the HTML files in a =templates= folder since we are returning the HTML file

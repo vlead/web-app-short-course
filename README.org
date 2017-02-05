@@ -19,3 +19,21 @@ make =role = "user"= by default.
 
 Remove =role= as a parameter from the REST API. Change =add_user=
 in system interface to set =role = "user"= by default.
+**** Have APIS return usage errors in JSON
+wrong API usage / wrong user input should not result in
+=4xx= or =5xx= errors.
+
+Rather, they should return a json object along the lines of
+
+#+BEGIN_SRC js
+{
+    status: "success" / "failure",
+    [error_message: "error_string"]
+    [other components on success]
+}
+#+END_SRC
+
+- Errors will have ="failure"=  and an associated error message
+- Success with have ="success"= and other associated data
+
+
