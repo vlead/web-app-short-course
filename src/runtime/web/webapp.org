@@ -432,6 +432,9 @@ function login_handler() {
 #+BEGIN_SRC js
   function add_user_handler() {
       hide_all_containers();
+      
+      $("#add-user-info-box").text("");
+      $("#add-user-error-box").text("");
       $("#add-user-container").removeClass("hidden");
   }
   
@@ -461,7 +464,7 @@ function login_handler() {
   
       function error_callback(request) {
           //TODO: once API returns JSON, pretty print the json
-          let error_json = JSON.parse(request.responseText);
+          //let error_json = JSON.parse(request.responseText);
           error_box.text(request.responseText || 'Unable to find error');
       }
       API.add_user(name,
