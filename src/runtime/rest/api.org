@@ -264,8 +264,8 @@ def logout():
                          'role': role,
                          'key': key }        
         try:
-            session_obj = SystemInterface.logout(session_dict)
             session.clear()
+            session_obj = SystemInterface.logout(session_dict)
             # session.pop('google_token', None)
             # session.pop('email', None)
             # session.pop('role', None)
