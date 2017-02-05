@@ -2,3 +2,13 @@ A show case of model driven developmet of web applications.
 
 Please checkout this [[./src/deployment/run-userdirectory-in-development-environment.org][document]] to run the application in developer's
 environment.
+
+*** To Fix
+
+**** request handling
+
+1. we do not need to check for =GET= and =POST= in request handlers that
+   have only one method registered on them. eg: =api.org:588= at =show_users()=
+
+2. We need to check for existence of keys in request handlers, and not
+   simply dereference the dictionary. eg: =show_users()=
