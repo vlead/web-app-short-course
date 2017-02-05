@@ -340,7 +340,7 @@ function login_handler() {
       
       let delete_button =
           "<a style='margin-left: 1em' onclick=user_list_delete(" +
-          '"' + user.email.email + '"'
+          "'" + user.email.email + "'" +
           ")> Delete User </a>";
 
       let roles = "";
@@ -417,14 +417,6 @@ function login_handler() {
       <input type="text" id="add-user-email"></input>
     </li>
     <li>
-      <label> Role</label>
-      <select id="add-user-role-id">
-        <option value="user"> user </option>
-        <option value="admin"> admin </option>
-      </select>
-    </li>
-    
-    <li>
       <button id="add-user-button" onclick="add_user_callback()"> Add User </button>
     </li>
     
@@ -448,7 +440,8 @@ function login_handler() {
   
       let name = $('#add-user-name').val();
       let email = $('#add-user-email').val();
-      let role_id = $('#add-user-role-id').val();
+      //TODO: once the API is fixed, we don't need to send this over
+      let role_id = "user";
   
       let error_box = $("#add-user-error-box");
       error_box.text("");
@@ -467,9 +460,9 @@ function login_handler() {
       }
   
       function error_callback(request) {
-          
+          //TODO: once API returns JSON, pretty print the json
           let error_json = JSON.parse(request.responseText);
-          error_box.text(error_json['error'] || 'Unable to find error');
+          error_box.text(request.responseText || 'Unable to find error');
       }
       API.add_user(name,
                    email,
