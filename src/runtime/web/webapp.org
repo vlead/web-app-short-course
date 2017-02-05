@@ -361,15 +361,23 @@ function login_handler() {
   }
   
   function user_list_delete(email) {
+      let error_box = $("#get-all-users-error-box");
+      let info_box = $("#get-all-users-info-box");
+
+      error_box.text("");
+      info_box.text("");
+
+
+      
       API.delete_user(email, function(request) {
           console.group("user_list_delete");
           console.log(request);
 
           if (request.status === "failure") {
-              $("#get-all-users-error-box").text(request.msg);
+              error_box.text(request.msg);
           }
           else {
-              $("#get-all-users-info-box").text("User successfully deleted");
+              info_box.text("User " + email + " successfully deleted");
               //TODO: use client-side flash for this message
               console.log("User successfully deleted");
               //trigger page reload
@@ -387,8 +395,15 @@ function login_handler() {
   
   function get_all_users_handler() {
       hide_all_containers();
+
       var container = $('#get-all-users-container');
       container.removeClass("hidden");
+
+      let error_box = $("#get-all-users-error-box");
+      let info_box = $("#get-all-users-info-box");
+
+      error_box.text("");
+      info_box.text("");
       
       API.get_all_users(function(users) {
           console.group("get_all_users callback");
