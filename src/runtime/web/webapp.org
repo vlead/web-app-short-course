@@ -34,14 +34,14 @@ We tangle all of the JS here
 #+BEGIN_SRC js
 var MockAPI = {
   users: [],
-<<mock_create_user>>
+<<mock_add_user>>
 <<mock_get_all_users>>
 };
 #+END_SRC
-** Create User
-#+NAME: mock_create_user
+** Add User
+#+NAME: mock_add_user
 #+BEGIN_SRC js
-    create_user: function(name, email, cb) {
+    add_user: function(name, email, cb) {
         this.users.push({name: name, email: email});
     },
 #+END_SRC
@@ -58,51 +58,34 @@ get_all_users: function(cb) {
 #+NAME: rest_api
 #+BEGIN_SRC js
 var RestAPI = {
-<<rest_create_session>>
+
 <<rest_delete_user>>
-<<rest_create_user>>
+<<rest_add_user>>
 <<rest_get_all_users>>
 <<rest_login>>
 <<rest_logout>>
 };
 #+END_SRC
 
-** Create Session
-** Delete User
-#+NAME: rest_create_session
-#+BEGIN_SRC js
-    create_session: function(role, success_cb, error_cb) {
-        post_json("/create_session",
-            {
-              role: role
-            },
-            success_cb,
-            error_cb);
-    },
-#+END_SRC
-
-
 ** Delete User
 #+NAME: rest_delete_user
 #+BEGIN_SRC js
-    delete_user: function(id, success_cb, error_cb) {
+    delete_user: function(email, success_cb, error_cb) {
         $.ajax({
-            url: '/users/' + id,
+            url: '/del_user/' + email,
             type: 'DELETE',
             success: success_cb,
             error: error_cb
         });
     },
 #+END_SRC
-** Create user
-#+NAME: rest_create_user
+** Add User
+#+NAME: rest_add_user
 #+BEGIN_SRC js
-  create_user: function(name, email, role_id, cb, error_cb) {
-      console.log("create_user name: " + name + " |email: " + 
-                  email + " |role_id: " + role_id);
-      post_json("/users",
-                {name: name, email: email, role_id: role_id},
-                function(data) { console.log(data); cb(data) },
+  add_user: function(name, email, role, success_cb, error_cb) {
+      post_json("/add_user",
+                {name: name, email: email, role: role},
+                success_cb,
                 error_cb);
   },
 #+END_SRC
@@ -125,9 +108,7 @@ var RestAPI = {
   },
 #+END_SRC
 
-
 ** Logout
-
 #+NAME: rest_logout
 #+BEGIN_SRC js
   logout: function(role, success_cb, failure_cb) {
@@ -137,7 +118,7 @@ var RestAPI = {
 
 * System JS - Window, # handling
 
-Call =make_hash_handler= to attach a handler.
+Call =register_onhashchange_handlers= to attach a handler.
 
 Parameters:
 handler_functions :: { hash_name :: function() {} }
@@ -153,48 +134,44 @@ navigates to given path
 
 #+NAME: hash_handler
 #+BEGIN_SRC js
-  function navigate(path) {
-      var current = window.location.href;
-      window.location.href = current.replace(/#(.*)$/, '') + '#' + path;
-      //TODO: figure out why I need to call this manually. does not work without this
-      //the first time
-      //$(window).trigger("hashchange")
-  }
-  
-  function get_window_hash_url() {
-      return location.hash.substring(1);
-  }
-  
-  function make_hash_handler(handler_functions) {
-      $(window).on("hashchange", function(e) {
-          //strip hash out
-          hash = get_window_hash_url();
-          console.log("new hash: ", hash);
-          //we use hasOwnProperty since we need to check if this
-          //object has it, not its parents (in the prototype chain)
-          if (handler_functions.hasOwnProperty(hash)) {
-              //invoke said handler function
-              handler_functions[hash]();
-          } else {
-              console.warn(`no handler for ${hash}`);
-          }
-      });
-  };
+function navigate(path) {
+    var current = window.location.href;
+    window.location.href = current.replace(/#(.*)$/, '') + '#' + path;
+}
+
+//strip # from window.location.hash
+function get_window_hash_url() {
+    return location.hash.substring(1);
+}
+
+function register_onhashchange_handlers(handler_functions) {
+    $(window).on("hashchange", function(e) {
+        //strip hash out
+        hash = get_window_hash_url();
+        console.log("new hash: ", hash);
+        //we use hasOwnProperty since we need to check if this
+        //object has it, not its parents (in the prototype chain)
+        if (handler_functions.hasOwnProperty(hash)) {
+            //invoke said handler function
+            handler_functions[hash]();
+        } else {
+            console.warn(`no handler for ${hash}`);
+        }
+    });
+};
 #+END_SRC
 
 
 
+* User JS - Introduction
 User code that uses our library to build an API.
-
-
 User code: Pick between REST and Mock API, setup # handlers for
-views
+views.
 
 
 * User JS - Model State
-#+NAME: user_model_state
-#+BEGIN_SRC js
-  
+#+NAME: model_state
+#+BEGIN_SRC js  
   function make_state_object() {
       private_state = {
           current_user: null
@@ -212,72 +189,70 @@ views
   
 #+END_SRC js
 * User JS - Pick API choice (REST V/S Mock)
-#+NAME: user_api_choice
+#+NAME: api_choice
 #+BEGIN_SRC js
 var API = RestAPI;
 #+END_SRC
 
 
 * User JS - Window onload: setup # handlers, start from register
-#+NAME: user_window_onload
+#+NAME: window_onload
 #+BEGIN_SRC js
 
 function is_logged_in() {
-  return document.cookie.indexOf("session") != -1;
+    return document.cookie.indexOf("session") != -1;
 }
 
-  window.onload = function() {
-      make_hash_handler({register: register_handler,
-                         login:  login_handler,
-                         get_all_users: get_all_users_handler,
-                         create_user: create_user_handler,
-                         home: home_handler,
-                         index: index_handler});
-      
-      // Hashes available when not logged in (authorized)
-      var unauth_available_hashes = ["index"];
+window.onload = function() {
+    register_onhashchange_handlers({register: register_handler,
+                                    login:  login_handler,
+                                    get_all_users: get_all_users_handler,
+                                    add_user: add_user_handler,
+                                    home: home_handler,
+                                    index: index_handler});
+    
+    // Hashes available when not logged in (authorized)
+    var unauth_available_hashes = ["index"];
 
-      //TODO: figure out why this does not trigger onhashchange
-      //TRIAL: check if preventing race condition helps
-      setTimeout(function() {
+    //TODO: figure out why this does not trigger onhashchange
+    //TRIAL: check if preventing race condition helps
 
-          let current_hash = get_window_hash_url();
-          if (current_hash == "") {
-              console.log("defaulting #url to get_all_users");
-              
-              //send logged in users to home, others to index
-              if (is_logged_in()) {
-                current_hash = "home";
-              }
-              else {
-                current_hash = "index";
-              }
-          }
 
-          console.log("navigating to: #" + current_hash);
-          
-          // If the hash is available to everyone, or if the user
-          // is logged in, give them access
-          if (unauth_available_hashes.indexOf(current_hash) > -1  ||
-             is_logged_in()) {
-            navigate(current_hash);
-          }
-          else {
-            //by default, if unauthorized, send to index page
-            naviagte("index");
-          }
+    let current_hash = get_window_hash_url();
+    if (current_hash == "") {
+        console.log("defaulting #url to get_all_users");
+        
+        //send logged in users to home, others to index
+        if (is_logged_in()) {
+            current_hash = "home";
+        }
+        else {
+            current_hash = "index";
+        }
+    }
 
-          //HACK: I don't know why this is needed for the first hash change. figure it out!
-          $(window).trigger("hashchange")
-      }, 100);
-  }
+    console.log("navigating to: #" + current_hash);
+    
+    // If the hash is available to everyone, or if the user
+    // is logged in, give them access
+    if (unauth_available_hashes.indexOf(current_hash) > -1  ||
+        is_logged_in()) {
+        navigate(current_hash);
+    }
+    else {
+        //by default, if unauthorized, send to index page
+        naviagte("index");
+    }
+
+    //HACK: I don't know why this is needed for the first hash change.
+    //Figure it out
+    $(window).trigger("hashchange");
+}
 #+END_SRC
-
-
 
 All components that are part of our single page application go here
 * User JS - Hide all containers
-#+NAME: user_component_auxiliary
+#+NAME: component_auxiliary
 #+BEGIN_SRC js
 //use to hide all containers before displaying another container
 function hide_all_containers() {
@@ -285,12 +260,13 @@ function hide_all_containers() {
     $('#login-container').addClass("hidden");
     $('#register-container').addClass("hidden");
     $('#get-all-users-container').addClass("hidden");
-    $('#create-user-container').addClass("hidden");
+    $('#add-user-container').addClass("hidden");
+    $('#delete-user-container').addClass("hidden");
     $('#home-container').addClass("hidden");
     $('#index-container').addClass("hidden");
+
 }
 #+END_SRC
-
 
 * User Component - Register
 
@@ -310,7 +286,7 @@ function hide_all_containers() {
 </div>
 #+END_SRC
 
-#+NAME: user_register_handler
+#+NAME: register_handler
 #+BEGIN_SRC js
 function register_handler() {
     hide_all_containers()
@@ -332,7 +308,7 @@ function register_handler() {
 </div>
 #+END_SRC
 
-#+NAME: user_login_handler
+#+NAME: login_handler
 #+BEGIN_SRC js
 function login_handler() {
     hide_all_containers();
@@ -350,7 +326,7 @@ function login_handler() {
   </div>
 #+END_SRC
 
-#+NAME: user_get_all_users_handler
+#+NAME: get_all_users_handler
 #+BEGIN_SRC js
   function make_li_for_user(user) {
       console.log("user: " + user + "|email: " + user.email + "|name: " + user.name)
@@ -394,34 +370,34 @@ function login_handler() {
   }
 #+END_SRC
 
-* User Component - Create User
-#+NAME: create_user_html
+* User Component - Add User
+#+NAME: add_user_html
 #+BEGIN_SRC html
-  <div id='create-user-container'>
+  <div id='add-user-container'>
     <ul class="no-bullets">
       <li> 
-        <label> Username: </label>
-        <input type="text" id="create-user-username"></input>
+        <label> Name: </label>
+        <input type="text" id="add-user-name"></input>
       </li>
       <li>
         <label> Email: </label>
-        <input type="text" id="create-user-email"></input>
+        <input type="text" id="add-user-email"></input>
       </li>
       <li>
-        <label> Role ID: </label>
-        <select id="create-user-role-id">
-          <option value="1"> 1 </option>
-          <option value="2"> 2</option>
+        <label> Role</label>
+        <select id="add-user-role-id">
+          <option value="user"> user </option>
+          <option value="admin"> admin </option>
         </select>
       </li>
   
       <li>
-        <button id="create-user-button" onclick="create_user_callback()"> Create User </button>
+        <button id="add-user-button" onclick="add_user_callback()"> Add User </button>
       </li>
   
       <li>
-        <label id="create-user-error-box" style="color: #FF5722"></label>
-        <label id="create-user-info-box" style="color: #26C6DA"></label>
+        <label id="add-user-error-box" style="color: #FF5722"></label>
+        <label id="add-user-info-box" style="color: #26C6DA"></label>
       </li>
       <li>
         <button onclick="window.location.hash='home'"> Go to Home </button>
@@ -431,75 +407,113 @@ function login_handler() {
     
 #+END_SRC
 
-#+NAME: user_create_user_handler
+#+NAME: add_user_handler
 #+BEGIN_SRC js
-  function create_user_handler() {
+  function add_user_handler() {
       hide_all_containers();
-      $("#create-user-container").removeClass("hidden");
+      $("#add-user-container").removeClass("hidden");
   }
   
-  function create_user_callback() {
-      console.log("create user callback called")
+  function add_user_callback() {
+      console.log("add user callback called")
   
-      let username = $('#create-user-username').val();
-      let email = $('#create-user-email').val();
-      let role_id = $('#create-user-role-id').val();
+      let name = $('#add-user-name').val();
+      let email = $('#add-user-email').val();
+      let role_id = $('#add-user-role-id').val();
   
-      $("#create-user-error-box").text("");
-      if (username == "") {
-          $("#create-user-error-box").text("Please fill in username");
+      $("#add-user-error-box").text("");
+
+      if (name == "") {
+          $("#add-user-error-box").text("Please fill in name");
           return;
       }
       else if (email == "") {
-          $("#create-user-error-box").text("Please fill in email");
+          $("#add-user-error-box").text("Please fill in email");
           return;
       }
       
       function success_callback() {
-          $('#create-user-info-box').text("Success, user: " + username + "created");
+          $('#add-user-info-box').text("Success, user: " + name + "added.");
       }
   
       function error_callback(request) {
           let error_json = JSON.parse(request.responseText);
-          $('#create-user-error-box').text(error_json['error'] || 'Unable to find error');
+          $('#add-user-error-box').text(error_json['error'] || 'Unable to find error');
       }
-      API.create_user(username,
-                      email,
-                      role_id,
-                      success_callback,
-                      error_callback);
+      API.add_user(name,
+                   email,
+                   role_id,
+                   success_callback,
+                   error_callback);
   }
 #+END_SRC
 
 * User Component - Delete User
 #+NAME: delete_user_html
 #+BEGIN_SRC html
-  <div id="delete-user-container">
-  <ul>
-  <li></li>
+<div id="delete-user-container">
+  <h3> Delete User </h3>
+  <ul>    
+    <li>
+      <label> Email ID </label>
+    </li>
+    <li>
+      <input type="text" id="delete-user-email-id"> </input>
+    </li>
+    <li>
+      <button onclick="delete_user_callback()"> Delete User </button>
+    </li>
   </ul>
-  </div>
-  
-#+END_SRC
-* User Component - Home
-#+NAME: home_html
-#+BEGIN_SRC html
-  <div id="home-container">
-    <ul>
-      <li><a onclick="window.location.hash='create_user'"> Create User </a></li>
-      <li><a onclick="window.location.hash='get_all_users'"> Get all users </a></li>
-      <li><a onclick="window.location.hash='delete_user'"> Delete User </a></li>
-      <li><a onclick="API.logout()"> Logout </a></li>
-    </ul>
-  </div>
+</div>
 #+END_SRC
 
-#+NAME: user_home_handler
+#+NAME: delete_user_handler
 #+BEGIN_SRC js
-  function home_handler() {
-      hide_all_containers();
-      $('#home-container').removeClass("hidden");
-  }
+function delete_user_handler() {
+    hide_all_containers();
+    $("#delete-user-container").removeClass("hidden");
+}
+
+function delete_user_callback() {
+    let delete_email = $('#delete-user-email-id').val();
+
+    if (delete_email == "") {
+        console.error("delete email ID expected!");
+    }
+
+    function success_cb() {
+        console.log(delete_email + " deleted successfully");
+    }
+    function error_cb(request){
+        let error_json = JSON.parse(request.responseText);
+        console.log("unable to delete user: ");
+        console.dir(error_json);
+    }
+
+    API.delete_user(delete_email, success_cb, error_cb);
+}
+#+END_SRC
+
+* User Component - Home
+  
+#+NAME: home_html
+#+BEGIN_SRC html
+<div id="home-container">
+  <ul>
+    <li><a onclick="window.location.hash='add_user'"> Add User </a></li>
+    <li><a onclick="window.location.hash='get_all_users'"> Get all users </a></li>
+    <li><a onclick="window.location.hash='delete_user'"> Delete User </a></li>
+    <li><a onclick="API.logout()"> Logout </a></li>
+  </ul>
+</div>
+#+END_SRC
+
+#+NAME: home_handler
+#+BEGIN_SRC js
+function home_handler() {
+    hide_all_containers();
+    $('#home-container').removeClass("hidden");
+}
 #+END_SRC
 
 * User Component - Index page
@@ -512,7 +526,7 @@ function login_handler() {
   </div>
 #+END_SRC
 
-#+NAME: user_index_handler
+#+NAME: index_handler
 #+BEGIN_SRC js
   function index_handler() {
       hide_all_containers();
@@ -549,7 +563,7 @@ so that when we are actually deploying this app, the static files can be served 
   <<register_html>>
   <<login_html>>
   <<get_all_users_html>>
-  <<create_user_html>>
+  <<add_user_html>>
   <<delete_user_html>>
   <<home_html>>
   <<index_html>>
@@ -582,7 +596,7 @@ so that when we are actually deploying this app, the static files can be served 
       margin-bottom: 1em;
   }
   
-  #create-user-container {
+  #add-user-container {
       max-width: 500px;
   }
   .hidden {
@@ -592,25 +606,23 @@ so that when we are actually deploying this app, the static files can be served 
 * JS: Consolidated
 #+BEGIN_SRC js :tangle static/js/main.js :eval no :noweb yes
 
-//system code
+// ***System code***
 <<post_json>>
 <<mock_api>>
 <<rest_api>>
 <<hash_handler>>
 
-//user code
-<<user_api_choice>>
+// ***User code***
 
-//components
-<<user_component_auxiliary>>
-<<user_register_handler>>
-<<user_login_handler>>
-<<user_get_all_users_handler>>
-<<user_create_user_handler>>
-<<user_home_handler>>
-<<user_index_handler>>
+<<api_choice>>
 
-//NOTE: user_window_onload uses the handlers
-//so keep these below the handlers
-<<user_window_onload>>
+<<component_auxiliary>>
+<<register_handler>>
+<<login_handler>>
+<<get_all_users_handler>>
+<<add_user_handler>>
+<<home_handler>>
+<<index_handler>>
+
+<<window_onload>>
 #+END_SRC
