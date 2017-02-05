@@ -279,14 +279,16 @@ All components that are part of our single page application go here
 * User JS - Hide all containers
 #+NAME: user_component_auxiliary
 #+BEGIN_SRC js
-    //use to hide all containers before displaying another container
-    function hide_all_containers() {
-        $('#login-container').addClass("hidden");
-        $('#register-container').addClass("hidden");
-        $('#get-all-users-container').addClass("hidden");
-        $('#create-user-container').addClass("hidden");
-        $('#home-container').addClass("hidden");
-  }
+//use to hide all containers before displaying another container
+function hide_all_containers() {
+    // TODO: consider refactoring to addClass in a loop
+    $('#login-container').addClass("hidden");
+    $('#register-container').addClass("hidden");
+    $('#get-all-users-container').addClass("hidden");
+    $('#create-user-container').addClass("hidden");
+    $('#home-container').addClass("hidden");
+    $('#index-container').addClass("hidden");
+}
 #+END_SRC
 
 

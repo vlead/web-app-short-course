@@ -76,11 +76,12 @@ def create_error_handler(app, status_code):
 
 
 def configure_errorhandlers(app):
-    
-    create_error_handler(app, 500)
-    create_error_handler(app, 500)
-    create_error_handler(app, 401)
-    create_error_handler(app, 400)
+    pass
+    # FIXME: commented error handlers to get traceback
+    # create_error_handler(app, 500)
+    # create_error_handler(app, 500)
+    # create_error_handler(app, 401)
+    # create_error_handler(app, 400)
 
     # @app.errorhandler(500)
     # def server_error(err):

@@ -101,66 +101,75 @@ def login(role):
  #+NAME: callback_google_api
  #+BEGIN_SRC python
 def create_session_for_user(email, role, key):
-  try:
-    session_dict = {'email': email,
-                          'role': role,
-                          'key': key }       
+    try:
+      session_dict = {'email': email,
+                      'role': role,
+                      'key': key }       
 
-    print("session_dict: %s" % session_dict)
-     
-    session_obj = SystemInterface.create_session_in_system(session_dict)
-    return True
-    
-  except NotAuthorizedError as e:
-      abort(401, 'Not Authorized error: %s' % str(e))
-  
-  except TypeError as e:
-      abort(400, 'Malformed arguments, error: %s' % str(e))
-  
-  except Exception as e:
-      abort(500, "Error: %s" % str(e))
+      print("\nsession_dict: %s" % session_dict)
+
+      session_obj = SystemInterface.create_session_in_system(session_dict)
+      return True
+
+    except NotAuthorizedError as e:
+        abort(401, 'Not Authorized error: %s' % str(e))
+
+    except TypeError as e:
+        abort(400, 'Malformed arguments, error: %s' % str(e))
+
+    except Exception as e:
+        abort(500, "Error: %s" % str(e))
 
 
 @api.route('/authorized')
 def authorized():
-  try:
-      resp = google_oauth.authorized_response()
-      if resp is None:
-          return jsonify({"Status" : "User denied access"})
-      session['google_token'] = (resp['access_token'], '')
-      user_info = google_oauth.get('userinfo')
-      email = str(user_info.data['email'])
-      
-      try:
-          roles = SystemInterface.authorize_user(email)
-          session['email'] = email
-          
-      except NotAuthorizedError as e:
-          session.pop('google_token', None)
-          abort(401, 'Not Authorized error: %s' % str(e))
+    try:
+        resp = google_oauth.authorized_response()
+        if resp is None:
+            return jsonify({"Status" : "User denied access"})
+        session['google_token'] = (resp['access_token'], '')
+        user_info = google_oauth.get('userinfo')
+        email = str(user_info.data['email'])
 
-      except TypeError as e:
-          abort(400, 'Malformed arguments, error: %s' % str(e))
+        try:
+            roles = SystemInterface.authorize_user(email)
+            session['email'] = email
 
-      except Exception as e:
-          session.pop('google_token', None)
-          abort(500, 'Error: %s' % str(e))
+        except NotAuthorizedError as e:
+            session.pop('google_token', None)
+            abort(401, 'Not Authorized error: %s' % str(e))
 
-      print("args: %s " % request.args)
-      print("original session: %s" % session)
+        except TypeError as e:
+            abort(400, 'Malformed arguments, error: %s' % str(e))
 
-      role = session['role']
-      print("role: %s" % role)
-      print("calling create_session_for_user...")
-      create_session_for_user(email, role, session['google_token'])
-      print("create_session_for_user Succeeded.")
-      print("redirecting to / ...")
+        except Exception as e:
+            session.pop('google_token', None)
+            abort(500, 'Error: %s' % str(e))
 
-      return redirect("/")
 
-  except Exception as e:
-      print str(e)
-      abort(500, 'Error: %s' % str(e))
+        assert len(roles) > 0
+
+        # BUG: roles[0].get("name") returns unicode encoded string, not native python
+        # string. Why?
+        role = str(roles[0].get("name")) if len(roles) == 1 else "user"
+
+        
+        create_session_for_user(email,
+                                role,
+                                session['google_token'])
+        # TODO: merge both session objects in some way?
+        # having both Flask's session and our SystemInterface
+        # session is confusing 
+        session["role"] = role
+        
+        print("create_session_for_user Succeeded.")
+        print("redirecting to / ...")
+
+        return redirect("/")
+
+    except Exception as e:
+        print str(e)
+        abort(500, 'Error: %s' % str(e))
 #+END_SRC
 
 *** Google OAuth Credentials
@@ -198,84 +207,6 @@ def get_google_oauth_token():
     return session.get('google_token')
 
  #+END_SRC
-
-
-** Create Session
-   API to create login and system sessions
-
-*** API Design
-
-   - URL :: /create_session
-
-   - Method :: POST
-
-   - Data Params ::
-     #+BEGIN_EXAMPLE
-     {
-     "role": "<value>"
-     }
-     #+END_EXAMPLE		   
-   - Success Response ::
-     + Code: 200
-
-     + Content:
-       #+BEGIN_EXAMPLE
-        {
-         status: "success"
-        }
-       #+END_EXAMPLE
-
-  - Error Response ::
-    + Code: 401 UNAUTHORIZED
-
-    + Content: { error : "Not Authorized" }
-
-    OR
-
-    + Code: 400 Bad Request
-
-    + Content: { error : "Malformed arguments" }
-
-    OR
-
-    + Code: 500
-
-    + Content: { error : Exception String}
-
-  - Example ::
-    #+BEGIN_EXAMPLE
-    http://localhost:5000/create_session
-    #+END_EXAMPLE
-
-*** Implementation
-#+NAME: create_session
-#+BEGIN_SRC python
-@api.route('/create_session', methods=['POST'])
-def create_session():
-    if request.method == 'POST':        
-        data_json = json.dumps(request.get_json())
-        data_dict = yaml.safe_load(data_json)
-        email = session['email']
-        role = data_dict['role']
-        key = session['google_token']
-        session_dict = {'email': email,
-                            'role': role,
-                            'key': key }        
-        try:            
-            session_obj = SystemInterface.create_session_in_system(session_dict)
-            session['role'] = role
-            return jsonify({"status" : "success"})
-
-        except NotAuthorizedError as e:
-            abort(401, 'Not Authorized error: %s' % str(e))
-
-        except TypeError as e:
-            abort(400, 'Malformed arguments, error: %s' % str(e))
-
-        except Exception as e:
-            abort(500, "Error: %s" % str(e))
-#+END_SRC
-
 
 
 ** =Logout= API
