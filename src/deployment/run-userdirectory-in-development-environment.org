@@ -9,7 +9,11 @@
 * Introduction
   This document helps in setting up development environment for run the
   =userdirectory= application. 
-* Rename =src/runtime/config/custom-config.org.sample= to =src/runtime/config/custom-config.org=
+
+* Rename sample config files
+  After cloning the repository, rename
+  =src/runtime/config/custom-config.org.sample= to
+  =src/runtime/config/custom-config.org=
 
 * Creation of database
   1. Login to mysql
@@ -30,7 +34,7 @@
 * Initial make
   Run make from =web-app-short-course= directory to build the application.  The
   code gets tangled but the test cases will fail.  This is because some of the
-  dependencies have not beeb set up.  To insall the dependencies and run the
+  dependencies have not been set up.  To insall the dependencies and run the
   application, follow the steps listed below.
 
 #+BEGIN_EXAMPLE
@@ -59,7 +63,7 @@
 
 * Set SQLALCHEMY_DATABASE_URI
   The variable =SQLALCHEMY_DATABASE_URI= has to be set to proper value in
-  =build/code/runtime/config/flask_app_config.py= so that the application can
+  =src/runtime/config/custom-config.org= so that the application can
   use the database.  In the example below, =root= is the user and =mysql= is
   the password.
   #+BEGIN_EXAMPLE
@@ -75,14 +79,23 @@ export PYTHONPATH=${PWD}
 
 * [[./google-oauth-configuration.org][Obtain Google OAuth Credentials]]
 * Congigure OAuth for Application
-  =build/code/runtime/config/google_oauth_config.py= so that the application
-  can use the Google OAuth API.
-  =CONSUMER_KEY= and =CONSUMER_SECRET= that were obtained from the previous
-  step should be filled up
+  Edit =src/runtime/config/custom-config.org= to set =CONSUMER_KEY= and
+  =CONSUMER_SECRET= that were obtained from the previous step. 
+  
+  This is necessary for the current application to use Google OAUTH service.
+
   #+BEGIN_EXAMPLE
     CONSUMER_KEY = "<key>"
     CONSUMER_SECRET = "<key>"
   #+END_EXAMPLE
+
+* Run Make again
+  The =make= this time should pass.  Change directory to =web-app-short-course=
+  and run =make=.
+
+#+BEGIN_EXAMPLE
+% make
+#+END_EXAMPLE
 
 * Insert Dafault data
   Edit =build/code/runtime/config/config.py= and set =admin-email= to
