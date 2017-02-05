@@ -12,3 +12,10 @@ environment.
 
 2. We need to check for existence of keys in request handlers, and not
    simply dereference the dictionary. eg: =show_users()=
+**** Add user API change
+We cannot create an admin user with =add_user=.
+Hence, remove the =role= parameter from the =add_user= API.
+make =role = "user"= by default.
+
+Remove =role= as a parameter from the REST API. Change =add_user=
+in system interface to set =role = "user"= by default.

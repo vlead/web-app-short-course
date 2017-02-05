@@ -209,7 +209,8 @@ window.onload = function() {
                                     get_all_users: get_all_users_handler,
                                     add_user: add_user_handler,
                                     home: home_handler,
-                                    index: index_handler});
+                                    index: index_handler,
+                                    delete_user: delete_user_handler});
     
     // Hashes available when not logged in (authorized)
     var unauth_available_hashes = ["index"];
@@ -433,10 +434,11 @@ function login_handler() {
       }
       
       function success_callback() {
-          $('#add-user-info-box').text("Success, user: " + name + "added.");
+          $('#add-user-info-box').text("Success, user: " + name + " added.");
       }
   
       function error_callback(request) {
+          
           let error_json = JSON.parse(request.responseText);
           $('#add-user-error-box').text(error_json['error'] || 'Unable to find error');
       }
@@ -463,6 +465,10 @@ function login_handler() {
     <li>
       <button onclick="delete_user_callback()"> Delete User </button>
     </li>
+    <li>
+      <button onclick="window.location.hash='home'"> Goto Home </button>
+    </li>
+
   </ul>
 </div>
 #+END_SRC
@@ -623,6 +629,7 @@ so that when we are actually deploying this app, the static files can be served 
 <<add_user_handler>>
 <<home_handler>>
 <<index_handler>>
+<<delete_user_handler>>
 
 <<window_onload>>
 #+END_SRC
