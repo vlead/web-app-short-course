@@ -297,6 +297,12 @@ def logout():
                        "msg": "Malformed Arguments"}
             return jsonify(msg)
 
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
+            return jsonify(msg)
+
         except Exception as e:
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
@@ -402,6 +408,12 @@ def add_user():
                        "msg": "Malformed Arguments"}
             return jsonify(msg)
 
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
+            return jsonify(msg)
+
         except Exception as e:
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
@@ -472,6 +484,12 @@ def del_user(email_str):
         except TypeError as e:
             msg = {"status": "failure", 
                        "msg": "Malformed Arguments"}
+            return jsonify(msg)
+
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
             return jsonify(msg)
 
         except Exception as e:
@@ -574,6 +592,12 @@ def show_users():
                        "msg": "Malformed Arguments"}
             return jsonify(msg)
 
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
+            return jsonify(msg)
+
         except Exception as e:
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
@@ -667,6 +691,12 @@ def show_sessions():
                        "msg": "Malformed Arguments"}
             return jsonify(msg)
 
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
+            return jsonify(msg)
+
         except Exception as e:
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
@@ -747,6 +777,12 @@ def show_roles():
         except TypeError as e:
             msg = {"status": "failure", 
                        "msg": "Malformed Arguments"}
+            return jsonify(msg)
+
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
             return jsonify(msg)
 
         except Exception as e:
@@ -838,6 +874,12 @@ def show_user_details():
         except TypeError as e:
             msg = {"status": "failure", 
                        "msg": "Malformed Arguments"}
+            return jsonify(msg)
+
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
             return jsonify(msg)
 
         except Exception as e:
@@ -942,6 +984,12 @@ def set_email():
                        "msg": "Malformed Arguments"}
             return jsonify(msg)
 
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
+            return jsonify(msg)
+
         except Exception as e:
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
@@ -1044,6 +1092,12 @@ def set_name():
                        "msg": "Malformed Arguments"}
             return jsonify(msg)
 
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
+            return jsonify(msg)
+
         except Exception as e:
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
@@ -1092,7 +1146,7 @@ def set_name():
     #+BEGIN_EXAMPLE
     http://localhost:5000/show_roles_of_user?email=xyz@vlabs.ac.in
     #+END_EXAMPLE
-*** Implementation
+*** COMMENT Implementation
 #+NAME: show_roles_of_user
 #+BEGIN_SRC python
 @api.route('/show_roles_of_user', methods=['GET'])
@@ -1118,6 +1172,12 @@ def show_roles_of_user():
         except TypeError as e:
             msg = {"status": "failure", 
                        "msg": "Malformed Arguments"}
+            return jsonify(msg)
+
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
             return jsonify(msg)
 
         except Exception as e:
@@ -1226,6 +1286,12 @@ def add_role_to_user():
                        "msg": "Malformed Arguments"}
             return jsonify(msg)
 
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
+            return jsonify(msg)
+
         except Exception as e:
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
@@ -1327,6 +1393,12 @@ def del_role_of_user():
         except TypeError as e:
             msg = {"status": "failure", 
                        "msg": "Malformed Arguments"}
+            return jsonify(msg)
+
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
             return jsonify(msg)
 
         except Exception as e:
