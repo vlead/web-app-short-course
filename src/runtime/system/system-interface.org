@@ -588,8 +588,8 @@ class TestAddUser(TestCase):
             user = SystemInterface.get_user_by_email(email_str)
             return System.do("del_user", session=session, user=user)
 
-        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
-            raise err
+        except (ArityError, TypeError, NotAuthorizedError, StateError,
+                    NotFoundError) as err:
 
         except Exception as err:
             raise err

@@ -492,6 +492,12 @@ def del_user(email_str):
                        "msg": err_str}
             return jsonify(msg)
 
+        except NotFoundError as e:
+            err_str = str(e)
+            msg = {"status": "failure",
+                       "msg": err_str}
+            return jsonify(msg)
+
         except Exception as e:
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
