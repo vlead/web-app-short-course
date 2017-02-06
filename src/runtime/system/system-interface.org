@@ -590,6 +590,7 @@ class TestAddUser(TestCase):
 
         except (ArityError, TypeError, NotAuthorizedError, StateError,
                     NotFoundError) as err:
+            raise err
 
         except Exception as err:
             raise err
