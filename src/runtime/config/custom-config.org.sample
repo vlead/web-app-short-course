@@ -20,7 +20,7 @@
 # example DB URI:
 # mysql+oursql://scott:tiger@localhost/mydatabase
 # postgresql+psycopg2://scott:tiger@localhost/mydatabase
-# SQLALCHEMY_DATABASE_URI = 'mysql+oursql://<userid>:<password>@<servername>/<db_name>'
+SQLALCHEMY_DATABASE_URI = 'mysql+oursql://<userid>:<password>@<servername>/<db_name>'
 
 # Debug from SQLAlchemy
 # Turn this to False on production
@@ -49,8 +49,9 @@ SESSION_COOKIE_HTTPONLY = False
   Configuration for the flask application. 
 #+NAME: google_oauth_conf
 #+BEGIN_SRC python
-# CONSUMER_KEY = "<key>"
-# CONSUMER_SECRET = "<key>"
+CONSUMER_KEY = "<key>"
+CONSUMER_SECRET = "<key>"
+
 #+END_SRC
 
   
