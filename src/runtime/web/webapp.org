@@ -1,32 +1,37 @@
-#+AUTHOR: Siddharth Bhat
-#+EMAIL: siddharth.bhat@iiit.ac.in
-#+DATE: <2017-01-09 Mon 22:22>
+#+TITLE: Front End for User Directory Application
+#+AUTHOR: VLEAD
+#+DATE: [2017-02-06 Mon]
+#+SETUPFILE: ../../org-templates/level-2.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
 
-We tangle all of the JS here
+* Introduction
+  The front end for the user directory application is implemeted here.
 
 * System JS - $.Post equivalent to send AJAX
 #+NAME: post_json
 #+BEGIN_SRC js
-  function post_json(url, data, callback, error_callback) {
-      $.ajax({
-          url: url,
-          type: "POST",
-          data: JSON.stringify(data),
-          contentType: "application/json; charset=utf-8",
-          success: callback,
-          error: function (request, status, error) {
-              console.log("error on: " + url + 
-                          "\n|data: " + data  + 
-                          "\n|RESPONSE: " + request.responseText + 
-                          "\n| status: " + status + 
-                          "\n| error: " + error);
-              //TODO: figure out which one of this is "semantically correct"
-              if (error_callback != null && error_callback != undefined && error_callback) {
-                  error_callback(request, status, error);
-              }
-          }
-      });
-  }
+function post_json(url, data, callback, error_callback) {
+    $.ajax({
+        url: url,
+        type: "POST",
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8",
+        success: callback,
+        error: function (request, status, error) {
+            console.log("error on: " + url + 
+                        "\n|data: " + data  + 
+                        "\n|RESPONSE: " + request.responseText + 
+                        "\n| status: " + status + 
+                        "\n| error: " + error);
+            //TODO: figure out which one of this is "semantically correct"
+            if (error_callback != null && error_callback != undefined && error_callback) {
+                error_callback(request, status, error);
+            }
+        }
+    });
+};
 #+END_SRC
 
 * System JS - Mock API

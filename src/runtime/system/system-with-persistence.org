@@ -1,4 +1,4 @@
-#+TITLE: Test System Composed with Objects.
+#+TITLE: Test System Composed of Persistence Objects.
 #+AUTHOR: VLEAD
 #+DATE: [2016-08-04 Thu]
 #+SETUPFILE: ../../org-templates/level-2.org

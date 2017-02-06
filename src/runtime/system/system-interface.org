@@ -1,4 +1,4 @@
-#+TITLE: System Interface implementation for Web App as Short Course
+#+TITLE: User Directory Application: System Interface
 #+AUTHOR: VLEAD
 #+DATE: [2017-01-25 Wed]
 #+SETUPFILE: ../../org-templates/level-2.org

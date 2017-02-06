@@ -1,4 +1,4 @@
-#+TITLE: Mini Version of User Directory Application: System
+#+TITLE: User Directory Application: System
 #+AUTHOR: VLEAD
 #+DATE: [2016-06-07 Tue]
 #+SETUPFILE: ../../org-templates/level-2.org

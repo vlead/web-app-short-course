@@ -1,4 +1,4 @@
-#+TITLE: The =objects= Package
+#+TITLE: System Implementation of User Directory Application
 #+AUTHOR: VLEAD
 #+DATE: [2016-06-07 Tue] 
 #+SETUPFILE: ../../org-templates/level-2.org
@@ -6,9 +6,14 @@
 #+EXCLUDE_TAGS: boilerplate
 #+OPTIONS: ^:nil
 
-The =objects= package holds two modules
+* Introduction
+  System, System Interface, Persistece Delegate and System-with-Persistence are
+  included here.
 
- - [[./system.org][=system=]]  
+ - [[./system.org][=System=]]
+ - [[./persistence-delegate.org][=Persistence Delegate=]]
+ - [[./system-with-persistence.org][=System with Persistence=]]
+ - [[./system-interface.org][=System Interface=]]
 
 
 * Tangle :boilerplate:

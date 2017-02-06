@@ -1,4 +1,4 @@
-#+TITLE: REST Interface for Mini Version of User Directory Application
+#+TITLE: REST Interface for User Directory Application
 #+AUTHOR: VLEAD
 #+DATE: [2016-06-07 Tue]
 #+SETUPFILE: ../../org-templates/level-2.org
@@ -8,9 +8,9 @@
 
 The REST package hold two modules
 
- - [[./type-utils.org][=app=]]
+ - [[./app.org][=app=]]
 
- - [[./class-templates.org][=api=]]
+ - [[./api.org][=api=]]
 
 
 * Tangle                          :boilerplate:
