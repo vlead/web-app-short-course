@@ -126,10 +126,11 @@ class System ():
         return session in System.session_set
 
     @staticmethod
-    def session_exists_without_key(new_session):
+    def session_exists_for_same_user_and_role(new_session):
         ret_val = False
-        bool_map = map(lambda session: new_session.get("user") == session.get("user") \
-                           and new_session.get("role") == session.get("role"), \
+        bool_map = map(lambda session: \
+                           new_session.get("user") == session.get("user") \
+                           and new_session.get("role") == session.get("role"),\
                            System.session_set)
 
         if bool_map:
@@ -208,14 +209,14 @@ class TestSystemConstructor(TestCase):
         self.assertEqual(System.session_exists(session), True)
 
 
-    def test_session_exists_without_key(self):
-        print "test_session_exists_without_key"
+    def test_session_exists_for_same_user_and_role(self):
+        print "test_session_exists_for_same_user_and_role"
         admin_user = System.delegate.get_admin_user()
         admin_role = System.delegate.get_admin_role()
         session1 = Session(user=admin_user, role=admin_role, key="abcde")
         session2 = Session(user=admin_user, role=admin_role, key="12345")
         System.session_set.append(session1)
-        self.assertEqual(System.session_exists_without_key(session1), True)
+        self.assertEqual(System.session_exists_for_same_user_and_role(session1), True)
 
 #+END_SRC
 
@@ -378,7 +379,7 @@ class LoginSecondStep():
     def state_check(args):
         session = args["session"]
 
-        if System.session_exists_without_key(session):
+        if System.session_exists_for_same_user_and_role(session):
             raise StateError("session %s already exists in System"
                                  % session.to_client())
         

@@ -82,8 +82,8 @@ def index():
     thereby it will forward request to =google=
  #+NAME: login_route
  #+BEGIN_SRC python
-@api.route('/login/<role>', methods=["GET"])
-def login(role):
+@api.route('/login', methods=["GET"])
+def login():
          return google_oauth.authorize(callback=url_for('APIs.authorized',
                                                         _external=True))
 
@@ -121,6 +121,12 @@ def create_session_for_user(email, role, key):
                         "msg": "Malformed Arguments"}
         return jsonify(msg)
 
+    except StateError as e:
+        err_str = str(e)
+        msg = {"status": "failure", 
+                   "msg": err_str}
+        return jsonify(msg)
+
     except Exception as e:
         msg = {"status": "failure", 
                         "msg": "Internal Server Error"}
@@ -153,6 +159,12 @@ def authorized():
             session.pop('google_token', None)
             msg = {"status": "failure", 
                        "msg": "Malformed Arguments"}
+            return jsonify(msg)
+
+        except StateError as e:
+            err_str = str(e)
+            msg = {"status": "failure", 
+                       "msg": err_str}
             return jsonify(msg)
 
         except Exception as e:

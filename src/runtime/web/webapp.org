@@ -7,32 +7,41 @@
 #+OPTIONS: ^:nil
 
 * Introduction
-  The front end for the user directory application is implemeted here.
+  The front end for the user directory application is implemeted here.  It is
+  implemented using client side hash(#) routing.  The window location's
+  hyperlink reference (href) is manipulated through the hash(#) to simulate the
+  state machine.  =http://part-url#login=, =http://part-url#logout=,
+  =http://part-url#get_all_users= are some of the routes this application
+  processes.  As a convention, in the above examples, the path after the
+  hash(#) - =login=, =logout= and =get_all_users= are referred to as hash
+  paths. 
 
 * System JS - $.Post equivalent to send AJAX
 #+NAME: post_json
 #+BEGIN_SRC js
 function post_json(url, data, callback, error_callback) {
-    $.ajax({
-        url: url,
-        type: "POST",
-        data: JSON.stringify(data),
-        contentType: "application/json; charset=utf-8",
-        success: callback,
-        error: function (request, status, error) {
-            console.log("error on: " + url + 
-                        "\n|data: " + data  + 
-                        "\n|RESPONSE: " + request.responseText + 
-                        "\n| status: " + status + 
-                        "\n| error: " + error);
-            //TODO: figure out which one of this is "semantically correct"
-            if (error_callback != null && error_callback != undefined && error_callback) {
-                error_callback(request, status, error);
-            }
-        }
-    });
+  $.ajax({
+    url: url,
+    type: "POST",
+    data: JSON.stringify(data),
+    contentType: "application/json; charset=utf-8",
+    success: callback,
+    error: function (request, status, error) {
+      console.log("error on: " + url + 
+                  "\n|data: " + data  + 
+                  "\n|RESPONSE: " + request.responseText + 
+                  "\n| status: " + status + 
+                  "\n| error: " + error);
+      //TODO: figure out which one of this is "semantically correct"
+      if (error_callback != null && error_callback != undefined && error_callback) {
+        error_callback(request, status, error);
+      }
+    }
+  });
 };
+
 #+END_SRC
+
 
 * System JS - Mock API
 #+NAME: mock_api
@@ -59,74 +68,81 @@ get_all_users: function(cb) {
 }
 #+END_SRC
 
+
 * System JS - Rest API
 #+NAME: rest_api
 #+BEGIN_SRC js
 var RestAPI = {
-
 <<rest_delete_user>>
 <<rest_add_user>>
 <<rest_get_all_users>>
 <<rest_login>>
 <<rest_logout>>
+<<rest_get_user_details>>
 };
+
 #+END_SRC
 
 ** Delete User
 #+NAME: rest_delete_user
 #+BEGIN_SRC js
-    delete_user: function(email, success_cb, error_cb) {
-        $.ajax({
-            url: '/del_user/' + email,
-            type: 'DELETE',
-            success: success_cb,
-            error: error_cb
-        });
-    },
+  delete_user: function(email, success_cb, error_cb) {
+    $.ajax({
+      url: '/del_user/' + email,
+      type: 'DELETE',
+      success: success_cb,
+      error: error_cb
+    });
+  },
+
 #+END_SRC
 ** Add User
 #+NAME: rest_add_user
 #+BEGIN_SRC js
   add_user: function(name, email, role, success_cb, error_cb) {
-      post_json("/add_user",
-                {name: name, email: email, role: role},
-                success_cb,
-                error_cb);
+    post_json("/add_user",
+              {name: name, email: email, role: role},
+              success_cb,
+              error_cb);
   },
+
 #+END_SRC
    
 ** Get all users
-
 #+NAME: rest_get_all_users
 #+BEGIN_SRC js
   get_all_users: function (cb) {
     $.get("/show_users",
           function(data) { console.log(data); cb(data) });
   },
+
 #+END_SRC
 
 ** Login
 #+NAME: rest_login
 #+BEGIN_SRC js
-  login: function(role) {
-      window.location.href = "/login/" + role;
+  login: function() {
+    window.location.href = "/login"
   },
+
 #+END_SRC
 
 ** Logout
 #+NAME: rest_logout
 #+BEGIN_SRC js
   logout: function(role, success_cb, failure_cb) {
-      window.location = "/logout";
+    window.location.href = "/logout";
   }
+
 #+END_SRC
+
 
 * System JS - Window, # handling
 
 Call =register_onhashchange_handlers= to attach a handler.
 
 Parameters:
-handler_functions :: { hash_name :: function() {} }
+handler_functions :: { hash_path :: function() {} }
 whose keys are the hash strings and the values
 are the handler.
 
@@ -142,118 +158,118 @@ navigates to given path
 function navigate(path) {
     var current = window.location.href;
     window.location.href = current.replace(/#(.*)$/, '') + '#' + path;
-}
+};
 
 //strip # from window.location.hash
-function get_window_hash_url() {
+function get_window_hash_path() {
     return location.hash.substring(1);
-}
+};
 
 function register_onhashchange_handlers(handler_functions) {
     $(window).on("hashchange", function(e) {
         //strip hash out
-        hash = get_window_hash_url();
-        console.log("new hash: ", hash);
-        //we use hasOwnProperty since we need to check if this
+        hash_path = get_window_hash_path();
+        console.log("new hash: ", hash_hash);
+        //we use hasOwnProperty since we need to check if a handler is 
+        // defined for the hash_path
         //object has it, not its parents (in the prototype chain)
-        if (handler_functions.hasOwnProperty(hash)) {
+        if (handler_functions.hasOwnProperty(hash_path)) {
             //invoke said handler function
-            handler_functions[hash]();
+            handler_functions[hash_path]();
         } else {
-            console.warn(`no handler for ${hash}`);
+            console.warn(`no handler for ${hash_path}`);
         }
     });
 };
+
 #+END_SRC
 
-
-
 * User JS - Introduction
-User code that uses our library to build an API.
-User code: Pick between REST and Mock API, setup # handlers for
-views.
-
+  User code that uses our library to build an API.  User code: Pick between
+  REST and Mock API, setup # handlers for views.
 
 * User JS - Model State
 #+NAME: model_state
-#+BEGIN_SRC js  
-  function make_state_object() {
-      private_state = {
-          current_user: null
-      };
+
+#+BEGIN_SRC js
+function make_state_object() {
+  private_state = {
+    current_user: null
+  };
   
-      state_obj = {
-          set_current_user: function(user) { private_state.current_user = user; },
-          get_current_user: function() { console.assert(private_state.current_user != null); return this.current_user; }
-      };
+  state_obj = {
+    set_current_user: function(user) { private_state.current_user = user; },
+    get_current_user: function() { console.assert(private_state.current_user != null); return this.current_user; }
+  };
   
-      return state_obj;
-  }
-  //have a global STATE object that has all of the model state
-  STATE = make_state_object();
-  
-#+END_SRC js
+  return state_obj;
+};
+
+//have a global STATE object that has all of the model state
+STATE = make_state_object();
+
+#+END_SRC
+
+
 * User JS - Pick API choice (REST V/S Mock)
 #+NAME: api_choice
 #+BEGIN_SRC js
 var API = RestAPI;
+
 #+END_SRC
 
 
 * User JS - Window onload: setup # handlers, start from register
 #+NAME: window_onload
 #+BEGIN_SRC js
-
 function is_logged_in() {
-    return document.cookie.indexOf("session") != -1;
+  return document.cookie.indexOf("session") != -1;
 }
 
 window.onload = function() {
-    register_onhashchange_handlers({register: register_handler,
-                                    login:  login_handler,
-                                    get_all_users: get_all_users_handler,
-                                    add_user: add_user_handler,
-                                    home: home_handler,
-                                    index: index_handler,
-                                    delete_user: delete_user_handler});
+  register_onhashchange_handlers({
+    index: index_handler,
+    get_all_users: get_all_users_handler,
+    add_user: add_user_handler,
+    home: home_handler,
+    delete_user: delete_user_handler});
+  
+  // Hashes available when not logged in (authorized)
+  var unauth_available_hashes = ["index"];
+
+  //TODO: figure out why this does not trigger onhashchange
+  //TRIAL: check if preventing race condition helps
+  let current_hash = get_window_hash_path();
+  if (current_hash === "") {
+    console.log("defaulting #url to get_all_users");
     
-    // Hashes available when not logged in (authorized)
-    var unauth_available_hashes = ["index"];
-
-    //TODO: figure out why this does not trigger onhashchange
-    //TRIAL: check if preventing race condition helps
-
-
-    let current_hash = get_window_hash_url();
-    if (current_hash === "") {
-        console.log("defaulting #url to get_all_users");
-        
-        //send logged in users to home, others to index
-        if (is_logged_in()) {
-            current_hash = "home";
-        }
-        else {
-            current_hash = "index";
-        }
-    }
-
-    console.log("navigating to: #" + current_hash);
-    
-    // If the hash is available to everyone, or if the user
-    // is logged in, give them access
-    if (unauth_available_hashes.indexOf(current_hash) > -1  ||
-        is_logged_in()) {
-        navigate(current_hash);
+    //send logged in users to home, others to index
+    if (is_logged_in()) {
+      current_hash = "home";
     }
     else {
-        //by default, if unauthorized, send to index page
-        naviagte("index");
+      current_hash = "index";
     }
+  }
 
-    //HACK: I don't know why this is needed for the first hash change.
-    //Figure it out
-    $(window).trigger("hashchange");
-}
+  console.log("navigating to: #" + current_hash);
+  
+  // If the hash is available to everyone, or if the user
+  // is logged in, give them access
+  if (unauth_available_hashes.indexOf(current_hash) > -1  ||
+      is_logged_in()) {
+    navigate(current_hash);
+  }
+  else {
+    //by default, if unauthorized, send to index page
+    naviagte("index");
+  }
+
+  //HACK: I don't know why this is needed for the first hash change.
+  //Figure it out
+  $(window).trigger("hashchange");
+};
+
 #+END_SRC
 
 All components that are part of our single page application go here
@@ -263,8 +279,6 @@ All components that are part of our single page application go here
 //use to hide all containers before displaying another container
 function hide_all_containers() {
     // TODO: consider refactoring to addClass in a loop
-    $('#login-container').addClass("hidden");
-    $('#register-container').addClass("hidden");
     $('#get-all-users-container').addClass("hidden");
     $('#add-user-container').addClass("hidden");
     $('#delete-user-container').addClass("hidden");
@@ -274,7 +288,7 @@ function hide_all_containers() {
 }
 #+END_SRC
 
-* User Component - Register
+* COMMENT User Component - Register
 
 #+NAME: register_html
 #+BEGIN_SRC html
@@ -290,6 +304,7 @@ function hide_all_containers() {
   </form>
   <button onclick="window.location.hash='home'"> Goto Home </button>
 </div>
+
 #+END_SRC
 
 #+NAME: register_handler
@@ -299,7 +314,8 @@ function register_handler() {
     $("#register-container").removeClass("hidden");
 }
 #+END_SRC
-* User Component - Login
+
+* COMMENT User Component - Login
 
 #+NAME: login_html
 #+BEGIN_SRC html
@@ -371,9 +387,7 @@ function login_handler() {
 
       error_box.text("");
       info_box.text("");
-
-
-      
+     
       API.delete_user(email, function(request) {
           console.group("user_list_delete");
           console.log(request);
@@ -425,6 +439,7 @@ function login_handler() {
   
   
   }
+
 #+END_SRC
 
 * User Component - Add User
@@ -627,19 +642,21 @@ function home_handler() {
       <li><a onclick="login_onclick()""> Login </a></li>
     </ul>
   </div>
+
 #+END_SRC
 
 #+NAME: index_handler
 #+BEGIN_SRC js
-  function index_handler() {
-      hide_all_containers();
-      $('#index-container').removeClass("hidden");
-  }
+function index_handler() {
+  hide_all_containers();
+  $('#index-container').removeClass("hidden");
+};
 
-  function login_onclick() {
-    //TODO: make role customizable
-    API.login("admin");
-  }
+function login_onclick() {
+  //TODO: make role customizable
+  API.login();
+};
+
 #+END_SRC
 
   
@@ -662,9 +679,6 @@ so that when we are actually deploying this app, the static files can be served 
   <body>
   <h1> Hello World </h1>
   
-  
-  <<register_html>>
-  <<login_html>>
   <<get_all_users_html>>
   <<add_user_html>>
   <<delete_user_html>>
@@ -720,8 +734,6 @@ so that when we are actually deploying this app, the static files can be served 
 <<api_choice>>
 
 <<component_auxiliary>>
-<<register_handler>>
-<<login_handler>>
 <<get_all_users_handler>>
 <<add_user_handler>>
 <<home_handler>>
