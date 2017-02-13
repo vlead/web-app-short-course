@@ -318,10 +318,11 @@ class TestSystemConstructor(TestCase):
   Once these checks are satisfied, either the system state is modified or retrieved.
 
 ** =LoginFirstStep=
-   A user is associated with multiple roles but each login session of a user is
-   associated with a specific role.  The first step in the login use case is to
-   check if the user exists in the user set.  The second step is to allow the
-   user to associate a role to that particular session.
+   In the current system, a user is associated with either one or two roles.
+   If the user is associated with one role, the login session is associated
+   with that role.  If the user has two roles,  role =user= is associated with
+   the login session.  After the successful logn, the user has the ability to
+   switch between the roles. 
 
    Refer [[../../data-model/index.org::#login-first-step-auth][auth-check]] and referential [[../../data-model/index.org::#login-first-step-ref][integrity]] rules.
 
@@ -348,7 +349,10 @@ class LoginFirstStep():
         user = args["user"]
         user_from_system = System.delegate.get_user(email=user.get("email"))
         roles = user_from_system.get("roles")
-        return roles
+        if len(roles) == 1:
+            return roles[0]
+        else:
+            return System.delegate.get_role(name=Config.user_role)
 
 #+END_SRC
 
@@ -377,11 +381,12 @@ class LoginSecondStep():
 
     @staticmethod
     def state_check(args):
-        session = args["session"]
+        pass
+        # session = args["session"]
 
-        if System.session_exists_for_same_user_and_role(session):
-            raise StateError("session %s already exists in System"
-                                 % session.to_client())
+        # if System.session_exists_for_same_user_and_role(session):
+        #     raise StateError("session %s already exists in System"
+        #                          % session.to_client())
         
     @staticmethod
     def action(args):

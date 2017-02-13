@@ -169,7 +169,7 @@ function register_onhashchange_handlers(handler_functions) {
     $(window).on("hashchange", function(e) {
         //strip hash out
         hash_path = get_window_hash_path();
-        console.log("new hash: ", hash_hash);
+        console.log("new hash: ", hash_path);
         //we use hasOwnProperty since we need to check if a handler is 
         // defined for the hash_path
         //object has it, not its parents (in the prototype chain)
@@ -653,8 +653,14 @@ function index_handler() {
 };
 
 function login_onclick() {
-  //TODO: make role customizable
-  API.login();
+
+  if (is_logged_in()) {
+    current_hash = "home";
+//    $(window).trigger("hashchange");
+  } else {
+    //TODO: make role customizable
+    API.login();
+  }
 };
 
 #+END_SRC

@@ -36,15 +36,15 @@ class TestLoginFirstStep(TestCase):
         db.drop_all()
         System.delegate = None
 
-    def test_get_roles_of_admin_user(self):
-        print "test_get_roles_of_admin_user"
+    def test_get_role_of_admin_user(self):
+        print "test_get_role_of_admin_user"
         admin_user=System.delegate.get_admin_user()
-        roles = System.do("login_first_step",
+        role = System.do("login_first_step",
                               user=admin_user)
-        self.assertEqual(roles[0].get("name"), Config.admin_role)
+        self.assertEqual(role.get("name"), Config.admin_role)
 
-    def test_get_roles_of_user(self):
-        print "test_get_roles_of_user"
+    def test_get_role_of_user(self):
+        print "test_get_role_of_user"
         na = Name(name="Jimi Hendrix")
         na.save()
 
@@ -58,8 +58,8 @@ class TestLoginFirstStep(TestCase):
         usr = User(name=na, email=em, roles=roles)
         usr.save()
 
-        roles = System.do("login_first_step", user=usr)
-        self.assertEqual(len(roles), 2)
+        role = System.do("login_first_step", user=usr)
+        self.assertEqual(role.get("name"), Config.user_role)
 
     def test_login_first_step_raises_arity_error(self):
         print "test_login_first_step_raises_arity_error"
@@ -95,7 +95,7 @@ class TestLoginFirstStep(TestCase):
  #+END_SRC
 
 
-** Test LoginFirstStep
+** Test LoginSecondStep
  #+NAME: test_login_second_step
  #+BEGIN_SRC python
 class TestLoginSecondStep(TestCase):
@@ -144,16 +144,16 @@ class TestLoginSecondStep(TestCase):
         with self.assertRaises(TypeError):
             System.do("login_second_step", session=user)
                 
-    def test_login_second_step_raises_state_error(self):
-        print "test_login_second_step_raises_state_error"
-        email = Email(email="jimi@gnu.org")
-        user = System.delegate.get_user(email=email)
-        user_role = System.delegate.get_role(name=Config.user_role)
-        session1 = Session(user=user, role=user_role, key="12345")
-        session2 = Session(user=user, role=user_role, key="abcde")
-        System.session_set.append(session1)
-        with self.assertRaises(StateError):
-            System.do("login_second_step", session=session2)
+    # def test_login_second_step_raises_state_error(self):
+    #     print "test_login_second_step_raises_state_error"
+    #     email = Email(email="jimi@gnu.org")
+    #     user = System.delegate.get_user(email=email)
+    #     user_role = System.delegate.get_role(name=Config.user_role)
+    #     session1 = Session(user=user, role=user_role, key="12345")
+    #     session2 = Session(user=user, role=user_role, key="abcde")
+    #     System.session_set.append(session1)
+    #     with self.assertRaises(StateError):
+    #         System.do("login_second_step", session=session2)
 
     def test_login_second_step_passes(self):
         print "test_login_second_step_passes"

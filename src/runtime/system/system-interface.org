@@ -403,9 +403,9 @@ class TestAuthorizeUser(TestCase):
     def test_authorize_user_passes(self):
         print "test_authorize_user_passes"
 
-        roles = SystemInterface.authorize_user(Config.admin_email)
+        role = SystemInterface.authorize_user(Config.admin_email)
                                                                
-        self.assertEqual(len(roles), 1)
+        self.assertEqual(role.get("name"), Config.admin_role)
 
 #+END_SRC
 

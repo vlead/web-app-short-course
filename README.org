@@ -37,3 +37,18 @@ Rather, they should return a json object along the lines of
 - Success with have ="success"= and other associated data
 
 
+
+* urllib2.URLError
+#+BEGIN_EXAMPLE
+urllib2.URLError
+
+URLError: <urlopen error [Errno -2] Name or service not known>
+
+#+END_EXAMPLE
+
+If such an error occurs when authentication using google oauth, install nscd - [[http://stackoverflow.com/questions/21356781/urrlib2-urlopen-name-or-service-not-known-persists-when-starting-script-witho][reference]]
+
+#+BEGIN_EXAMPLE
+apt-get install nscd
+#+END_EXAMPLE
+

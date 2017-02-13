@@ -104,7 +104,7 @@ def create_session_for_user(email, role, key):
     try:
       session_dict = {'email': email,
                       'role': role,
-                      'key': key }       
+                      'key': key }
 
       print("\nsession_dict: %s" % session_dict)
 
@@ -112,26 +112,17 @@ def create_session_for_user(email, role, key):
       return True
 
     except NotAuthorizedError as e:
-        msg = {"status": "failure", 
-                        "msg": "Not Authorized error"}
-        return jsonify(msg)
+        raise e
 
     except TypeError as e:
-        msg = {"status": "failure", 
-                        "msg": "Malformed Arguments"}
-        return jsonify(msg)
+        raise e
 
     except StateError as e:
-        err_str = str(e)
-        msg = {"status": "failure", 
-                   "msg": err_str}
-        return jsonify(msg)
+        raise e
 
     except Exception as e:
-        msg = {"status": "failure", 
-                        "msg": "Internal Server Error"}
+        raise e
 
-        return jsonify(msg)
 
 @api.route('/authorized')
 def authorized():
@@ -146,49 +137,47 @@ def authorized():
         email = str(user_info.data['email'])
 
         try:
-            roles = SystemInterface.authorize_user(email)
+            role = SystemInterface.authorize_user(email)
             session['email'] = email
 
         except NotAuthorizedError as e:
-            session.pop('google_token', None)
+            session.clear()
             msg = {"status": "failure", 
                        "msg": "Not Authorized error"}
             return jsonify(msg)
 
         except TypeError as e:
-            session.pop('google_token', None)
+            session.clear()
             msg = {"status": "failure", 
                        "msg": "Malformed Arguments"}
             return jsonify(msg)
 
         except StateError as e:
+            session.clear()
             err_str = str(e)
             msg = {"status": "failure", 
                        "msg": err_str}
             return jsonify(msg)
 
         except Exception as e:
-            session.pop('google_token', None)
+            session.clear()
             msg = {"status": "failure", 
                        "msg": "Internal Server Error"}
 
             return jsonify(msg)
 
 
-        assert len(roles) > 0
-
-        # BUG: roles[0].get("name") returns unicode encoded string, not native python
+        # BUG: role.get("name") returns unicode encoded string, not native python
         # string. Why?
-        role = str(roles[0].get("name")) if len(roles) == 1 else "user"
+        role_str = str(role.get("name"))
 
-        
         create_session_for_user(email,
-                                role,
+                                role_str,
                                 session['google_token'])
         # TODO: merge both session objects in some way?
         # having both Flask's session and our SystemInterface
         # session is confusing 
-        session["role"] = role
+        session["role"] = role_str
         
         print("create_session_for_user Succeeded.")
         print("redirecting to / ...")
