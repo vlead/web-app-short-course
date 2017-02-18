@@ -73,16 +73,31 @@ get_all_users: function(cb) {
 #+NAME: rest_api
 #+BEGIN_SRC js
 var RestAPI = {
+<<rest_get_user_details>>
 <<rest_delete_user>>
 <<rest_add_user>>
 <<rest_get_all_users>>
 <<rest_login>>
 <<rest_logout>>
-<<rest_get_user_details>>
 };
 
 #+END_SRC
+** Get user Details
+#+NAME: rest_get_user_details
+#+BEGIN_SRC js
+  get_user_details: function(email, success_cb, error_cb) {
+    $.ajax({
+      url: '/show_user_details',
+      type: 'GET',
+      data: {
+        email: email
+      },
+      success: success_cb,
+      error: error_cb
+    });
+  },
 
+#+END_SRC   
 ** Delete User
 #+NAME: rest_delete_user
 #+BEGIN_SRC js
@@ -156,30 +171,30 @@ navigates to given path
 #+NAME: hash_handler
 #+BEGIN_SRC js
 function navigate(path) {
-    var current = window.location.href;
-    window.location.href = current.replace(/#(.*)$/, '') + '#' + path;
+  var current = window.location.href;
+  window.location.href = current.replace(/#(.*)$/, '') + '#' + path;
 };
 
 //strip # from window.location.hash
 function get_window_hash_path() {
-    return location.hash.substring(1);
+  return location.hash.substring(1);
 };
 
 function register_onhashchange_handlers(handler_functions) {
-    $(window).on("hashchange", function(e) {
-        //strip hash out
-        hash_path = get_window_hash_path();
-        console.log("new hash: ", hash_path);
-        //we use hasOwnProperty since we need to check if a handler is 
-        // defined for the hash_path
-        //object has it, not its parents (in the prototype chain)
-        if (handler_functions.hasOwnProperty(hash_path)) {
-            //invoke said handler function
-            handler_functions[hash_path]();
-        } else {
-            console.warn(`no handler for ${hash_path}`);
-        }
-    });
+  $(window).on("hashchange", function(e) {
+    //strip hash out
+    hash_path = get_window_hash_path();
+    console.log("new hash: ", hash_path);
+    //we use hasOwnProperty since we need to check if a handler is 
+    // defined for the hash_path
+    //object has it, not its parents (in the prototype chain)
+    if (handler_functions.hasOwnProperty(hash_path)) {
+      //invoke said handler function
+      handler_functions[hash_path]();
+    } else {
+      console.warn(`no handler for ${hash_path}`);
+    }
+  });
 };
 
 #+END_SRC
@@ -278,14 +293,15 @@ All components that are part of our single page application go here
 #+BEGIN_SRC js
 //use to hide all containers before displaying another container
 function hide_all_containers() {
-    // TODO: consider refactoring to addClass in a loop
-    $('#get-all-users-container').addClass("hidden");
-    $('#add-user-container').addClass("hidden");
-    $('#delete-user-container').addClass("hidden");
-    $('#home-container').addClass("hidden");
-    $('#index-container').addClass("hidden");
-
+  // TODO: consider refactoring to addClass in a loop
+  $('#get-all-users-container').addClass("hidden");
+  $('#add-user-container').addClass("hidden");
+  $('#delete-user-container').addClass("hidden");
+  $('#home-container').addClass("hidden");
+  $('#index-container').addClass("hidden");
+  $('#user-details-result-container').addClass("hidden");
 }
+
 #+END_SRC
 
 * COMMENT User Component - Register
@@ -302,7 +318,7 @@ function hide_all_containers() {
     <input type="text" name="email"/>
     <input type="submit" name="register" />
   </form>
-  <button onclick="window.location.hash='home'"> Goto Home </button>
+  <button onclick="window.location.hash='home'"> Home </button>
 </div>
 
 #+END_SRC
@@ -326,7 +342,7 @@ function register_handler() {
     <label>Password</label>
     <input type="text"/>
   </form>
-  <button onclick="window.location.hash='home'"> Goto Home </button>
+  <button onclick="window.location.hash='home'"> Home </button>
 </div>
 #+END_SRC
 
@@ -350,95 +366,109 @@ function login_handler() {
     </ul>
     <ul id="users-list">
     </ul>
-    <button onclick="window.location.hash='home'"> Goto Home </button>
+    <button onclick="window.location.hash='home'"> Home </button>
   </div>
+
 #+END_SRC
 
 #+NAME: get_all_users_handler
 #+BEGIN_SRC js
-  function make_li_for_user(user) {
-      console.dir(user);
-      
-      let delete_button =
-          "<a style='margin-left: 1em' onclick=user_list_delete(" +
-          "'" + user.email.email + "'" +
-          ")> Delete User </a>";
+function make_li_for_user(user) {
+  console.dir(user);
+  
+  let delete_button =
+    "<a style='margin-left: 1em' onclick=user_list_delete(" +
+    "'" + user.email.email + "'" +
+    ")> Delete User </a>";
 
-      let roles = "";
+  let user_details_button =
+    "<a style='margin-left: 1em' onclick=get_user_details_handler(" +
+    "'" + user.email.email + "'" +
+    ")> User Details </a>";
 
-      for(var i = 0; i < user.roles.length; i++) {
-          roles += user.roles[i].name;
-          roles += " ";
-      }
-      
-      let li = $("<li style='margin-bottom: 50px' >" + "Name: " +
-                 user.name.name +
-                 " | Email: " +
-                 user.email.email +
-                 delete_button + 
-                 "</li>"
-                 );
-      return li;
+  let roles = "";
+
+  for(var i = 0; i < user.roles.length; i++) {
+    roles += user.roles[i].name;
+    roles += " ";
   }
-  
-  function user_list_delete(email) {
-      let error_box = $("#get-all-users-error-box");
-      let info_box = $("#get-all-users-info-box");
 
-      error_box.text("");
-      info_box.text("");
-     
-      API.delete_user(email, function(request) {
-          console.group("user_list_delete");
-          console.log(request);
+  var match = /\w+/.exec(user.email.email);
+  let id = 'user-details-' + match[0];
+  let details_ul = "<ul id=" + id + "></ul>";
 
-          if (request.status === "failure") {
-              error_box.text(request.msg);
-          }
-          else {
-              info_box.text("User " + email + " successfully deleted");
-              //TODO: use client-side flash for this message
-              console.log("User successfully deleted");
-              //trigger page reload
-              //FIXME: currently forcing' page reload
-          }
-          $(window).trigger("hashchange");
-          navigate("get_all_users");
-          console.groupEnd();
-      }, 
-      function(request) {
-          $("get-all-users-error-box").val(request.responseText);
-      });
-  }
-  
-  
-  function get_all_users_handler() {
-      hide_all_containers();
+  let li = $("<li style='margin-bottom: 50px' >" + "Name: " +
+             user.name.name +
+             " | Email: " +
+             user.email.email +
+             user_details_button + 
+             delete_button + 
+             details_ul + 
+             "</li>"
+            );
+  return li;
+}
 
-      var container = $('#get-all-users-container');
-      container.removeClass("hidden");
+function user_list_delete(email) {
+  let error_box = $("#get-all-users-error-box");
+  let info_box = $("#get-all-users-info-box");
 
-      let error_box = $("#get-all-users-error-box");
-      let info_box = $("#get-all-users-info-box");
+  error_box.text("");
+  info_box.text("");
+  
+  API.delete_user(email, 
+                  function(request) {
+                    console.group("user_list_delete");
+                    console.log(request);
 
-      error_box.text("");
-      info_box.text("");
-      
-      API.get_all_users(function(users) {
-          console.group("get_all_users callback");
-          console.dir(users);
-          let ul = $('#get-all-users-container #users-list');
-          ul.empty(); //TODO: slower than removing nodes
-          for(var i = 0; i < users.length; ++i) {
-              let user = users[i];
-              let li = make_li_for_user(user);
-              ul.append(li);
-          }
-          console.groupEnd();
-    });
+                    if (request.status === "failure") {
+                      error_box.text(request.msg);
+                    }
+
+                    else {
+                      info_box.text("User " + email + " successfully deleted");
+                      //TODO: use client-side flash for this message
+                      console.log("User successfully deleted");
+                      //trigger page reload
+                      //FIXME: currently forcing' page reload
+                    }
+
+                    $(window).trigger("hashchange");
+                    navigate("get_all_users");
+                    console.groupEnd();
+                  }, 
+
+                  function(request) {
+                    $("get-all-users-error-box").val(request.responseText);
+                  });
+};
+
+
+function get_all_users_handler() {
+  hide_all_containers();
+
+  var container = $('#get-all-users-container');
+  container.removeClass("hidden");
+
+  let error_box = $("#get-all-users-error-box");
+  let info_box = $("#get-all-users-info-box");
+
+  error_box.text("");
+  info_box.text("");
   
-  
-  }
+  API.get_all_users(function(users) {
+    console.group("get_all_users callback");
+    console.dir(users);
+    let ul = $('#get-all-users-container #users-list');
+    ul.empty(); //TODO: slower than removing nodes
+    for(var i = 0; i < users.length; ++i) {
+      let user = users[i];
+      let li = make_li_for_user(user);
+      ul.append(li);
+    }
+    console.groupEnd();
+  });
+};
 
 #+END_SRC
 
@@ -474,58 +504,59 @@ function login_handler() {
 
 #+NAME: add_user_handler
 #+BEGIN_SRC js
-  function add_user_handler() {
+function add_user_handler() {
       hide_all_containers();
       
       $("#add-user-info-box").text("");
       $("#add-user-error-box").text("");
       $("#add-user-container").removeClass("hidden");
+}
+  
+function add_user_callback() {
+  console.log("add user callback called");
+  
+  let name = $('#add-user-name').val();
+  let email = $('#add-user-email').val();
+  //TODO: once the API is fixed, we don't need to send this over
+  let role_id = "user";
+  
+  let error_box = $("#add-user-error-box");
+  let info_box = $("#add-user-info-box");
+  
+  error_box.text("");
+  info_box.text("");
+  
+  if (name === "") {
+    error_box.text("Please fill in name");
+    return;
+  }
+  else if (email === "") {
+    error_box.text("Please fill in email");
+    return;
   }
   
-  function add_user_callback() {
-      console.log("add user callback called")
+  function success_callback(req) {
+    console.log(req);
+    if (req.status === "failure") {
+      error_box.text(req.msg);
+    }
+    else {
+      info_box.text("Success, user: " + name + " added.");
+    }
+  };
   
-      let name = $('#add-user-name').val();
-      let email = $('#add-user-email').val();
-      //TODO: once the API is fixed, we don't need to send this over
-      let role_id = "user";
-  
-      let error_box = $("#add-user-error-box");
-      let info_box = $("#add-user-info-box");
-      
-      error_box.text("");
-      info_box.text("");
-      
-      if (name === "") {
-          error_box.text("Please fill in name");
-          return;
-      }
-      else if (email === "") {
-          error_box.text("Please fill in email");
-          return;
-      }
-      
-      function success_callback(req) {
-          console.log(req);
-          if (req.status === "failure") {
-              error_box.text(req.msg);
-          }
-          else {
-              info_box.text("Success, user: " + name + " added.");
-          }
-      }
-  
-      function error_callback(request) {
-          //TODO: once API returns JSON, pretty print the json
-          //let error_json = JSON.parse(request.responseText);
-          error_box.text(request.responseText || 'Unable to find error');
-      }
-      API.add_user(name,
-                   email,
-                   role_id,
-                   success_callback,
-                   error_callback);
-  }
+  function error_callback(request) {
+    //TODO: once API returns JSON, pretty print the json
+    //let error_json = JSON.parse(request.responseText);
+    error_box.text(request.responseText || 'Unable to find error');
+  };
+
+  API.add_user(name,
+               email,
+               role_id,
+               success_callback,
+               error_callback);
+};
 #+END_SRC
 
 * User Component - Delete User
@@ -549,67 +580,211 @@ function login_handler() {
       <button onclick="delete_user_callback()"> Delete User </button>
     </li>
     <li>
-      <button onclick="window.location.hash='home'"> Goto Home </button>
+      <button onclick="window.location.hash='home'"> Home </button>
     </li>
 
   </ul>
 </div>
+
 #+END_SRC
 
 #+NAME: delete_user_handler
 #+BEGIN_SRC js
 function delete_user_handler() {
-    hide_all_containers();
-    
-    let error_box = $("#delete-user-error-box");
-    let info_box = $("#delete-user-info-box");
-    
-    error_box.text("");
-    info_box.text("");
-    
-    $("#delete-user-container").removeClass("hidden");
+  hide_all_containers();
+  
+  let error_box = $("#delete-user-error-box");
+  let info_box = $("#delete-user-info-box");
+  
+  error_box.text("");
+  info_box.text("");
+  
+  $("#delete-user-container").removeClass("hidden");
 }
 
 function delete_user_callback() {
-    let delete_email = $('#delete-user-email-id').val();
-    let error_box = $("#delete-user-error-box");
-    let info_box =  $("#delete-user-info-box");
+  let delete_email = $('#delete-user-email-id').val();
+  let error_box = $("#delete-user-error-box");
+  let info_box =  $("#delete-user-info-box");
 
-    error_box.text("");
-    info_box.text("");
+  error_box.text("");
+  info_box.text("");
+  
+  if (delete_email == "") {
+    console.error("delete email ID expected!");
+    error_box.text("delete email ID expected");
+    return;
+  };
+
+  function success_callback(req) {
+    console.log(req);
+    if (req.status === "failure") {
+      error_box.text(req.msg);
+    }
+    else {
+      info_box.text(delete_email + " deleted successfully");
+
+    }
+  };
+  
+  function error_cb(request) {
+    console.group("delete_user error callback");
+    console.dir(request);
+    /*
+      let error_json = JSON.parse(request.responseText);
+      console.dir(error_json);
+    ,*/
     
-    if (delete_email == "") {
-        console.error("delete email ID expected!");
-        error_box.text("delete email ID expected");
-        return;
-    }
+    //TODO: once you recieve JSON, extract the error
+    error_box.text(request.responseText);
+    console.groupEnd();
+  };
 
-    function success_callback(req) {
-        console.log(req);
-        if (req.status === "failure") {
-            error_box.text(req.msg);
-        }
-        else {
-            info_box.text(delete_email + " deleted successfully");
+  API.delete_user(delete_email, success_callback, error_cb);
+};
 
-        }
-    }
-    
-    function error_cb(request){
-        console.group("delete_user error callback");
-        console.dir(request);
-        /*
-          let error_json = JSON.parse(request.responseText);
-        console.dir(error_json);
-        ,*/
-        
-        //TODO: once you recieve JSON, extrace the error
-        error_box.text(request.responseText);
-        console.groupEnd();
-    }
+#+END_SRC
 
-    API.delete_user(delete_email, success_callback, error_cb);
+* User Component - Delete User
+#+NAME: delete_user_html
+#+BEGIN_SRC html
+<div id="delete-user-container">
+  <h3> Delete User </h3>
+  <ul>    
+    <li>
+      <label id="delete-user-error-box" style="color: #FF5722"></label>
+      <label id="delete-user-info-box" style="color: #26C6DA"></label>
+    </li>
+
+    <li>
+      <label> Email ID </label>
+    </li>
+    <li>
+      <input type="text" id="delete-user-email-id"> </input>
+    </li>
+    <li>
+      <button onclick="delete_user_callback()"> Delete User </button>
+    </li>
+    <li>
+      <button onclick="window.location.hash='home'"> Home </button>
+    </li>
+
+  </ul>
+</div>
+
+#+END_SRC
+
+#+NAME: delete_user_handler
+#+BEGIN_SRC js
+function delete_user_handler() {
+  hide_all_containers();
+  
+  let error_box = $("#delete-user-error-box");
+  let info_box = $("#delete-user-info-box");
+  
+  error_box.text("");
+  info_box.text("");
+  
+  $("#delete-user-container").removeClass("hidden");
 }
+
+function delete_user_callback() {
+  let delete_email = $('#delete-user-email-id').val();
+  let error_box = $("#delete-user-error-box");
+  let info_box =  $("#delete-user-info-box");
+
+  error_box.text("");
+  info_box.text("");
+  
+  if (delete_email == "") {
+    console.error("delete email ID expected!");
+    error_box.text("delete email ID expected");
+    return;
+  };
+
+  function success_callback(req) {
+    console.log(req);
+    if (req.status === "failure") {
+      error_box.text(req.msg);
+    }
+    else {
+      info_box.text(delete_email + " deleted successfully");
+
+    }
+  };
+  
+  function error_cb(request) {
+    console.group("delete_user error callback");
+    console.dir(request);
+    /*
+      let error_json = JSON.parse(request.responseText);
+      console.dir(error_json);
+    ,*/
+    
+    //TODO: once you recieve JSON, extract the error
+    error_box.text(request.responseText);
+    console.groupEnd();
+  };
+
+  API.delete_user(delete_email, success_callback, error_cb);
+};
+
+#+END_SRC
+
+* User Component - User Details
+
+#+NAME: user_details_handler
+#+BEGIN_SRC js
+function make_li_for_user_details(str, value) {
+  console.group("make_li_for_user_details");
+  console.dir(str);
+  console.dir(value);
+
+  let li = $("<li style='margin-bottom: 50px' >" + str + ": " +
+             value + 
+             "</li>"
+            );
+  console.dir(li);
+  console.groupEnd();
+  return li;
+};
+
+
+function get_user_details_handler(email) {
+
+  function details_success_cb(user) {
+    console.group("get_all_users callback");
+    console.dir(user);
+
+    name = user.name.name;
+    email = user.email.email;
+    roles = user.roles;
+
+    var match = /\w+/.exec(email);
+    id = 'user-details-' + match[0];
+    console.dir('#get-all-users-container ' + '#' + id);
+
+    let ul = $('#get-all-users-container ' + '#' + id);
+
+    ul.empty();
+    ul.append(make_li_for_user_details("Name", name));
+    ul.append(make_li_for_user_details("Email", email));
+    for(var i = 0; i < roles.length; ++i) {
+      let role = roles[i];
+      let li = make_li_for_user_details("Role", role.name);
+      ul.append(li);
+    };
+    console.groupEnd();
+  };
+
+  function details_error_cb(xhr) {
+    console.log("error");
+  };
+
+  API.get_user_details(email, details_success_cb, details_error_cb);
+
+};
+
 #+END_SRC
 
 * User Component - Home
@@ -629,8 +804,8 @@ function delete_user_callback() {
 #+NAME: home_handler
 #+BEGIN_SRC js
 function home_handler() {
-    hide_all_containers();
-    $('#home-container').removeClass("hidden");
+  hide_all_containers();
+  $('#home-container').removeClass("hidden");
 }
 #+END_SRC
 
@@ -656,7 +831,6 @@ function login_onclick() {
 
   if (is_logged_in()) {
     current_hash = "home";
-//    $(window).trigger("hashchange");
   } else {
     //TODO: make role customizable
     API.login();
@@ -690,9 +864,9 @@ so that when we are actually deploying this app, the static files can be served 
   <<delete_user_html>>
   <<home_html>>
   <<index_html>>
-  
   </body>
   </html>
+
 #+END_SRC
 
 * CSS : Consolidated
@@ -745,6 +919,6 @@ so that when we are actually deploying this app, the static files can be served 
 <<home_handler>>
 <<index_handler>>
 <<delete_user_handler>>
-
+<<user_details_handler>>
 <<window_onload>>
 #+END_SRC
