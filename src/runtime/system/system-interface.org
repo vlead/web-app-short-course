@@ -364,13 +364,28 @@ class TestGetUserByEmail(TestCase):
 
 
 ** Authorize the User
+   When a user is authorized, a default role is attached to the session. 
+
 #+NAME: authorize_user
 #+BEGIN_SRC python
     @staticmethod
-    def authorize_user(email_str):
+    def authorize_user(email_str, session_key):
         try:
             user = SystemInterface.get_user_by_email(email_str)
-            return System.do("login_first_step", user=user)
+            role = System.do("login_first_step", user=user)
+            session_dict = {'email': email_str,
+                                'role': str(role.get("name")),
+                                'key': str(session_key)}
+
+            session_obj = SystemInterface.make_session(session_dict)
+            session = System.do("login_second_step", session=session_obj)
+            return str(role.get("name"))
+
+        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
+            raise err
+
+        except Exception as err:
+            raise err
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
@@ -403,64 +418,10 @@ class TestAuthorizeUser(TestCase):
     def test_authorize_user_passes(self):
         print "test_authorize_user_passes"
 
-        role = SystemInterface.authorize_user(Config.admin_email)
-                                                               
-        self.assertEqual(role.get("name"), Config.admin_role)
-
-#+END_SRC
-
-
-** Create Session In System
-   After the user is authenticated and authorized and chooses a role to
-   interact further with the application,  a session is created in the system
-   that is used for authentication before any operation is performed.
-#+NAME: create_session_in_system
-#+BEGIN_SRC python
-    @staticmethod
-    def create_session_in_system(session_dict):
-        try:
-            session_obj = SystemInterface.make_session(session_dict)
-            return System.do("login_second_step",
-                                 session=session_obj)
-
-        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
-            raise err
-
-        except Exception as err:
-            raise err
-
-#+END_SRC
-
-*** Test Create Session In System
-#+NAME: test_create_session_in_system
-#+BEGIN_SRC python
-class TestCreateSessionInSystem(TestCase):
-    TESTING = True
-
-    def create_app(self):
-        app = create_app(config)
-        return app
-
-    def setUp(self):
-        db.create_all()
-        Config.populate_db()
-        SystemInterface.initialize(PersistenceDelegate)
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        System.delegate = None
-
-    def test_create_session_passes(self):
-        print "test_create_session_passes"
-
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
-        
-        session = SystemInterface.create_session_in_system(session_dict)
-                                                               
-        self.assertEqual(session.get("role").get("name"), Config.admin_role)
+        email = Config.admin_email
+        session_key = "abcde"
+        role_name = SystemInterface.authorize_user(email, session_key)
+        self.assertEqual(role_name, Config.admin_role)
 
 #+END_SRC
 
@@ -505,10 +466,15 @@ class TestLogout(TestCase):
     def test_logout_passes(self):
         print "test_logout_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
-        session = SystemInterface.create_session_in_system(session_dict)
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
+
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
         self.assertEqual(len(System.session_set), 1)
 
         session = SystemInterface.logout(session_dict)
@@ -529,7 +495,8 @@ class TestLogout(TestCase):
             user_dict['role'] = "user"
             new_user = SystemInterface.make_user(user_dict)
             return System.do("add_user", session=session, user=new_user)
-
+   ##TODO:
+   ## Return json object rather than pure object.
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
 
@@ -561,14 +528,18 @@ class TestAddUser(TestCase):
     def test_add_user_passes(self):
         print "test_add_user_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
+
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
 
         user_dict = {'email': 'abc@gnu.org',
                              'name': "Test User" }
 
-        session = SystemInterface.create_session_in_system(session_dict)
         ret_user = SystemInterface.add_user(session_dict, user_dict)
 
         self.assertEqual(ret_user.get("name").get("name"), 
@@ -620,15 +591,19 @@ class TestDelUser(TestCase):
     def test_del_user_passes(self):
         print "test_del_user_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
+
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
 
         user_dict = {'email': 'abc@gnu.org',
                              'role': Config.user_role,
                              'name': "Test User" }
 
-        session = SystemInterface.create_session_in_system(session_dict)
         ret_user = SystemInterface.add_user(session_dict, user_dict)
         self.assertEqual(len(SystemInterface.show_users(session_dict)), 2)
 
@@ -680,11 +655,15 @@ class TestShowUsers(TestCase):
     def test_show_users_passes(self):
         print "test_show_users_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
 
-        session = SystemInterface.create_session_in_system(session_dict)
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
         user_list = SystemInterface.show_users(session_dict)
 
         self.assertEqual(len(user_list), 1)
@@ -734,11 +713,15 @@ class TestShowSessions(TestCase):
     def test_show_sessions_passes(self):
         print "test_show_sessions_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
 
-        session = SystemInterface.create_session_in_system(session_dict)
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
         session_list = SystemInterface.show_sessions(session_dict)
 
         self.assertEqual(len(session_list), 1)
@@ -789,11 +772,15 @@ class TestShowRoles(TestCase):
     def test_show_roles_passes(self):
         print "test_show_roles_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
 
-        session = SystemInterface.create_session_in_system(session_dict)
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
         role_list = SystemInterface.show_roles(session_dict)
 
         self.assertEqual(len(role_list), 2)
@@ -843,11 +830,15 @@ class TestShowUserDetails(TestCase):
     def test_show_user_details_passes(self):
         print "test_show_user_details_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
 
-        session = SystemInterface.create_session_in_system(session_dict)
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
         user = SystemInterface.show_user_details(session_dict, 
                                                      Config.admin_email)
 
@@ -902,11 +893,15 @@ class TestSetNameOfUser(TestCase):
     def test_set_name_of_user_passes(self):
         print "test_set_name_of_user_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
 
-        session = SystemInterface.create_session_in_system(session_dict)
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
         user = SystemInterface.set_name_of_user(session_dict, 
                                                     Config.admin_email,
                                                     "Temp Admin")
@@ -964,11 +959,15 @@ class TestSetEmailOfUser(TestCase):
     def test_set_email_of_user_passes(self):
         print "test_set_email_of_user_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
 
-        session = SystemInterface.create_session_in_system(session_dict)
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
         user = SystemInterface.set_email_of_user(session_dict, 
                                                     Config.admin_email,
                                                     "tt@gnu.org")
@@ -1022,11 +1021,15 @@ class TestGetRolesOfUser(TestCase):
     def test_get_roles_of_user_passes(self):
         print "test_get_roles_of_user_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
 
-        session = SystemInterface.create_session_in_system(session_dict)
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
         roles = SystemInterface.get_roles_of_user(session_dict, 
                                                   Config.admin_email)
 
@@ -1082,15 +1085,19 @@ class TestAddRoleToUser(TestCase):
     def test_add_role_to_user_passes(self):
         print "test_add_role_to_user_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
+
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
         
         user_dict = {'email': 'abc@gnu.org',
                              'role': Config.user_role,
                              'name': "Test User" }
 
-        session = SystemInterface.create_session_in_system(session_dict)
         user = SystemInterface.add_user(session_dict, user_dict)
         self.assertEqual(len(user.get("roles")), 1)
         user = SystemInterface.add_role_to_user(session_dict,
@@ -1147,15 +1154,20 @@ class TestDelRoleOfUser(TestCase):
     def test_del_role_of_user_passes(self):
         print "test_del_role_of_user_passes"
 
-        session_dict = {'email': Config.admin_email,
-                             'role': Config.admin_role,
-                             'key': "abcde" }
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
+
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
         
         user_dict = {'email': 'abc@gnu.org',
                              'role': Config.user_role,
                              'name': "Test User" }
 
-        session = SystemInterface.create_session_in_system(session_dict)
+
         user = SystemInterface.add_user(session_dict, user_dict)
 
         self.assertEqual(len(user.get("roles")), 1)
@@ -1226,7 +1238,6 @@ if __name__ == '__main__':
 <<make_name>>
 <<make_role>>
 <<authorize_user>>
-<<create_session_in_system>>
 <<logout>>
 <<add_user>>
 <<del_user>>
@@ -1253,7 +1264,6 @@ if __name__ == '__main__':
 <<test_make_name>>
 <<test_make_email>>
 <<test_authorize_user>>
-<<test_create_session_in_system>>
 <<test_logout>>
 <<test_add_user>>
 <<test_del_user>>

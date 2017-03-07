@@ -98,32 +98,8 @@ def login():
     - Once google authenticates the user, =userdirectory= application will
       authorize the user to use the application.
 
- #+NAME: callback_google_api
- #+BEGIN_SRC python
-def create_session_for_user(email, role, key):
-    try:
-      session_dict = {'email': email,
-                      'role': role,
-                      'key': key }
-
-      print("\nsession_dict: %s" % session_dict)
-
-      session_obj = SystemInterface.create_session_in_system(session_dict)
-      return True
-
-    except NotAuthorizedError as e:
-        raise e
-
-    except TypeError as e:
-        raise e
-
-    except StateError as e:
-        raise e
-
-    except Exception as e:
-        raise e
-
-
+#+NAME: callback_google_api
+#+BEGIN_SRC python
 @api.route('/authorized')
 def authorized():
     try:
@@ -135,10 +111,14 @@ def authorized():
         session['google_token'] = (resp['access_token'], '')
         user_info = google_oauth.get('userinfo')
         email = str(user_info.data['email'])
+        session['email'] = email
 
         try:
-            role = SystemInterface.authorize_user(email)
-            session['email'] = email
+            role_str = SystemInterface.authorize_user(email,
+                                                      session['google_token'])
+            session["role"] = role_str
+            print("redirecting to / ...")
+            return redirect("/")
 
         except NotAuthorizedError as e:
             session.clear()
@@ -165,24 +145,6 @@ def authorized():
                        "msg": "Internal Server Error"}
 
             return jsonify(msg)
-
-
-        # BUG: role.get("name") returns unicode encoded string, not native python
-        # string. Why?
-        role_str = str(role.get("name"))
-
-        create_session_for_user(email,
-                                role_str,
-                                session['google_token'])
-        # TODO: merge both session objects in some way?
-        # having both Flask's session and our SystemInterface
-        # session is confusing 
-        session["role"] = role_str
-        
-        print("create_session_for_user Succeeded.")
-        print("redirecting to / ...")
-
-        return redirect("/")
 
     except Exception as e:
         msg = {"status": "failure", 
@@ -216,7 +178,6 @@ google_oauth = oauth.remote_app(
 )
 
  #+END_SRC
-
 
 *** Google token getter
     - Once the google verfies the credentials token will be shared.

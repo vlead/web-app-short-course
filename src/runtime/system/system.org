@@ -358,15 +358,22 @@ class LoginFirstStep():
 
 
 ** =LoginSecondStep=
-   The second step ensures every session in the session set is uniquely
-   identified by a user and a role.  This means, a user can have multiple
-   sessions but each session of a user is uniquely identified by a role.  In
-   other words a user cannot have multiple sessions with a same role.
+      
+   Create a session.  This is done after a user us authorized.  Currently there
+   is no mechanism to expire a session.  And any login attempt with a
+   successful authorization will create a session.
 
-   A session is made up of a user, a role and a key.  A new login attempt might
-   have a different key, but the fact that a session exists for a user and a
-   role is sufficient to raise a state error.  Refer [[../../data-model/index.org::#login-second-step-auth][auth-check]] and referential
-   [[../../data-model/index.org::#login-second-step-ref][integrity]] rules.
+*** This is not implemented
+
+    The second step ensures every session in the session set is uniquely
+    identified by a user and a role.  This means, a user can have multiple
+    sessions but each session of a user is uniquely identified by a role.  In
+    other words a user cannot have multiple sessions with a same role.
+
+    A session is made up of a user, a role and a key.  A new login attempt
+    might have a different key, but the fact that a session exists for a user
+    and a role is sufficient to raise a state error.  Refer [[../../data-model/index.org::#login-second-step-auth][auth-check]] and
+    referential [[../../data-model/index.org::#login-second-step-ref][integrity]] rules.
 
 #+NAME: class_login_second_step
 #+BEGIN_SRC python
