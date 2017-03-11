@@ -11,7 +11,7 @@
   =userdirectory= application. 
 
 * Rename sample config files
-  After cloning the repository, rename
+  After cloning the repository, copy
   =src/runtime/config/custom-config.org.sample= to
   =src/runtime/config/custom-config.org=
 
@@ -53,13 +53,29 @@
   #+END_EXAMPLE
 
 * Setting up dependencies
-
   Install all the dependencies for running the =user-directory= applciation.
   The =setup.py= script is in the =build/code/deployment= directory
   #+BEGIN_EXAMPLE
   cd <path to build/code/deployment> directory
   python setup.py install
   #+END_EXAMPLE
+
+  If below problem occurs (reference stackoverflow [[http://stackoverflow.com/questions/7475223/mysql-config-not-found-when-installing-mysqldb-python-interface][post]])
+  #+BEGIN_EXAMPLE
+  oursqlx/oursql.c:8:22: fatal error: pyconfig.h: No such file or directory
+  #include "pyconfig.h"
+                      ^
+  compilation terminated.
+  error: Setup script exited with error: command 'x86_64-linux-gnu-gcc' failed
+  with exit status 1
+  #+END_EXAMPLE
+
+  Do the following
+  #+BEGIN_EXAMPLE
+  sudo apt-get install libmysqlclient-dev
+  sudo apt-get install python-dev
+  #+END_EXAMPLE
+
 
 * Set SQLALCHEMY_DATABASE_URI
   The variable =SQLALCHEMY_DATABASE_URI= has to be set to proper value in

@@ -87,6 +87,7 @@ class TestPersistenceDelegate(TestCase):
          self.assertEqual(len(user_set), 1)
          self.assertEqual(user_set[0].get("roles")[0].get("name"),
                               Config.admin_role)
+                              
 
 #+END_SRC
 
@@ -185,7 +186,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: role_exists_for_user
 #+BEGIN_SRC python
     def role_exists_for_user(self, role, user):
-        return role in user.get("roles")
+        return role in self.get_roles_of_user(user)
 
 #+END_SRC
 
@@ -212,7 +213,6 @@ class TestPersistenceDelegate(TestCase):
 
         return False
             
-
 #+END_SRC
 
 **** Tests
@@ -489,6 +489,26 @@ class TestPersistenceDelegate(TestCase):
 
 #+END_SRC
 
+*** Get =length of roles= of a =User=
+    This function returns length of roles associated with a user
+#+NAME: get_roles_length_of_user
+#+BEGIN_SRC python
+    def get_roles_length_of_user(self, user):
+        user = self.get_user(email=user.get("email"))
+        return len(user.get("roles"))
+
+#+END_SRC
+
+**** Tests
+#+NAME: test_get_roles_length_of_user
+#+BEGIN_SRC python
+    def test_get_roles_length_of_user(self):
+         print "test_get_roles_length_of_user"
+         length = self.delegate.get_roles_length_of_user(self.delegate.get_admin_user())
+         self.assertEqual(length, 1)
+
+#+END_SRC
+
 *** Get the =admin= role
 #+NAME: get_admin_role
 #+begin_src python
@@ -583,8 +603,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: mask_roles_of_user
 #+BEGIN_SRC python
     def mask_roles_of_user(self, user):
-        user.set(roles=[], do_not_save=True)
-        return user
+        return User(name=user.get("name"), email=user.get("email"), roles=[])
 
 #+END_SRC
 
@@ -656,7 +675,6 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_set_name(self):
         print "test_set_name"
-
         email = Email(email=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
         name = Name(name="Jimi Hendrix")
@@ -682,11 +700,13 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: test_add_role_to_user
 #+BEGIN_SRC python
     def test_add_role_to_user(self):
+        print "test_add_role_to_user"
         user = self.delegate.get_user(email=Email(email=Config.admin_email))
         self.assertTrue(len(user.get("roles")) == 1)
         user_role = Role(name=Config.user_role)
         user_with_new_role = self.delegate.add_role_to_user(user_role, user)
         self.assertTrue(len(user_with_new_role.get("roles")) == 2)
+        user = self.delegate.get_user(email=Email(email=Config.admin_email))
 
 #+END_SRC
 
@@ -708,6 +728,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: test_del_role_of_user
 #+BEGIN_SRC python
     def test_del_role_of_user(self):
+        print "test_del_role_of_user"
         user = self.delegate.get_user(email=Email(email=Config.admin_email))
         self.assertTrue(len(user.get("roles")) == 1)
 
@@ -744,7 +765,7 @@ from runtime.exceptions.custom_exceptions import *
 import unittest
 from flask_testing import TestCase
 from sqlalchemy.exc import IntegrityError
-from runtime.system.persistence_delegate import *
+from persistence_delegate import *
 from runtime.rest.app import create_app
 
 config = {
@@ -781,6 +802,7 @@ if __name__ == '__main__':
 <<user_exists>>
 <<email_exists>>
 <<get_roles_of_user>>
+<<get_roles_length_of_user>>
 <<is_admin>>
 <<add_user>>
 <<name_exists>>
@@ -809,6 +831,7 @@ if __name__ == '__main__':
 <<test_user_exists>>
 <<test_email_exists>>
 <<test_get_roles_of_user>>
+<<test_get_roles_length_of_user>>
 <<test_is_admin>>
 <<test_add_user>>
 <<test_name_exists>>

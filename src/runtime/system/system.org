@@ -509,13 +509,10 @@ class ShowUsers():
 
     @staticmethod
     def action(args):
-        from runtime.objects.entities import User
         users = System.delegate.get_user_set()
         users_to_return = []
         for user in users:
-            new_user = User(name=user.get("name"),
-                            email=user.get("email"),
-                            roles=[])
+            new_user = System.delegate.mask_roles_of_user(user)
             new_user.id = user.id
             users_to_return.append(new_user)
 
@@ -740,7 +737,8 @@ class DelUser():
     @staticmethod
     def action(args):
         user = args["user"]
-        user = System.delegate.del_user(user)
+        user_from_system = System.delegate.get_user(email=user.get("email"))
+        user = System.delegate.del_user(user_from_system)
         return user
 
 #+END_SRC
@@ -936,7 +934,7 @@ class DelRoleOfUser():
             raise StateError("role %s does not exist for user %s"
                                 % (role.to_client(), user.to_client()))
 
-        elif not (len(System.delegate.get_roles_of_user(user)) > 1):
+        elif not (System.delegate.get_roles_length_of_user(user) > 1):
             raise StateError("number of roles of the user %s is not greater "
                                  "than one" % role.to_client())
 
