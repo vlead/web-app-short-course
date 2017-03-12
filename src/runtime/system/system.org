@@ -579,7 +579,7 @@ class SetName():
         user = args["user"]
         
         if not (System.is_session_admin(session) or
-                    user is session.get("user")):
+                    user == session.get("user")):
             raise NotAuthorizedError("User with role %s" 
                                 " not Authorized to perform this action"
                                 % session.to_client())
@@ -628,7 +628,7 @@ class SetEmail():
         user = args["user"]
         
         if not (System.is_session_admin(session) or
-                    user is session.get("user")):
+                    user == session.get("user")):
             raise NotAuthorizedError("User with role %s" 
                                 " not Authorized to perform this action"
                                 % session.to_client())
@@ -720,7 +720,7 @@ class DelUser():
             raise StateError("session %s does not exist in System"
                                 % session.to_client())
         
-        elif user is session.get("user"):
+        elif user == session.get("user"):
             raise StateError("logged user %s cannot delete himself"
                                  % user.to_client())
 
@@ -728,7 +728,7 @@ class DelUser():
             raise StateError("user %s does not exist in System"
                                 % user.to_client())
 
-        # elif System.delegate.is_admin(user):
+        #elif System.delegate.is_admin(user):
         #     raise StateError("A user with role admin cannot be deleted")
 
     @staticmethod
@@ -797,7 +797,7 @@ class GetRolesOfUser():
         user = args["user"]
         
         if not (System.is_session_admin(session) or
-                    user is session.get("user")):
+                    user == session.get("user")):
             raise NotAuthorizedError("User with role %s" 
                                 " not Authorized to perform this action"
                                 % session.to_client())
@@ -915,7 +915,7 @@ class DelRoleOfUser():
             raise StateError("session %s does not exist in System"
                                 % session.to_client())
 
-        elif user is session.get("user"):
+        elif user == session.get("user"):
             raise StateError("logged user %s cannot delete self role"
                                  % user.to_client())
 

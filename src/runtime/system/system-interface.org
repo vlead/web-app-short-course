@@ -610,6 +610,22 @@ class TestDelUser(TestCase):
         ret_user = SystemInterface.del_user(session_dict, "abc@gnu.org")
         self.assertEqual(len(SystemInterface.show_users(session_dict)), 1)
 
+
+    def test_del_user_causes_state_error(self):
+        print "test_del_user_causes_state_error"
+
+        email = Config.admin_email
+        key = "abcde"
+        role_name = SystemInterface.authorize_user(email, key)
+
+        session_dict = {}
+        session_dict['email'] = email
+        session_dict['role'] = role_name
+        session_dict['key'] = key
+
+        with self.assertRaises(StateError):
+            SystemInterface.del_user(session_dict, Config.admin_email)
+
 #+END_SRC
 
 
