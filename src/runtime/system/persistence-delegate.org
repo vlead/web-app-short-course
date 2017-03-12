@@ -603,7 +603,9 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: mask_roles_of_user
 #+BEGIN_SRC python
     def mask_roles_of_user(self, user):
-        return User(name=user.get("name"), email=user.get("email"), roles=[])
+        new_user = User(name=user.get("name"), email=user.get("email"), roles=[])
+        new_user.set_hidden_id(new_user, user.id)
+        return new_user
 
 #+END_SRC
 
@@ -617,6 +619,7 @@ class TestPersistenceDelegate(TestCase):
         user = self.delegate.mask_roles_of_user(user)
 
         self.assertEqual(user.get("roles"), [])
+        self.assertEqual(user.to_client()['id'], str(1))
 
 #+END_SRC
 

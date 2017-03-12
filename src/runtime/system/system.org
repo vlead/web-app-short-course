@@ -513,7 +513,6 @@ class ShowUsers():
         users_to_return = []
         for user in users:
             new_user = System.delegate.mask_roles_of_user(user)
-            new_user.id = user.id
             users_to_return.append(new_user)
 
         return users_to_return
@@ -686,8 +685,6 @@ class GetUserByEmail():
         
     @staticmethod
     def action(args):
-        from runtime.objects.entities import User
-
         email = args["email"]
         user = System.delegate.get_user_by_email(email)
         if user is not None:

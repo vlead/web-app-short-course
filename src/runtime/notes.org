@@ -1,0 +1,53 @@
+#+TITLE: Notes
+#+AUTHOR:VLEAD
+#+DATE:
+#+SETUPFILE: ./org-templates/level-0.org
+#+TAGS: boilerplate(b)
+#+EXCLUDE_TAGS: boilerplate
+#+OPTIONS: ^:nil
+
+
+1. The retreiveal of attributes is different for a) objects with persistence
+   and b) objects with persistence.
+
+2. When a persistence object is created, two approaches were tried:
+   1. In the first approach, save the attributes in the __init__ the way
+      sqlalchemy stores - =object.attribute=, but the problem with is that, the
+      session associated with the database is causing such assignments to be
+      saved whenever there is an explicit call to save, thus causing contraint
+      errors.  Not all the time would one want to save the contructed object,
+      the reason being one would want to pass them around for achieving some
+      other functionality.
+      #+BEGIN_EXAMPLE
+      create a partial of an existing user object, while masking the roles. 
+      #+END_EXAMPLE
+   2. In the second approach, to avoid the consequence of saving every
+      initialized object to database, the attributes are saved to a state
+      variable holding all the attributes.  This is similar to building an
+      object without persistence. This works.
+
+3. Based on the second approach, the retrieval of attributes - the getter
+   method - is implemented in such a way that, 
+   1. for all presistence objects with a valid =id=, get the attribute stored at
+      the top level of the object - =object.attribue=.  The presence of a valid
+      =id= implies the object is either saved or persisted to database.
+   2. for persistence objects without a valid =id=, implies the object is built
+      as in 2.2 and therefore the attributes are retrieved from =state=
+      variable into which all the attributes are saved as key value pairs.
+
+4. Using the above approach mentioned in step 3, has consequences.  If the =id=
+   also is populated at the top level =obj.id=, the getter works as in 3.1, and
+   for objects created as in 3.2 and not persisted yet, every get on an
+   attribute retuns =None= because the attributes are part of =state=
+   variable.
+
+5. Another approach taken is to recreate a persistence object whenever saved or
+   retrieved from database, like an object without persistence.  But this is
+   not efficient when there is an hiereachy of objects within an object.
+
+
+   
+   
+
+   
+   

@@ -68,10 +68,10 @@
 
         cls.save = ClassPersistenceTemplate.mk_save(cls)
         cls.delete = ClassPersistenceTemplate.mk_delete(cls)
-   #    cls.set_state = ClassPersistenceTemplate.mk_set_state(cls)
         cls.get_by_id = ClassPersistenceTemplate.mk_get_by_id(cls)
         cls.get_all = ClassPersistenceTemplate.mk_get_all(cls)
         cls.apply_filters = ClassPersistenceTemplate.mk_apply_filters(cls)
+        cls.set_hidden_id = ClassPersistenceTemplate.mk_set_hidden_id(cls)
         ClassPersistenceTemplate.mk_save_handler(cls)
         return cls
 
@@ -269,6 +269,20 @@
 
 #+END_SRC
 
+**** Set hidden ID
+     The function provides the class with the functionality to set an hidden
+     ID. 
+#+NAME: set_hidden_id
+#+BEGIN_SRC python
+    @staticmethod
+    def mk_set_hidden_id(cls):
+        def fn(obj, id):
+            obj.hide_id["id"] = id
+
+        return staticmethod(fn)
+
+#+END_SRC
+
 
 ** Tests
    #+NAME: persistence_tests
@@ -380,6 +394,8 @@ if __name__ == '__main__':
 <<get_by_id_method>>
 <<get_all_method>>
 <<apply_filters>>
+<<set_hidden_id>>
+
     #+end_src
 
 *** tests

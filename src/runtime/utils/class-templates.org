@@ -194,8 +194,10 @@ class ClassTemplate():
             # initialize the state
             for key, value in args.iteritems():
                 obj.state[key] = value
-                # if cls.is_persistent:
-                #     setattr(obj, key, value)
+
+
+            if cls.is_persistent:
+                setattr(obj, 'hide_id', {})
 
         return fn
 
@@ -209,7 +211,6 @@ class ClassTemplate():
             if not hasattr(obj, 'state'):
                 obj.state = {}
             tmp = obj.state.copy()
-            do_not_save = False
             
             for key, value in args.iteritems():
                 # arg variables should be a subset of those in the formal spec
@@ -219,10 +220,7 @@ class ClassTemplate():
                     # if so update tmp with the new bindings in args
                     tmp[key] = value
                 else:
-                    if key == "do_not_save":
-                       do_not_save = value
-                    else:
-                        raise TypeError("set: Invalid field name %s" % key)  
+                    raise TypeError("set: Invalid field name %s" % key)  
 
             # now check the invariant on tmp
             if not obj.inv(tmp):
@@ -231,8 +229,8 @@ class ClassTemplate():
             # now save the state
             obj.state = tmp
 
-            if 'save_handler' in (cls.custom_handlers) and not do_not_save:
-                cls.custom_handlers['save_handler'](obj, **args) 
+            if 'save_handler' in (cls.custom_handlers):
+                cls.custom_handlers['save_handler'](obj, **args)
 
         return fn
 
@@ -269,6 +267,9 @@ class ClassTemplate():
 
             if hasattr(obj, "id"):
                 to_client_var["id"] = str(obj.id)
+
+            if hasattr(obj, "hide_id") and 'id' in getattr(obj, "hide_id").keys():
+                to_client_var["id"] = str(getattr(obj, "hide_id")["id"])
 
             return to_client_var
 
