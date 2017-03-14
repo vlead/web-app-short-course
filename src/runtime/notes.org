@@ -7,14 +7,14 @@
 #+OPTIONS: ^:nil
 
 
-1. The retreiveal of attributes is different for a) objects with persistence
+1. The retreiveal of attributes is different for a) objects without persistence
    and b) objects with persistence.
 
 2. When a persistence object is created, two approaches were tried:
    1. In the first approach, save the attributes in the __init__ the way
       sqlalchemy stores - =object.attribute=, but the problem with is that, the
       session associated with the database is causing such assignments to be
-      saved whenever there is an explicit call to save, thus causing contraint
+      saved whenever there is an explicit call to save, thus causing constraint
       errors.  Not all the time would one want to save the contructed object,
       the reason being one would want to pass them around for achieving some
       other functionality.
