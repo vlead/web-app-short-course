@@ -28,13 +28,13 @@ class Config:
 #+BEGIN_SRC python
     @staticmethod
     def populate_db():
-        r_a = Role(name=Config.admin_role)
+        r_a = Role(val=Config.admin_role)
         r_a.save()
-        r_u = Role(name=Config.user_role)
+        r_u = Role(val=Config.user_role)
         r_u.save()
-        name=Name(name=Config.admin_name)
+        name=Name(val=Config.admin_name)
         name.save()
-        email=Email(email=Config.admin_email)
+        email=Email(val=Config.admin_email)
         email.save()
         usr = User(name=name, email=email, roles=[r_a])
         usr.save()

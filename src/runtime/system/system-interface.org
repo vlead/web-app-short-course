@@ -85,10 +85,10 @@ class TestMakeSession(TestCase):
 
         session = SystemInterface.make_session(dictionary)
                                                                
-        self.assertEqual(session.get("role").get("name"), Config.admin_role)
-        self.assertEqual(session.get("user").get("name").get("name"),
+        self.assertEqual(session.get("role").get("val"), Config.admin_role)
+        self.assertEqual(session.get("user").get("name").get("val"),
                              Config.admin_name)
-        self.assertEqual(session.get("user").get("email").get("email"),
+        self.assertEqual(session.get("user").get("email").get("val"),
                              Config.admin_email)
 
 #+END_SRC
@@ -151,9 +151,9 @@ class TestMakeUser(TestCase):
 
         user = SystemInterface.make_user(dictionary)
                                                                
-        self.assertEqual(user.get("roles")[0].get("name"), Config.admin_role)
-        self.assertEqual(user.get("name").get("name"), Config.admin_name)
-        self.assertEqual(user.get("email").get("email"), Config.admin_email)
+        self.assertEqual(user.get("roles")[0].get("val"), Config.admin_role)
+        self.assertEqual(user.get("name").get("val"), Config.admin_name)
+        self.assertEqual(user.get("email").get("val"), Config.admin_email)
 
 #+END_SRC
 
@@ -168,7 +168,7 @@ class TestMakeUser(TestCase):
         email_cls = System.delegate.entities["email"]
 
         try:
-            email = email_cls(email=email_str)
+            email = email_cls(val=email_str)
             return email
         except Exception as err:
             raise err
@@ -202,7 +202,7 @@ class TestMakeEmail(TestCase):
 
         email = SystemInterface.make_email(email_str)
                                                                
-        self.assertEqual(email.get("email"), Config.admin_email)
+        self.assertEqual(email.get("val"), Config.admin_email)
 
 #+END_SRC
 
@@ -217,7 +217,7 @@ class TestMakeEmail(TestCase):
         role_cls = System.delegate.entities["role"]
 
         try:
-            role = role_cls(name=role_str)
+            role = role_cls(val=role_str)
             return role
         except Exception as err:
             raise err
@@ -251,7 +251,7 @@ class TestMakeRole(TestCase):
 
         role = SystemInterface.make_role(role_str)
                                                                
-        self.assertEqual(role.get("name"), Config.admin_role)
+        self.assertEqual(role.get("val"), Config.admin_role)
 
 #+END_SRC
 
@@ -266,7 +266,7 @@ class TestMakeRole(TestCase):
         name_cls = System.delegate.entities["name"]
 
         try:
-            name = name_cls(name=name_str)
+            name = name_cls(val=name_str)
             return name
         
         except Exception as err:
@@ -301,7 +301,7 @@ class TestMakeName(TestCase):
 
         name = SystemInterface.make_name(name_str)
                                                                
-        self.assertEqual(name.get("name"), Config.admin_name)
+        self.assertEqual(name.get("val"), Config.admin_name)
 
 #+END_SRC
 
@@ -358,7 +358,7 @@ class TestGetUserByEmail(TestCase):
         email_str = Config.admin_email
         user = SystemInterface.get_user_by_email(email_str)
                                                                
-        self.assertEqual(user.get("email").get("email"), Config.admin_email)
+        self.assertEqual(user.get("email").get("val"), Config.admin_email)
 
 #+END_SRC
 
@@ -374,12 +374,12 @@ class TestGetUserByEmail(TestCase):
             user = SystemInterface.get_user_by_email(email_str)
             role = System.do("login_first_step", user=user)
             session_dict = {'email': email_str,
-                                'role': str(role.get("name")),
+                                'role': str(role.get("val")),
                                 'key': str(session_key)}
 
             session_obj = SystemInterface.make_session(session_dict)
             session = System.do("login_second_step", session=session_obj)
-            return str(role.get("name"))
+            return str(role.get("val"))
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
@@ -542,7 +542,7 @@ class TestAddUser(TestCase):
 
         ret_user = SystemInterface.add_user(session_dict, user_dict)
 
-        self.assertEqual(ret_user.get("name").get("name"), 
+        self.assertEqual(ret_user.get("name").get("val"), 
                              user_dict['name'])
 
 #+END_SRC
@@ -858,7 +858,7 @@ class TestShowUserDetails(TestCase):
         user = SystemInterface.show_user_details(session_dict, 
                                                      Config.admin_email)
 
-        self.assertEqual(user.get("email").get("email"), Config.admin_email)
+        self.assertEqual(user.get("email").get("val"), Config.admin_email)
 
 #+END_SRC
 
@@ -923,7 +923,7 @@ class TestSetNameOfUser(TestCase):
                                                     "Temp Admin")
                                                     
 
-        self.assertEqual(user.get("name").get("name"), "Temp Admin")
+        self.assertEqual(user.get("name").get("val"), "Temp Admin")
 
 #+END_SRC
 
@@ -989,7 +989,7 @@ class TestSetEmailOfUser(TestCase):
                                                     "tt@gnu.org")
                                                     
 
-        self.assertEqual(user.get("email").get("email"), "tt@gnu.org")
+        self.assertEqual(user.get("email").get("val"), "tt@gnu.org")
 
 #+END_SRC
 
@@ -1049,7 +1049,7 @@ class TestGetRolesOfUser(TestCase):
         roles = SystemInterface.get_roles_of_user(session_dict, 
                                                   Config.admin_email)
 
-        self.assertEqual(roles[0].get("name"), Config.admin_name)
+        self.assertEqual(roles[0].get("val"), Config.admin_name)
         self.assertEqual(len(roles), 1)
 
 #+END_SRC

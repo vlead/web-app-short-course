@@ -19,11 +19,11 @@ n#+DATE: [2016-06-07 Tue]
 #+begin_src python
 args = {"__tablename__": "name",
         "id": db.Column(db.Integer, primary_key=True),
-        "name": db.Column(db.String(128), unique=True, nullable=False),
+        "val": db.Column(db.String(128), unique=True, nullable=False),
         "users": db.relationship('User', backref='name')
         }
 
-Name = ClassPersistenceTemplate.mk_persistent(Name, ['name'], **args)
+Name = ClassPersistenceTemplate.mk_persistent(Name, ['val'], **args)
 
 #+end_src
 
@@ -47,35 +47,35 @@ class TestPersistentName(TestCase):
     def test_create_name(self):
         print "test_create_name"
         name="Jimi Hendrix"
-        na = Name(name=name)
+        na = Name(val=name)
         na.save()
-        na_from_db = Name.apply_filters(name=name)[0]
+        na_from_db = Name.apply_filters(val=name)[0]
         
         self.assertEqual(is_name(na), True)
         self.assertEqual(is_name(na_from_db), True)
         new_name = Name.get_by_id(1)
-        self.assertEqual(new_name.get("name"), "Jimi Hendrix")
-        self.assertRaises(TypeError, Name, name="Jimi 123 Hendrix")
+        self.assertEqual(new_name.get("val"), "Jimi Hendrix")
+        self.assertRaises(TypeError, Name, val="Jimi 123 Hendrix")
 
     def test_update_name(self):
         print "test update name"
         name="Jimi Hendrix"
-        na = Name(name=name)
+        na = Name(val=name)
         na.save()
 
-        self.assertEqual(Name.get_by_id(1).get("name"), "Jimi Hendrix")
+        self.assertEqual(Name.get_by_id(1).get("val"), "Jimi Hendrix")
 
-        na.set(name="Bo Didley")
+        na.set(val="Bo Didley")
 
-        self.assertEqual(Name.get_by_id(1).get("name"), "Bo Didley")
+        self.assertEqual(Name.get_by_id(1).get("val"), "Bo Didley")
 
         with self.assertRaises(NotFoundError):
-            na_from_db = Name.apply_filters(name=name)[0]
+            na_from_db = Name.apply_filters(val=name)[0]
 
     
     def test_delete_name(self):
         print "test delete name"
-        na = Name(name="Jimi Hendrix")
+        na = Name(val="Jimi Hendrix")
         na.save()
         self.assertEqual(len(Name.get_all()), 1)
         na.delete()
@@ -83,12 +83,12 @@ class TestPersistentName(TestCase):
 
     def test_equality_on_name(self):
         print "test equality on name"
-        na = Name(name="Jimi Hendrix")
+        na = Name(val="Jimi Hendrix")
         na.save()
-        na = Name(name="Bo Didley")
+        na = Name(val="Bo Didley")
         na.save()
-        na_from_db = Name.apply_filters(name="Bo Didley")[0]
-        self.assertEqual(na_from_db.get("name"), "Bo Didley")
+        na_from_db = Name.apply_filters(val="Bo Didley")[0]
+        self.assertEqual(na_from_db.get("val"), "Bo Didley")
 
 #+END_SRC
 
@@ -99,12 +99,12 @@ class TestPersistentName(TestCase):
 #+begin_src python
 args = {"__tablename__": "email",
         "id": db.Column(db.Integer, primary_key=True),
-        "email": db.Column(db.String(128), unique=True, nullable=False),
+        "val": db.Column(db.String(128), unique=True, nullable=False),
         "user": db.relationship('User', 
                                     backref=db.backref('email', uselist=False))
         }
 
-Email = ClassPersistenceTemplate.mk_persistent(Email, ['email'], **args)
+Email = ClassPersistenceTemplate.mk_persistent(Email, ['val'], **args)
 
 #+end_src
 
@@ -128,36 +128,36 @@ class TestPersistenceEmail(TestCase):
     def test_create_email(self):
         print "test_create_email"
         email="jimi@gnu.org"
-        em = Email(email=email)
+        em = Email(val=email)
         em.save()
-        em_from_db = Email.apply_filters(email=email)[0]
+        em_from_db = Email.apply_filters(val=email)[0]
         self.assertEqual(is_email(em_from_db), True)
         em = Email.get_by_id(1)
-        self.assertEqual(em_from_db.get("email"), email)
-        self.assertEqual(em.get("email"), email)
-        self.assertRaises(TypeError, Email, email="jimi@@gnu.org")
+        self.assertEqual(em_from_db.get("val"), email)
+        self.assertEqual(em.get("val"), email)
+        self.assertRaises(TypeError, Email, val="jimi@@gnu.org")
 
     def test_update_email(self):
         print "test update email"
 
         email="jimi@gnu.org"
-        em = Email(email=email)
+        em = Email(val=email)
         em.save()
 
-        em.set(email="didley@gnu.org")
+        em.set(val="didley@gnu.org")
 
         with self.assertRaises(NotFoundError):
-            em_from_db = Email.apply_filters(email=email)[0]
+            em_from_db = Email.apply_filters(val=email)[0]
 
         em = Email.get_by_id(1)
-        em_from_db = Email.apply_filters(email="didley@gnu.org")[0]
+        em_from_db = Email.apply_filters(val="didley@gnu.org")[0]
 
-        self.assertEqual(em_from_db.get("email"), "didley@gnu.org")
-        self.assertEqual(em.get("email"), "didley@gnu.org")
+        self.assertEqual(em_from_db.get("val"), "didley@gnu.org")
+        self.assertEqual(em.get("val"), "didley@gnu.org")
 
     def test_delete_email(self):
         print "test delete email"
-        em = Email(email="jimi@gnu.org")
+        em = Email(val="jimi@gnu.org")
         em.save()
         self.assertEqual(len(Email.get_all()), 1)
         em.delete()
@@ -165,36 +165,37 @@ class TestPersistenceEmail(TestCase):
 
     def test_duplicate_email(self):
         print "test_duplicate_email"
-        em1 = Email(email="jimi@gnu.org")
+        em1 = Email(val="jimi@gnu.org")
         em1.save()
         with self.assertRaises(IntegrityError):
-            em2 = Email(email="jimi@gnu.org")
+            em2 = Email(val="jimi@gnu.org")
             em2.save()
 
     def test_equality_on_email(self):
         print "test_equality_on_email"
-        em1 = Email(email="jimi@gnu.org")
+        em1 = Email(val="jimi@gnu.org")
         em1.save()
 
-        em2 = Email(email="didley@gnu.org")
+        em2 = Email(val="didley@gnu.org")
         em2.save()
 
-        self.assertEqual(len(Email.apply_filters(email="jimi@gnu.org")), 1)
+        self.assertEqual(len(Email.apply_filters(val="jimi@gnu.org")), 1)
         
 #+END_SRC
 
+      
 
 * Role
-  =Role= is an entity that has an attribute =name= which is an alphabetic string
+  =Role= is an entity that has an attribute =val= which is an alphabetic string
 
 #+NAME: class_Role
 #+BEGIN_SRC python
 args = {"__tablename__": "role",
         "id": db.Column(db.Integer, primary_key=True),
-        "name": db.Column(db.String(128), nullable=False, unique=True)
+        "val": db.Column(db.String(128), nullable=False, unique=True)
       }
 
-Role = ClassPersistenceTemplate.mk_persistent(Role, ['name'], **args)
+Role = ClassPersistenceTemplate.mk_persistent(Role, ['val'], **args)
 
 #+END_SRC
 
@@ -217,13 +218,13 @@ class TestPersistenceRole(TestCase):
 
     def test_create_admin_role(self):
         print "test_create_role"
-        ro = Role(name="admin")
+        ro = Role(val="admin")
         ro.save()
-        ro_from_db = Role.apply_filters(name="admin")[0]
+        ro_from_db = Role.apply_filters(val="admin")[0]
         self.assertEqual(is_role(ro_from_db), True)
         ro = Role.get_by_id(1)
-        self.assertEqual(ro.get("name"), "admin")
-        self.assertEqual(ro_from_db.get("name"), "admin")
+        self.assertEqual(ro.get("val"), "admin")
+        self.assertEqual(ro_from_db.get("val"), "admin")
 
 #+END_SRC
 
@@ -276,16 +277,16 @@ class TestPersistenceUser(TestCase):
     def test_create_user(self):
         print "test_create_user"
 
-        na = Name(name="Jimi Hendrix")
+        na = Name(val="Jimi Hendrix")
         na.save()
 
-        em = Email(email="jimi@gnu.org")
+        em = Email(val="jimi@gnu.org")
         em.save()
 
-        ro1 = Role(name="user")
+        ro1 = Role(val="user")
         ro1.save()
 
-        ro2 = Role(name="admin")
+        ro2 = Role(val="admin")
         ro2.save()
 
         roles = [ro1, ro2] 
@@ -297,23 +298,23 @@ class TestPersistenceUser(TestCase):
         self.assertEqual(is_user(user), True)
         self.assertEqual(is_user(user_from_db), True)
 
-        self.assertEqual(user.get("email").get('email'), "jimi@gnu.org")
-        self.assertEqual(user_from_db.get("name").get('name'), 
+        self.assertEqual(user.get("email").get("val"), "jimi@gnu.org")
+        self.assertEqual(user_from_db.get("name").get("val"), 
                              "Jimi Hendrix")
 
     def test_update_user(self):
         print "test_update_user"
 
-        na = Name(name="Jimi Hendrix")
+        na = Name(val="Jimi Hendrix")
         na.save()
 
-        em = Email(email="jimi@gnu.org")
+        em = Email(val="jimi@gnu.org")
         em.save()
 
-        ro1 = Role(name="user")
+        ro1 = Role(val="user")
         ro1.save()
 
-        ro2 = Role(name="admin")
+        ro2 = Role(val="admin")
         ro2.save()
 
         roles = [ro1, ro2]
@@ -329,21 +330,21 @@ class TestPersistenceUser(TestCase):
         user_from_db.set(roles=roles)
         user_from_db = User.apply_filters(email=em)[0]
 
-        self.assertEqual(user.get("roles")[0].get('name'), "user")
+        self.assertEqual(user.get("roles")[0].get('val'), "user")
 
     def test_delete_user(self):
         print "test_delete_user"
 
-        na = Name(name="Jimi Hendrix")
+        na = Name(val="Jimi Hendrix")
         na.save()
 
-        em = Email(email="jimi@gnu.org")
+        em = Email(val="jimi@gnu.org")
         em.save()
 
-        ro1 = Role(name="user")
+        ro1 = Role(val="user")
         ro1.save()
 
-        ro2 = Role(name="admin")
+        ro2 = Role(val="admin")
         ro2.save()
 
         roles = [ro1, ro2] 

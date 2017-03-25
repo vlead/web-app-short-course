@@ -35,8 +35,8 @@ class ObjectDelegate():
 #+NAME: initialize_role_set
 #+begin_src python
     def initialize_role_set(self):
-        Role.admin = Role(name=Config.admin_role)
-        Role.user = Role(name=Config.user_role)
+        Role.admin = Role(val=Config.admin_role)
+        Role.user = Role(val=Config.user_role)
         role_set = [Role.admin, Role.user]
         return role_set
 
@@ -49,8 +49,8 @@ class ObjectDelegate():
 
     def initialize_user_set(self):
 
-        admin_user = User(name=Name(name=Config.admin_name),
-                          email=Email(email=Config.admin_email),
+        admin_user = User(name=Name(val=Config.admin_name),
+                          email=Email(val=Config.admin_email),
                           role=Role.admin)
 
         return [admin_user]
@@ -74,9 +74,9 @@ class TestObjectDelegate(TestCase):
     def test_initialize_object_delegate(self):
          print "test_initialize_object_delegate"
          self.assertEqual(len(self.obj_delegate.role_set), 2)
-         self.assertEqual(self.obj_delegate.role_set[0].get("name"), "admin")
+         self.assertEqual(self.obj_delegate.role_set[0].get("val"), "admin")
          self.assertEqual(len(self.obj_delegate.user_set), 1)
-         self.assertEqual(self.obj_delegate.user_set[0].get("role").get("name"),
+         self.assertEqual(self.obj_delegate.user_set[0].get("role").get("val"),
                           "admin")
 
 #+END_SRC
@@ -120,8 +120,8 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_add_user(self):
          print "test_add_user"
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
+         user = User(name=Name(val="some user"),
+                          email=Email(val="tt@kk.com"),
                           role=Role.user)
 
          user = self.obj_delegate.add_user(user)
@@ -145,8 +145,8 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_del_user(self):
          print "test_del_user"
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
+         user = User(name=Name(val="some user"),
+                          email=Email(val="tt@kk.com"),
                           role=Role.user)
 
          self.obj_delegate.user_set.append(user)
@@ -171,8 +171,8 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_users(self):
          print "test_get_users"
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
+         user = User(name=Name(val="some user"),
+                          email=Email(val="tt@kk.com"),
                           role=Role.user)
 
          user = self.obj_delegate.add_user(user)
@@ -186,7 +186,7 @@ class TestObjectDelegate(TestCase):
 #+NAME: is_admin
 #+BEGIN_SRC python
     def is_admin(self, user):
-        return user.get("role").get("name") == "admin"
+        return user.get("role").get("val") == "admin"
 
 #+END_SRC
 
@@ -195,14 +195,14 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_is_admin(self):
          print "test_is_admin"
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
+         user = User(name=Name(val="some user"),
+                          email=Email(val="tt@kk.com"),
                           role=Role.user)
 
          self.assertEqual(self.obj_delegate.is_admin(user), False)
 
-         user = User(name=Name(name="some user"),
-                          email=Email(email="tt@kk.com"),
+         user = User(name=Name(val="some user"),
+                          email=Email(val="tt@kk.com"),
                           role=Role.admin)
 
          self.assertEqual(self.obj_delegate.is_admin(user), True)
@@ -229,9 +229,9 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_role(self):
          print "test_get_role"
-         self.assertEqual(self.obj_delegate.get_role(name="admin").get("name"),
+         self.assertEqual(self.obj_delegate.get_role(val="admin").get("val"),
                               "admin")
-         self.assertEqual(self.obj_delegate.get_role(name="user").get("name"),
+         self.assertEqual(self.obj_delegate.get_role(val="user").get("val"),
                               "user")
 
 #+END_SRC
@@ -276,11 +276,11 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_user_by_email(self):
         print "test_get_user_by_email"
-        email = Email(email=Config.admin_email)
+        email = Email(val=Config.admin_email)
         user = self.obj_delegate.get_user_by_email(email)
         self.assertEqual(user.get("email"), email)
 
-        user = self.obj_delegate.get_user_by_email(Email(email="tt@kk.com"))
+        user = self.obj_delegate.get_user_by_email(Email(val="tt@kk.com"))
         self.assertEqual(user, None)
 
 #+END_SRC
@@ -304,9 +304,9 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_set_email(self):
         print "test_set_email"
-        email = Email(email=Config.admin_email)
+        email = Email(val=Config.admin_email)
         user = self.obj_delegate.get_user_by_email(email)
-        email = Email(email="abc@gnu.org")
+        email = Email(val="abc@gnu.org")
         user = self.obj_delegate.set_email(user, email)
 
         self.assertEqual(user.get("email"), email)
@@ -332,9 +332,9 @@ class TestObjectDelegate(TestCase):
 #+BEGIN_SRC python
     def test_set_name(self):
         print "test_set_name"
-        email = Email(email=Config.admin_email)
+        email = Email(val=Config.admin_email)
         user = self.obj_delegate.get_user_by_email(email)
-        name = Name(name="Jimi Hendrix")
+        name = Name(val="Jimi Hendrix")
         user = self.obj_delegate.set_name(user, name)
         self.assertEqual(user.get("name"), name)
 

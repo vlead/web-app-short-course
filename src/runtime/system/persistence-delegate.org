@@ -82,10 +82,10 @@ class TestPersistenceDelegate(TestCase):
          role_set = self.delegate.get_role_set()
          user_set = self.delegate.get_user_set()
          self.assertEqual(len(role_set), 2)
-         self.assertEqual(role_set[0].get_by_id(1).get("name"), 
+         self.assertEqual(role_set[0].get_by_id(1).get("val"), 
                               Config.admin_role)
          self.assertEqual(len(user_set), 1)
-         self.assertEqual(user_set[0].get("roles")[0].get("name"),
+         self.assertEqual(user_set[0].get("roles")[0].get("val"),
                               Config.admin_role)
                               
 
@@ -123,7 +123,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: name_exists
 #+BEGIN_SRC python
     def name_exists(self, name):
-        return name == self.get_name(name=name.get("name"))
+        return name == self.get_name(val=name.get("val"))
 
 #+END_SRC
 
@@ -132,9 +132,9 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_name_exists(self):
          print "test_name_exists"
-         name = Name(name=Config.admin_name)
+         name = Name(val=Config.admin_name)
          self.assertEqual(self.delegate.name_exists(name), True)
-         name = Name(name="Temp user")
+         name = Name(val="Temp user")
          self.assertEqual(self.delegate.name_exists(name), False)
 
 #+END_SRC
@@ -144,7 +144,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: email_exists
 #+BEGIN_SRC python
     def email_exists(self, email):
-        return email == self.get_email(email=email.get("email"))
+        return email == self.get_email(val=email.get("val"))
 
 #+END_SRC
 
@@ -153,9 +153,9 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_email_exists(self):
          print "test_email_exists"
-         email = Email(email=Config.admin_email)
+         email = Email(val=Config.admin_email)
          self.assertEqual(self.delegate.email_exists(email), True)
-         email = Email(email="abc@gnu.org")
+         email = Email(val="abc@gnu.org")
          self.assertEqual(self.delegate.email_exists(email), False)
 
 #+END_SRC
@@ -165,7 +165,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: role_exists_in_system
 #+BEGIN_SRC python
     def role_exists_in_system(self, role):
-        return role == self.get_role(name=role.get("name"))
+        return role == self.get_role(val=role.get("val"))
 
 #+END_SRC
 
@@ -174,9 +174,9 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_role_exists_in_system(self):
          print "test_role_exists"
-         role = Role(name=Config.admin_role)
+         role = Role(val=Config.admin_role)
          self.assertEqual(self.delegate.role_exists_in_system(role), True)
-         role = Role(name="temp")
+         role = Role(val="temp")
          self.assertEqual(self.delegate.role_exists_in_system(role), False)
 
 #+END_SRC
@@ -196,9 +196,9 @@ class TestPersistenceDelegate(TestCase):
     def test_role_exists_for_user(self):
          print "test_role_exists_for_user"
          user = self.delegate.get_user_set()[0]
-         role = Role(name=Config.admin_role)
+         role = Role(val=Config.admin_role)
          self.assertEqual(self.delegate.role_exists_for_user(role, user), True)
-         role = Role(name="temp")
+         role = Role(val="temp")
          self.assertEqual(self.delegate.role_exists_for_user(role, user), False)
 
 #+END_SRC
@@ -221,7 +221,7 @@ class TestPersistenceDelegate(TestCase):
     def test_user_with_admin_role_exists(self):
          print "test_user_with_admin_role_exists"
          self.assertEqual(self.delegate.user_with_admin_role_exists(), True)
-         self.delegate.del_user(self.delegate.get_user(email=Email(email=Config.admin_email)))
+         self.delegate.del_user(self.delegate.get_user(email=Email(val=Config.admin_email)))
          self.assertEqual(self.delegate.user_with_admin_role_exists(), False)
 
 #+END_SRC
@@ -238,14 +238,14 @@ class TestPersistenceDelegate(TestCase):
 
         # roles = []
         # for role in user.get("roles"):
-        #     db_role = self.get_role(name=role.get("name"))
+        #     db_role = self.get_role(val=role.get("name"))
         #     roles.append(db_role)
 
         # user.set(roles=roles, do_not_save=True)
         if not self.name_exists(name):
             name.save()
         # else:
-        #     name = self.get_name(name=name.get("name"))
+        #     name = self.get_name(val=name.get("name"))
         #     user.set(name=name, do_not_save=True)
             
         email.save()
@@ -259,15 +259,15 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_add_user(self):
          print "test_add_user"
-         name=Name(name="some user")
-         email=Email(email="tt@kk.com")
+         name=Name(val="some user")
+         email=Email(val="tt@kk.com")
          user = User(name=name, email=email, 
-                         roles=[self.delegate.get_role(name=Config.user_role)])
+                         roles=[self.delegate.get_role(val=Config.user_role)])
 
          user = self.delegate.add_user(user)
          another_user = User(name=name,
-                                 email=Email(email="xyz@gnu.org"),
-                                 roles=[self.delegate.get_role(name=Config.user_role)])
+                                 email=Email(val="xyz@gnu.org"),
+                                 roles=[self.delegate.get_role(val=Config.user_role)])
 
          user = self.delegate.add_user(another_user)
 
@@ -299,8 +299,8 @@ class TestPersistenceDelegate(TestCase):
     def test_del_user(self):
          print "test_del_user"
 
-         name=Name(name="some user")
-         email=Email(email="tt@kk.com")
+         name=Name(val="some user")
+         email=Email(val="tt@kk.com")
          user = User(name=name, email=email, 
                          roles=self.delegate.get_role_set())
 
@@ -326,9 +326,9 @@ class TestPersistenceDelegate(TestCase):
     def test_get_users(self):
          print "test_get_users"
 
-         name=Name(name="some user")
+         name=Name(val="some user")
          name.save()
-         email=Email(email="tt@kk.com")
+         email=Email(val="tt@kk.com")
          email.save()
          user = User(name=name, email=email, 
                          role=self.delegate.get_role_set()[1])
@@ -351,7 +351,7 @@ class TestPersistenceDelegate(TestCase):
         if roles:
             ret_val = reduce(lambda a, b: a or b, \
                                 map(lambda role: \
-                                    role.get("name") == Config.admin_name, 
+                                    role.get("val") == Config.admin_name, 
                                     roles))
         return ret_val
 
@@ -363,23 +363,23 @@ class TestPersistenceDelegate(TestCase):
     def test_is_admin(self):
          print "test_is_admin"
 
-         name=Name(name="some user")
+         name=Name(val="some user")
          name.save()
-         email=Email(email="tt@kk.com")
+         email=Email(val="tt@kk.com")
          email.save()
          user = User(name=name, email=email, 
-                         roles=[self.delegate.get_role(name=Config.user_role)])
+                         roles=[self.delegate.get_role(val=Config.user_role)])
 
          user = self.delegate.add_user(user)
 
          self.assertEqual(self.delegate.is_admin(user), False)
 
-         name=Name(name="some another user")
+         name=Name(val="some another user")
          name.save()
-         email=Email(email="someanother@gnu.org")
+         email=Email(val="someanother@gnu.org")
          email.save()
          user = User(name=name, email=email,
-                        roles=[self.delegate.get_role(name=Config.admin_role)])
+                        roles=[self.delegate.get_role(val=Config.admin_role)])
 
          user = self.delegate.add_user(user)
 
@@ -421,8 +421,8 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_name(self):
          print "test_get_name"
-         name_obj = self.delegate.get_name(name=Config.admin_name)
-         self.assertEqual(name_obj.get("name"), Config.admin_name)
+         name_obj = self.delegate.get_name(val=Config.admin_name)
+         self.assertEqual(name_obj.get("val"), Config.admin_name)
 
 #+END_SRC
 
@@ -443,8 +443,8 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_email(self):
          print "test_get_email"
-         email_obj = self.delegate.get_email(email=Config.admin_email)
-         self.assertEqual(email_obj.get("email"), Config.admin_email)
+         email_obj = self.delegate.get_email(val=Config.admin_email)
+         self.assertEqual(email_obj.get("val"), Config.admin_email)
 
 #+END_SRC
 
@@ -463,8 +463,8 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_role(self):
          print "test_get_role"
-         role_obj = self.delegate.get_role(name=Config.admin_role)
-         self.assertEqual(role_obj.get("name"), Config.admin_role)
+         role_obj = self.delegate.get_role(val=Config.admin_role)
+         self.assertEqual(role_obj.get("val"), Config.admin_role)
 
 #+END_SRC
 
@@ -485,7 +485,7 @@ class TestPersistenceDelegate(TestCase):
     def test_get_roles_of_user(self):
          print "test_get_roles_of_user"
          roles = self.delegate.get_roles_of_user(self.delegate.get_admin_user())
-         self.assertEqual(roles[0].get("name"), Config.admin_role)
+         self.assertEqual(roles[0].get("val"), Config.admin_role)
 
 #+END_SRC
 
@@ -513,7 +513,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_admin_role
 #+begin_src python
     def get_admin_role(self):
-        return self.get_role(name=Config.admin_role)
+        return self.get_role(val=Config.admin_role)
 
 #+END_SRC
 
@@ -523,7 +523,7 @@ class TestPersistenceDelegate(TestCase):
     def test_get_admin_role(self):
          print "test_get_admin_role"
          role = self.delegate.get_admin_role()
-         self.assertEqual(role.get("name"), Config.admin_role)
+         self.assertEqual(role.get("val"), Config.admin_role)
 
 #+END_SRC
 
@@ -543,9 +543,9 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_user(self):
          print "test_get_user"
-         email = Email(email=Config.admin_email)
+         email = Email(val=Config.admin_email)
          user_obj = self.delegate.get_user(email=email)
-         self.assertEqual(user_obj.get("email").get("email"), 
+         self.assertEqual(user_obj.get("email").get("val"), 
                               Config.admin_email)
 
 #+END_SRC
@@ -556,7 +556,7 @@ class TestPersistenceDelegate(TestCase):
 #+NAME: get_admin_user
 #+BEGIN_SRC python
     def get_admin_user(self):
-        email = Email(email=Config.admin_email)
+        email = Email(val=Config.admin_email)
         return self.get_user(email=email)
         
 
@@ -587,11 +587,11 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_get_user_by_email(self):
         print "test_get_user_by_email"
-        email = Email(email=Config.admin_email)
+        email = Email(val=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
         self.assertEqual(user.get("email"), email)
 
-        email = Email(email="tt@kk.com")
+        email = Email(val="tt@kk.com")
         email.save()
         user = self.delegate.get_user_by_email(email)
         self.assertEqual(user, None)
@@ -614,7 +614,7 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_mask_roles_of_user(self):
         print "test_mask_roles_of_user"
-        email = Email(email=Config.admin_email)
+        email = Email(val=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
         user = self.delegate.mask_roles_of_user(user)
 
@@ -632,9 +632,9 @@ class TestPersistenceDelegate(TestCase):
     def set_email(self, user, email):
         usr = self.get_user_by_email(user.get("email"))
 
-        if self.get_email(email=email.get("email")) is None:
+        if self.get_email(val=email.get("val")) is None:
             email.save()
-            email = self.get_email(email=email.get("email"))
+            email = self.get_email(val=email.get("val"))
             
         usr.set(email=email)
         return self.get_user_by_email(usr.get("email"))
@@ -646,9 +646,9 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_set_email(self):
         print "test_set_email"
-        email = Email(email=Config.admin_email)
+        email = Email(val=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
-        email = Email(email="abc@gnu.org")
+        email = Email(val="abc@gnu.org")
         user = self.delegate.set_email(user, email)
         self.assertEqual(user.get("email"), email)
 
@@ -664,9 +664,9 @@ class TestPersistenceDelegate(TestCase):
     def set_name(self, user, name):
         usr = self.get_user_by_email(user.get("email"))
 
-        if self.get_name(name=name.get("name")) is None:
+        if self.get_name(val=name.get("val")) is None:
             name.save()
-            name = self.get_name(name=name.get("name"))
+            name = self.get_name(val=name.get("val"))
 
         usr.set(name=name)
         return self.get_user(name=usr.get("name"))
@@ -678,9 +678,9 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_set_name(self):
         print "test_set_name"
-        email = Email(email=Config.admin_email)
+        email = Email(val=Config.admin_email)
         user = self.delegate.get_user_by_email(email)
-        name = Name(name="Jimi Hendrix")
+        name = Name(val="Jimi Hendrix")
         user = self.delegate.set_name(user, name)
         self.assertEqual(user.get("name"), name)
 
@@ -692,7 +692,7 @@ class TestPersistenceDelegate(TestCase):
     def add_role_to_user(self, role, user):
         user = self.get_user(email=user.get("email"))
         roles = user.get("roles")
-        role = self.get_role(name=role.get("name"))
+        role = self.get_role(val=role.get("val"))
         roles.append(role)
         user.set(roles=roles)
         return self.get_user(email=user.get("email"))
@@ -704,12 +704,12 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_add_role_to_user(self):
         print "test_add_role_to_user"
-        user = self.delegate.get_user(email=Email(email=Config.admin_email))
+        user = self.delegate.get_user(email=Email(val=Config.admin_email))
         self.assertTrue(len(user.get("roles")) == 1)
-        user_role = Role(name=Config.user_role)
+        user_role = Role(val=Config.user_role)
         user_with_new_role = self.delegate.add_role_to_user(user_role, user)
         self.assertTrue(len(user_with_new_role.get("roles")) == 2)
-        user = self.delegate.get_user(email=Email(email=Config.admin_email))
+        user = self.delegate.get_user(email=Email(val=Config.admin_email))
 
 #+END_SRC
 
@@ -732,10 +732,10 @@ class TestPersistenceDelegate(TestCase):
 #+BEGIN_SRC python
     def test_del_role_of_user(self):
         print "test_del_role_of_user"
-        user = self.delegate.get_user(email=Email(email=Config.admin_email))
+        user = self.delegate.get_user(email=Email(val=Config.admin_email))
         self.assertTrue(len(user.get("roles")) == 1)
 
-        user_role = Role(name=Config.user_role)
+        user_role = Role(val=Config.user_role)
         user_with_new_role = self.delegate.add_role_to_user(user_role, user)
         self.assertTrue(len(user_with_new_role.get("roles")) == 2)
 

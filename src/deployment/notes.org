@@ -1,0 +1,32 @@
+#+TITLE: Run in python debugger
+#+DATE: [2017-03-25 Sat]
+
+
+
+* Commands to run in python interpreter
+
+#+BEGIN_EXAMPLE
+from runtime.persistence.entities import *
+
+from flask import Flask
+app = Flask(__name__)
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+oursql://root:root@localhost/userdirectory'
+
+db.init_app(app)
+
+db.app = app
+
+with app.app_context():
+    db.create_all()
+
+na = Name(val="Temp")
+with app.app_context():
+    db.create_all()
+
+with app.app_context():
+    db.drop_all()
+
+#+END_EXAMPLE
