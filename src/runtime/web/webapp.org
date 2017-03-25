@@ -389,7 +389,7 @@ function make_li_for_user(user) {
   let roles = "";
 
   for(var i = 0; i < user.roles.length; i++) {
-    roles += user.roles[i].name;
+    roles += user.roles[i].val;
     roles += " ";
   }
 
@@ -398,9 +398,9 @@ function make_li_for_user(user) {
   let details_ul = "<ul id=" + id + "></ul>";
 
   let li = $("<li style='margin-bottom: 50px' >" + "Name: " +
-             user.name.name +
+             user.name.val +
              " | Email: " +
-             user.email.email +
+             user.email.val +
              user_details_button + 
              delete_button + 
              details_ul + 
@@ -670,8 +670,8 @@ function get_user_details_handler(email) {
     console.group("get_all_users callback");
     console.dir(user);
 
-    name = user.name.name;
-    email = user.email.email;
+    name = user.name.val;
+    email = user.email.val;
     roles = user.roles;
 
     var match = /\w+/.exec(email);
@@ -685,7 +685,7 @@ function get_user_details_handler(email) {
     ul.append(make_li_for_user_details("Email", email));
     for(var i = 0; i < roles.length; ++i) {
       let role = roles[i];
-      let li = make_li_for_user_details("Role", role.name);
+      let li = make_li_for_user_details("Role", role.val);
       ul.append(li);
     };
     console.groupEnd();
