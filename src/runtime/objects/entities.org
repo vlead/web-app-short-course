@@ -20,7 +20,7 @@ mutate the fields of the entity.
 The main idea in the object model is that certain relations
 of the data model (those that are total functions) are
 implemented as /fields/.  For example the =User= object has
-a field called =email= that holds an object of type =Email=.
+a field called =val= that holds an object of type =Email=.
 
 As a start, we do not implement all relations of the data
 model.  For example, the relation =user: Email > User?= is
@@ -92,10 +92,10 @@ def is_user_status(s):
 
 #+NAME: class_Name
 #+begin_src python
-Name.add_attributes(name=is_alphabetic_str)
+Name.add_attributes(val=is_alphabetic_str)
 Name.__eq__ = lambda self, other: \
                   is_name(other) and \
-                  self.get("name") == other.get("name")
+                  self.get("val") == other.get("val")
 
 #+end_src
 
@@ -107,32 +107,32 @@ class TestName(TestCase):
 
     def test_instantiate_name(self):
         print "test_instantiate_name"
-        self.assertEqual(is_name(Name(name="Jimi Hendrix")), True)
-        self.assertEqual(Name(name="Jimi Hendrix").get("name"), "Jimi Hendrix")
-        self.assertRaises(TypeError, Name, name="Jimi 123 Hendrix")
+        self.assertEqual(is_name(Name(val="Jimi Hendrix")), True)
+        self.assertEqual(Name(val="Jimi Hendrix").get("val"), "Jimi Hendrix")
+        self.assertRaises(TypeError, Name, val="Jimi 123 Hendrix")
 
     def test_name_equality(self):
         print "test_name_equality"
-        self.assertEqual(Name(name="Jimi Hendrix") == 
-                         Name(name="Jimi Hendrix"), 
+        self.assertEqual(Name(val="Jimi Hendrix") == 
+                         Name(val="Jimi Hendrix"), 
                          True)
 
-        self.assertEqual(Name(name="Jimi Hendrix") == 
-                         Name(name="Bo Didley"), 
+        self.assertEqual(Name(val="Jimi Hendrix") == 
+                         Name(val="Bo Didley"), 
                          False)
 
 #+END_SRC
 
 
 * Email
-=Name= is a value class with type =is_email_str=.
+=Email= is a value class with type =is_email_str=.
 #+NAME: class_Email
 #+begin_src python
-Email.add_attributes(email=is_email_str)
+Email.add_attributes(val=is_email_str)
 
 Email.__eq__ = lambda self, other: \
                   is_email(other) and \
-                  self.get("email") == other.get("email")
+                  self.get("val") == other.get("val")
 
 #+end_src
 
@@ -144,19 +144,19 @@ class TestEmail(TestCase):
 
     def test_instantiate_email(self):
         print "test_instantiate_email"
-        self.assertEqual(is_email(Email(email="jimi@gnu.org")), True)
-        self.assertEqual(Email(email="jimi@gnu.org").get("email"),
+        self.assertEqual(is_email(Email(val="jimi@gnu.org")), True)
+        self.assertEqual(Email(val="jimi@gnu.org").get("val"),
                              "jimi@gnu.org")
-        self.assertRaises(TypeError, Name, name="jimi@@gnu.org")
+        self.assertRaises(TypeError, Name, val="jimi@@gnu.org")
 
 
     def test_equality_of_email(self):
         print "test_equality_of_email"
-        self.assertEqual(Email(email="jimi@gnu.org") ==
-                             Email(email="jimi@gnu.org"), True)
+        self.assertEqual(Email(val="jimi@gnu.org") ==
+                             Email(val="jimi@gnu.org"), True)
         
-        self.assertEqual(Email(email="didley@gnu.org") ==
-                             Email(email="jimi@gnu.org"), False)
+        self.assertEqual(Email(val="didley@gnu.org") ==
+                             Email(val="jimi@gnu.org"), False)
 
 #+END_SRC
 
@@ -167,14 +167,14 @@ class TestEmail(TestCase):
 #+NAME: class_Role
 #+BEGIN_SRC python
 Role = ClassTemplate.mk_class("Role", 
-                              name=is_alphabetic_str)
+                              val=is_alphabetic_str)
 
 Role.__eq__ = lambda self,other: \
             is_role(other) and \
-	    self.get("name") == other.get("name")
+	    self.get("val") == other.get("val")
 
-Role.admin = Role(name="admin")
-Role.user = Role(name="user")
+Role.admin = Role(val="admin")
+Role.user = Role(val="user")
 Role.is_admin = lambda role: role.name == 'admin'
 Role.is_user = lambda role: role.guest == 'user'
 
@@ -188,17 +188,17 @@ class TestRole(TestCase):
 
     def test_instantiate_role(self):
         print "test_instantiate_role"
-        a_role = Role(name="admin")
+        a_role = Role(val="admin")
         self.assertEqual(is_role(a_role), True)
-        self.assertEqual(a_role.get("name"), "admin")
+        self.assertEqual(a_role.get("val"), "admin")
         self.assertRaises(TypeError, Role, my_name="admin123")
 
     def test_set_and_get_role(self):
         print "test_sets_on_role"
-        u_role = Role(name="user")
-        self.assertEqual(u_role.get("name"), "user")
-        u_role.set(name="admin")
-        self.assertEqual(u_role.get("name"), "admin")
+        u_role = Role(val="user")
+        self.assertEqual(u_role.get("val"), "user")
+        u_role.set(val="admin")
+        self.assertEqual(u_role.get("val"), "admin")
 
 #+END_SRC
 
@@ -235,35 +235,35 @@ class TestUser(TestCase):
 
     def test_instantiate_user(self):
         print "test_instantiate_user"
-        user = User(name=Name(name="Jimi Hendrix"),
-                    email=Email(email="jimi@gnu.org"),
+        user = User(name=Name(val="Jimi Hendrix"),
+                    email=Email(val="jimi@gnu.org"),
                     roles=[])
 
         self.assertEqual(is_user(user), True)
 
     def test_sets_on_user(self):
         print "test_sets_on_user"
-        user = User(name=Name(name="Jimi Hendrix"),
-                    email=Email(email="jimi@gnu.org"),
-                    roles=[Role(name="user")]
+        user = User(name=Name(val="Jimi Hendrix"),
+                    email=Email(val="jimi@gnu.org"),
+                    roles=[Role(val="user")]
                     )
 
-        self.assertEqual(user.get("name").get("name"), "Jimi Hendrix")
-        self.assertEqual(user.get("email").get("email"), "jimi@gnu.org")
-        self.assertEqual(user.get("roles")[0].get("name"), "user")
+        self.assertEqual(user.get("name").get("val"), "Jimi Hendrix")
+        self.assertEqual(user.get("email").get("val"), "jimi@gnu.org")
+        self.assertEqual(user.get("roles")[0].get("val"), "user")
 
     def test_equality_on_user(self):
         print "test_equality_on_user"
-        user1 = User(name=Name(name="Jimi Hendrix"),
-                     email=Email(email="jimi@gnu.org"),
+        user1 = User(name=Name(val="Jimi Hendrix"),
+                     email=Email(val="jimi@gnu.org"),
                      roles=[])
 
-        user2 = User(name=Name(name="Jimi Hendrix"),
-                     email=Email(email="jimi@gnu.org"),
+        user2 = User(name=Name(val="Jimi Hendrix"),
+                     email=Email(val="jimi@gnu.org"),
                      roles=[]) 
 
-        user3 = User(name=Name(name="John Roy"),
-                     email=Email(email="roy@gnu.org"),
+        user3 = User(name=Name(val="John Roy"),
+                     email=Email(val="roy@gnu.org"),
                      roles=[])
 
         self.assertEqual(user1 == user2, True)
@@ -271,11 +271,11 @@ class TestUser(TestCase):
         
     def test_append_role(self):
         print "test_append_role"
-        user = User(name=Name(name="Jimi Hendrix"),
-                     email=Email(email="jimi@gnu.org"),
+        user = User(name=Name(val="Jimi Hendrix"),
+                     email=Email(val="jimi@gnu.org"),
                      roles=[])
 
-        user.append_role(Role(name="user"))
+        user.append_role(Role(val="user"))
         self.assertTrue(len(user.get('roles')) == 1)
 
 #+END_SRC
@@ -307,44 +307,44 @@ class TestSession(TestCase):
 
     def test_instantiate_session(self):
         print "test_instantiate_user"
-        user = User(name=Name(name="Jimi Hendrix"),
-                    email=Email(email="jimi@gnu.org"),
+        user = User(name=Name(val="Jimi Hendrix"),
+                    email=Email(val="jimi@gnu.org"),
                     roles=[])
 
-        role = Role(name="admin")
+        role = Role(val="admin")
         d_key = "kdshfkjdahfjdhfkjd"
         session = Session(user=user, role=role, key=d_key)
         self.assertEqual(is_session(session), True)
 
     def test_sets_on_session(self):
         print "test_sets_on_session"
-        user = User(name=Name(name="Jimi Hendrix"),
-                    email=Email(email="jimi@gnu.org"),
+        user = User(name=Name(val="Jimi Hendrix"),
+                    email=Email(val="jimi@gnu.org"),
                     roles=[])
 
-        role = Role(name="admin")
+        role = Role(val="admin")
         d_key = "kdshfkjdahfjdhfkjd"
         session = Session(user=user, role=role, key=d_key)
 
-        user = User(name=Name(name="Bo Didley"),
-                    email=Email(email="didley@gnu.org"),
+        user = User(name=Name(val="Bo Didley"),
+                    email=Email(val="didley@gnu.org"),
                     roles=[])
 
         session.set(user=user)
-        self.assertEqual(session.get("user").get("email").get("email"),
+        self.assertEqual(session.get("user").get("email").get("val"),
                          "didley@gnu.org")
 
     def test_equality_on_session(self):
         print "test_equality_on_session"
-        role1 = Role(name="admin")
-        role2 = Role(name="user")
+        role1 = Role(val="admin")
+        role2 = Role(val="user")
 
-        user1 = User(name=Name(name="Jimi Hendrix"),
-                    email=Email(email="jimi@gnu.org"),
+        user1 = User(name=Name(val="Jimi Hendrix"),
+                    email=Email(val="jimi@gnu.org"),
                     roles=[role1])
 
-        user2 = User(name=Name(name="Jimi Hendrix"),
-                    email=Email(email="jimi@gmail.org"),
+        user2 = User(name=Name(val="Jimi Hendrix"),
+                    email=Email(val="jimi@gmail.org"),
                     roles=[role1])
 
         d_key = "kdshfkjdahfjdhfkjd"
