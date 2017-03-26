@@ -1,4 +1,4 @@
-#+TITLE: UserDirectory
+#+TITLE: WebApp (User Directory) Short Course
 #+Author: VLEAD
 #+Date: [2016-05-05 Thu]
 #+PROPERTY: results output
@@ -7,13 +7,52 @@
 #+options: ^:nil
 
 * Introduction
-  This document helps in setting up development environment for run the
+  This document helps in setting up development environment to run the
   =userdirectory= application. 
 
 * Rename sample config files
-  After cloning the repository, copy
+  After cloning the =web-app-short-course=, copy
   =src/runtime/config/custom-config.org.sample= to
   =src/runtime/config/custom-config.org=
+
+* Installation of Database
+
+** Checking if =mysql= is installed
+
+If the command
+#+BEGIN_SRC bash :eval no
+which mysql
+#+END_SRC
+returns nothing, then =mysql= is not installed.
+
+** Installing =mysql=
+** Checking if installed version is running as a service
+#+BEGIN_SRC bash :eval no
+/etc/init.d/mysql status
+#+END_SRC
+If this returns something like =mysql start/running, process
+<pid>=, then =mysql= is running.  Otherwise it is not
+running and you will need to start it.
+** Starting =mysql= if it not running
+
+#+BEGIN_SRC bash :eval no
+sudo /etc/init.d/mysql start
+#+END_SRC
+
+** Resetting the =mysql= password.
+See
+https://support.rackspace.com/how-to/mysql-resetting-a-lost-mysql-root-password/
+
+Note that the section "Stop and start the MySQL service" has
+a mistake: you need to start mysql; trying to stop it will
+give you an error.  Simply ignore the stop command. 
+
+ - First stop =mysql=:
+#+BEGIN_SRC bash :eval no
+sudo /etc/init.d/mysql stop
+#+END_SRC
+ - 
+
 
 * Creation of database
   1. Login to mysql
@@ -26,7 +65,7 @@
      #+END_EXAMPLE
   3. If <userdirectory> database is not present, create it
      #+BEGIN_EXAMPLE
-     create database userdirectory
+     create database userdirectory;
      #+END_EXAMPLE
   
      Exit our of the mysql console
@@ -72,8 +111,9 @@
 
   Do the following
   #+BEGIN_EXAMPLE
-  sudo apt-get install libmysqlclient-dev
-  sudo apt-get install python-dev
+  sudo su -
+  apt-get install libmysqlclient-dev
+  apt-get install python-dev
   #+END_EXAMPLE
 
 
@@ -90,11 +130,11 @@
   Set PYTHONPATH variable and export it to access python modules. 
 #+BEGIN_EXAMPLE
 cd build/code/
-export PYTHONPATH=${PWD}
+export PYTHONPATH=${PWD}:$PYTHONPATH
 #+END_EXAMPLE
 
 * [[./google-oauth-configuration.org][Obtain Google OAuth Credentials]]
-* Congigure OAuth for Application
+* Configure OAuth for Application
   Edit =src/runtime/config/custom-config.org= to set =CONSUMER_KEY= and
   =CONSUMER_SECRET= that were obtained from the previous step. 
   

@@ -123,7 +123,6 @@ TYPE Name
   Requirement satisfied: [[../requirements/index.org::#req_role][Role]]
 #+BEGIN_SRC spec :tangle spec.txt
 TYPE Role = {admin, user}
-
 #+END_SRC
 
 ** Session
@@ -141,17 +140,22 @@ TYPE Session
   :PROPERTIES:
   :CUSTOM_ID: cardinal_constraints
   :END: 
-  For each relation, we define its inverse next to it.
+  +For each relation, we define its inverse next to it.+
 
   Meets requirements [[../requirements/index.org::#req_user_uniqueness][uniqueness of a user]], [[../requirements/index.org::#req_user_role][role of a user]] and [[../requirements/index.org::#req_session_constraints][session constraints]]
 
 #+BEGIN_SRC spec :tangle spec.txt
 ;;; Relations with cardinality constraints
-[email, user]    :  User?    > Email!
-[name, users]    :  User     > Name!
-[roles, users]   :  User     > Role+
-[user, sessions] :  Session  > User!
-
+email : User > Email!
+user  : Email > User?
+name  : User  > Name!
+users : Name  > User
+roles : User  > Role+
+users : Role  > User
+user  : Session > User!
+role  : Session > Role!
+sessions: User  > Session
+sessions: Role  > Session
 #+END_SRC
 
 
@@ -171,11 +175,13 @@ TYPE Session
 An entity =K= is called a /key for/ an entity =A= if there
 is a relation =r: A? > K!=.
 
-|--------+-------|
-| Entity | Key   |
-|--------+-------|
-| User   | Email |
-|--------+-------|
+|---------+-------------|
+| Entity  | Key         |
+|---------+-------------|
+| User    | Email       |
+|---------+-------------|
+| Session | (User,Role) |
+|---------+-------------|
 
 
 * System state

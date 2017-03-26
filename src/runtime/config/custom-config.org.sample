@@ -20,6 +20,7 @@
 # example DB URI:
 # mysql+oursql://scott:tiger@localhost/mydatabase
 # postgresql+psycopg2://scott:tiger@localhost/mydatabase
+#  e.g.,  SQLALCHEMY_DATABASE_URI = 'mysql+oursql://<userid>:<password>@localhost/userdirectory'
 SQLALCHEMY_DATABASE_URI = 'mysql+oursql://<userid>:<password>@<servername>/<db_name>'
 
 # Debug from SQLAlchemy
