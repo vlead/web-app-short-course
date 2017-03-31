@@ -378,12 +378,12 @@ function make_li_for_user(user) {
   
   let delete_button =
     "<a style='margin-left: 1em' onclick=user_list_delete(" +
-    "'" + user.email.email + "'" +
+    "'" + user.email.val + "'" +
     ")> Delete User </a>";
 
   let user_details_button =
     "<a style='margin-left: 1em' onclick=get_user_details_handler(" +
-    "'" + user.email.email + "'" +
+    "'" + user.email.val + "'" +
     ")> User Details </a>";
 
   let roles = "";
@@ -393,7 +393,7 @@ function make_li_for_user(user) {
     roles += " ";
   }
 
-  var match = /\w+/.exec(user.email.email);
+  var match = /\w+/.exec(user.email.val);
   let id = 'user-details-' + match[0];
   let details_ul = "<ul id=" + id + "></ul>";
 

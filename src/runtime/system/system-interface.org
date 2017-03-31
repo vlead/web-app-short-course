@@ -319,7 +319,7 @@ class TestMakeName(TestCase):
             user = System.do("get_user_by_email", email=email)
 
             if user is None:
-                raise NotFoundError("User with email = %s is not found"
+                raise StateError("User with email = %s is not found"
                                         % email_str)
             else:
                 return user
@@ -380,12 +380,6 @@ class TestGetUserByEmail(TestCase):
             session_obj = SystemInterface.make_session(session_dict)
             session = System.do("login_second_step", session=session_obj)
             return str(role.get("val"))
-
-        except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
-            raise err
-
-        except Exception as err:
-            raise err
 
         except (ArityError, TypeError, NotAuthorizedError, StateError) as err:
             raise err
