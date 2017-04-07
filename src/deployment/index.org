@@ -154,7 +154,8 @@ fi
 ABS_PATH_DS=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 update_app_config () {
-  CONFIG_FILE="runtime/config/flask_app_config.py"
+  
+  CONFIG_FILE="/var/www/runtime/config/flask_app_config.py"
   DB_USER="root"
   DB_PASS=$(cat db_pass.txt)
   DB_NAME="userdirectory"
@@ -168,12 +169,12 @@ update_app_config () {
 
   echo "Updating config.py.."
   # Update parts of the DB URI
-  sed -i "s/<userid>/$DB_USER/" $ABS_PATH_DS/$CONFIG_FILE
-  sed -i "s/<password>/$DB_PASS/" $ABS_PATH_DS/$CONFIG_FILE
-  sed -i "s/<servername>/$DB_SERVER/" $ABS_PATH_DS/$CONFIG_FILE
-  sed -i "s/<db_name>/$DB_NAME/" $ABS_PATH_DS/$CONFIG_FILE
+  sed -i "s/<userid>/$DB_USER/" $CONFIG_FILE
+  sed -i "s/<password>/$DB_PASS/" $CONFIG_FILE
+  sed -i "s/<servername>/$DB_SERVER/" $CONFIG_FILE
+  sed -i "s/<db_name>/$DB_NAME/" $CONFIG_FILE
   # update SQLALCHEMY_ECHO
-  sed -i "s/^SQLALCHEMY_ECHO.*$/SQLALCHEMY_ECHO = False/" $ABS_PATH_DS/$CONFIG_FILE
+  sed -i "s/^SQLALCHEMY_ECHO.*$/SQLALCHEMY_ECHO = False/" $CONFIG_FILE
   # update WHITELIST_IPS
   #sed -i "s/^WHITELIST_IPS.*$/WHITELIST_IPS = $WHITELIST_IPS/" $CONFIG_FILE
   # update ALLOWED_ORIGINS
@@ -235,6 +236,23 @@ exit 0;
 #+END_SRC
 
 
+* Deploying the application
+
+#+BEGIN_SRC python :tangle userdirectory.wsgi :eval no
+
+import sys, os
+
+BASE_DIR = BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+
+#sys.path.insert(0, BASE_DIR)
+sys.path.insert(0, "/var/www")
+
+from runtime.rest.app import create_app
+from runtime.config import flask_app_config as config
+
+application = create_app(config)
+
+#+END_SRC
 
 * Tangle                                       :boilerplate:
 #+BEGIN_SRC python :eval no :tangle __init__.py
