@@ -29,7 +29,7 @@ requires = [
 ]
 
 setup(
-    name='userdirectory',
+    name='webapp',
     version='2.0',
     install_requires=requires
 )
@@ -156,9 +156,10 @@ ABS_PATH_DS=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 update_app_config () {
   
   CONFIG_FILE="/var/www/runtime/config/flask_app_config.py"
+  GOOGLE_CONFIG_FILE="/var/www/runtime/config/google_oauth_config.py"
   DB_USER="root"
   DB_PASS=$(cat db_pass.txt)
-  DB_NAME="userdirectory"
+  DB_NAME="webapp"
   DB_SERVER="localhost"
 
   # the list of white-listed IPs for POST/PUT requests to data service
@@ -169,6 +170,8 @@ update_app_config () {
 
   echo "Updating config.py.."
   # Update parts of the DB URI
+  sed -i "s/<consumer-key>/60936275987-cg6a77vpb49g8mp93q7lc0k48jr7lvoc.apps.googleusercontent.com/" $GOOGLE_CONFIG_FILE
+  sed -i "s/<secret-key>/dAmG4Nd3j8-3HYCCYyP2R8di/" $GOOGLE_CONFIG_FILE
   sed -i "s/<userid>/$DB_USER/" $CONFIG_FILE
   sed -i "s/<password>/$DB_PASS/" $CONFIG_FILE
   sed -i "s/<servername>/$DB_SERVER/" $CONFIG_FILE
@@ -186,8 +189,8 @@ update_app_config () {
 }
 
 update_apache_config() {
-  PROC_NAME="userdirectory"
-  WSGI_SCRIPT="userdirectory.wsgi"
+  PROC_NAME="webapp"
+  WSGI_SCRIPT="webapp.wsgi"
   APACHE_VHOST_FILE="/etc/apache2/sites-available/default"
 
   sed -i "/<\/VirtualHost>/i \
@@ -238,7 +241,7 @@ exit 0;
 
 * Deploying the application
 
-#+BEGIN_SRC python :tangle userdirectory.wsgi :eval no
+#+BEGIN_SRC python :tangle webapp.wsgi :eval no
 
 import sys, os
 
