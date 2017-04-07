@@ -67,7 +67,7 @@
           "configure": [],
           "pre_build": [],
           "build": [
-            "cd ../;cp src/runtime/config/custom-config.org.sample cp src/runtime/config/custom-config.org;make build"
+            "cd ../;cp src/runtime/config/custom-config.org.sample src/runtime/config/custom-config.org;make build"
           ],
           "post_build": [
             "cp -R ../build/code/* /var/www/",
